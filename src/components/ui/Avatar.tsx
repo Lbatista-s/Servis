@@ -30,6 +30,13 @@ export interface AvatarProps {
   tamano?: keyof typeof TAMANOS;
   /** URL de la fotografía, cuando exista. */
   src?: string;
+  /**
+   * Expone el nombre completo al lector de pantalla. Por defecto es `false`
+   * porque casi siempre el nombre ya aparece escrito junto al avatar, y
+   * anunciarlo de nuevo lo repetiría («Ricardo Almanzar Ricardo Almanzar»).
+   * Actívalo sólo cuando el avatar sea la única referencia a la persona.
+   */
+  etiquetar?: boolean;
   className?: string;
 }
 
@@ -39,12 +46,16 @@ export function Avatar({
   color = 'blue',
   tamano = 'lg',
   src,
+  etiquetar = false,
   className,
 }: AvatarProps) {
   const texto = iniciales ?? calcularIniciales(nombre);
 
   return (
     <AvatarPrimitive.Root
+      // Sin etiqueta, el avatar es puramente decorativo: las iniciales no
+      // aportan nada a quien no ve la pantalla.
+      aria-hidden={etiquetar ? undefined : true}
       className={cn(
         'inline-flex shrink-0 select-none items-center justify-center overflow-hidden rounded-full',
         TAMANOS[tamano],
@@ -53,15 +64,18 @@ export function Avatar({
       )}
     >
       {src ? (
-        <AvatarPrimitive.Image src={src} alt={nombre} className="h-full w-full object-cover" />
+        <AvatarPrimitive.Image
+          src={src}
+          alt={etiquetar ? nombre : ''}
+          className="h-full w-full object-cover"
+        />
       ) : null}
       <AvatarPrimitive.Fallback
-        // El nombre completo se expone al lector de pantalla; las iniciales son visuales.
         className="flex h-full w-full items-center justify-center font-bold leading-none"
         delayMs={src ? 300 : 0}
       >
         <span aria-hidden="true">{texto}</span>
-        <span className="sr-only">{nombre}</span>
+        {etiquetar ? <span className="sr-only">{nombre}</span> : null}
       </AvatarPrimitive.Fallback>
     </AvatarPrimitive.Root>
   );
