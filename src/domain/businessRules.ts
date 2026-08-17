@@ -13,13 +13,7 @@ import {
   obtenerTransicion,
   type Transicion,
 } from './requestStateMachine';
-import type {
-  Actor,
-  EntradaHistorial,
-  EstadoSolicitud,
-  Servicio,
-  Solicitud,
-} from './types';
+import type { Actor, EntradaHistorial, EstadoSolicitud, Servicio, Solicitud } from './types';
 import { ETIQUETA_ESTADO } from './types';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -43,8 +37,7 @@ export interface ErrorDominio {
 }
 
 export type Resultado<T> =
-  | { readonly ok: true; readonly valor: T }
-  | { readonly ok: false; readonly error: ErrorDominio };
+  { readonly ok: true; readonly valor: T } | { readonly ok: false; readonly error: ErrorDominio };
 
 const exito = <T>(valor: T): Resultado<T> => ({ ok: true, valor });
 
@@ -212,9 +205,10 @@ export function aplicarTransicion(
     estado: hacia,
     actualizadaEn: ahora.toISOString(),
     // La fecha de envío se fija la primera vez que la solicitud sale de borrador.
-    enviadaEn: hacia === 'enviada' && solicitud.enviadaEn === null
-      ? ahora.toISOString()
-      : solicitud.enviadaEn,
+    enviadaEn:
+      hacia === 'enviada' && solicitud.enviadaEn === null
+        ? ahora.toISOString()
+        : solicitud.enviadaEn,
     historial: Object.freeze([...solicitud.historial, entrada]),
   });
 }

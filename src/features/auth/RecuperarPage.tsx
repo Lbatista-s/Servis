@@ -77,8 +77,8 @@ export function RecuperarPage() {
           <strong className="block font-semibold">
             {enviado ? 'Instrucciones enviadas' : 'Revisa tu bandeja'}
           </strong>
-          Si el correo existe en el sistema, recibirás el enlace en los próximos minutos. No
-          olvides verificar la carpeta de spam.
+          Si el correo existe en el sistema, recibirás el enlace en los próximos minutos. No olvides
+          verificar la carpeta de spam.
         </InlineNotification>
 
         <Button type="submit" tamano="lg" className="w-full">

@@ -56,7 +56,10 @@ export function Th({ className, ...props }: ThHTMLAttributes<HTMLTableCellElemen
 export function Td({ className, ...props }: TdHTMLAttributes<HTMLTableCellElement>) {
   return (
     <td
-      className={cn('border-b border-line px-3.5 py-3 text-base text-ink transition-colors', className)}
+      className={cn(
+        'border-b border-line px-3.5 py-3 text-base text-ink transition-colors',
+        className,
+      )}
       {...props}
     />
   );

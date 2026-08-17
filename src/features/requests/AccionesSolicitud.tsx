@@ -35,7 +35,10 @@ import type { ButtonProps } from '@/components/ui';
 
 /** Aspecto de cada acción, para que el color comunique la consecuencia. */
 const ESTILO_ACCION: Partial<
-  Record<EstadoSolicitud, { variante: ButtonProps['variante']; icono: 'verificar' | 'cerrar' | 'rotar' | 'chevron' }>
+  Record<
+    EstadoSolicitud,
+    { variante: ButtonProps['variante']; icono: 'verificar' | 'cerrar' | 'rotar' | 'chevron' }
+  >
 > = {
   enviada: { variante: 'primary', icono: 'chevron' },
   en_revision: { variante: 'primary', icono: 'chevron' },
@@ -103,7 +106,10 @@ export function AccionesSolicitud({
     <>
       <div className="flex flex-wrap gap-2.5">
         {acciones.map((transicion) => {
-          const estilo = ESTILO_ACCION[transicion.hacia] ?? { variante: 'outline' as const, icono: 'chevron' as const };
+          const estilo = ESTILO_ACCION[transicion.hacia] ?? {
+            variante: 'outline' as const,
+            icono: 'chevron' as const,
+          };
           return (
             <Button
               key={transicion.hacia}
@@ -178,7 +184,9 @@ export function AccionesSolicitud({
                   onClick={() => ejecutar(transicionActiva, comentario)}
                 >
                   <Icono nombre={transicionActiva.hacia === 'rechazada' ? 'cerrar' : 'rotar'} />
-                  {procesando ? 'Procesando…' : `Confirmar ${transicionActiva.accion.toLowerCase()}`}
+                  {procesando
+                    ? 'Procesando…'
+                    : `Confirmar ${transicionActiva.accion.toLowerCase()}`}
                 </Button>
               </DialogFooter>
             </>

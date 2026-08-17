@@ -10,11 +10,7 @@
 import { create } from 'zustand';
 
 import { repositorios } from '@/data';
-import type {
-  FiltroServicios,
-  FiltroSolicitudes,
-  FiltroUsuarios,
-} from '@/data/repositories/types';
+import type { FiltroServicios, FiltroSolicitudes, FiltroUsuarios } from '@/data/repositories/types';
 import type { Servicio, Solicitud, Usuario } from '@/domain/types';
 
 import { useAsync, type EstadoAsincrono } from './useAsync';

@@ -16,10 +16,14 @@ const variantesBoton = cva(
   {
     variants: {
       variante: {
-        primary: 'border-primary bg-primary text-white hover:border-primary-hover hover:bg-primary-hover',
-        success: 'border-success bg-success text-white hover:bg-success-hover hover:border-success-hover',
-        danger: 'border-danger bg-danger text-white hover:bg-danger-hover hover:border-danger-hover',
-        warning: 'border-warning bg-warning text-white hover:bg-warning-hover hover:border-warning-hover',
+        primary:
+          'border-primary bg-primary text-white hover:border-primary-hover hover:bg-primary-hover',
+        success:
+          'border-success bg-success text-white hover:bg-success-hover hover:border-success-hover',
+        danger:
+          'border-danger bg-danger text-white hover:bg-danger-hover hover:border-danger-hover',
+        warning:
+          'border-warning bg-warning text-white hover:bg-warning-hover hover:border-warning-hover',
         outline: 'border-line-2 bg-transparent text-ink hover:border-ink-4 hover:bg-canvas',
         ghost: 'border-transparent bg-transparent text-ink-2 hover:bg-canvas',
       },
@@ -38,8 +42,7 @@ const variantesBoton = cva(
 );
 
 export interface ButtonProps
-  extends ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof variantesBoton> {
+  extends ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof variantesBoton> {
   /** Renderiza el hijo directo en lugar de un `<button>` (por ejemplo, un enlace). */
   asChild?: boolean;
 }

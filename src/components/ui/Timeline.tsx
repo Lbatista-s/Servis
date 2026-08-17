@@ -45,7 +45,12 @@ export function TimelineItem({
         )}
       />
       <div className="min-w-0 flex-1">
-        <p className={cn('text-base font-semibold', estado === 'pendiente' ? 'text-ink-3' : 'text-ink')}>
+        <p
+          className={cn(
+            'text-base font-semibold',
+            estado === 'pendiente' ? 'text-ink-3' : 'text-ink',
+          )}
+        >
           {titulo}
         </p>
         {cuando ? (

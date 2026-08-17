@@ -1,11 +1,7 @@
 /** Implementación del repositorio de usuarios sobre `localStorage`. */
 
 import type { Usuario } from '@/domain/types';
-import type {
-  DatosNuevoUsuario,
-  FiltroUsuarios,
-  IUserRepository,
-} from '@/data/repositories/types';
+import type { DatosNuevoUsuario, FiltroUsuarios, IUserRepository } from '@/data/repositories/types';
 import { ErrorRepositorio } from '@/data/repositories/types';
 
 import { actualizarAlmacen, leerAlmacen, resolver } from './almacen';

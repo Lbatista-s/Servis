@@ -32,7 +32,9 @@ export function StatCard({
   className,
 }: StatCardProps) {
   return (
-    <div className={cn('flex flex-col gap-2 rounded-lg border border-line bg-surface p-5', className)}>
+    <div
+      className={cn('flex flex-col gap-2 rounded-lg border border-line bg-surface p-5', className)}
+    >
       {icono ? (
         <span
           className={cn('mb-1 flex h-9 w-9 items-center justify-center rounded', fondoIcono)}

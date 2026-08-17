@@ -23,10 +23,7 @@ import type {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type CodigoErrorRepositorio =
-  | 'NO_ENCONTRADO'
-  | 'REGLA_DE_NEGOCIO'
-  | 'CONFLICTO'
-  | 'NO_IMPLEMENTADO';
+  'NO_ENCONTRADO' | 'REGLA_DE_NEGOCIO' | 'CONFLICTO' | 'NO_IMPLEMENTADO';
 
 /**
  * Error uniforme de la capa de datos. La implementación HTTP traducirá los

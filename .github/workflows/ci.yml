@@ -1,0 +1,40 @@
+name: Integración continua
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main]
+
+jobs:
+  verificar:
+    name: Lint, tipos, pruebas y compilación
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Comprobar el formato
+        run: npm run format:check
+
+      - name: Analizar con ESLint
+        run: npm run lint
+
+      - name: Comprobar los tipos
+        run: npm run typecheck
+
+      - name: Ejecutar las pruebas
+        run: npm test
+
+      - name: Compilar para producción
+        run: npm run build

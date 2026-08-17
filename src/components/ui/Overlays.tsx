@@ -71,7 +71,10 @@ export const DropdownMenuLabel = forwardRef<
   return (
     <DropdownMenuPrimitive.Label
       ref={ref}
-      className={cn('px-3 py-1.5 text-2xs font-semibold uppercase tracking-wider text-ink-3', className)}
+      className={cn(
+        'px-3 py-1.5 text-2xs font-semibold uppercase tracking-wider text-ink-3',
+        className,
+      )}
       {...props}
     />
   );

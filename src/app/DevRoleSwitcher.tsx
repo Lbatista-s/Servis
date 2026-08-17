@@ -41,7 +41,11 @@ export function DevRoleSwitcher() {
       </span>
       <span aria-hidden="true" className="h-5 w-px bg-white/15" />
 
-      <div className="flex flex-wrap gap-1" role="group" aria-label="Cambiar de rol (sólo desarrollo)">
+      <div
+        className="flex flex-wrap gap-1"
+        role="group"
+        aria-label="Cambiar de rol (sólo desarrollo)"
+      >
         {ROLES.map((rol) => {
           const disponible = usuarioDe(rol);
           const activo = usuario?.rol === rol;

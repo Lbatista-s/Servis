@@ -116,7 +116,9 @@ export function CatalogoPage() {
                       <Icono nombre="documento" className="h-3 w-3" />
                       {servicio.requisitos.length} requisito
                       {servicio.requisitos.length === 1 ? '' : 's'}
-                      {obligatorios > 0 ? ` · ${obligatorios} obligatorio${obligatorios === 1 ? '' : 's'}` : ''}
+                      {obligatorios > 0
+                        ? ` · ${obligatorios} obligatorio${obligatorios === 1 ? '' : 's'}`
+                        : ''}
                     </span>
                     <Button tamano="sm" asChild>
                       <span>Solicitar</span>

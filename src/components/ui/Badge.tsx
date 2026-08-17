@@ -38,8 +38,7 @@ const PUNTO: Record<NonNullable<VariantProps<typeof variantesBadge>['tono']>, st
 };
 
 export interface BadgeProps
-  extends HTMLAttributes<HTMLSpanElement>,
-    VariantProps<typeof variantesBadge> {
+  extends HTMLAttributes<HTMLSpanElement>, VariantProps<typeof variantesBadge> {
   children: ReactNode;
   /** Oculta el punto de color que lleva el distintivo por defecto. */
   sinPunto?: boolean;
@@ -76,7 +75,13 @@ const ESTILO_ESTADO: Record<EstadoSolicitud, { contenedor: string; punto: string
   cancelada: { contenedor: 'bg-neutral-light text-neutral line-through', punto: 'bg-neutral' },
 };
 
-export function StatusBadge({ estado, className }: { estado: EstadoSolicitud; className?: string }) {
+export function StatusBadge({
+  estado,
+  className,
+}: {
+  estado: EstadoSolicitud;
+  className?: string;
+}) {
   const estilo = ESTILO_ESTADO[estado];
   return (
     <span

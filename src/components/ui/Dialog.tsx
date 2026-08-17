@@ -60,7 +60,9 @@ export function DialogHeader({
 }) {
   return (
     <div className={cn('mb-5 pr-9', className)}>
-      <DialogPrimitive.Title className="text-2xl font-bold text-ink">{titulo}</DialogPrimitive.Title>
+      <DialogPrimitive.Title className="text-2xl font-bold text-ink">
+        {titulo}
+      </DialogPrimitive.Title>
       {descripcion ? (
         <DialogPrimitive.Description className="mt-1 text-base text-ink-3">
           {descripcion}

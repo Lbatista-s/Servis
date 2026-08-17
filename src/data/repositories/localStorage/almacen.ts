@@ -57,8 +57,10 @@ export function leerAlmacen(): Almacen {
 
   // Si la migración avanzó de versión, se persiste el resultado para no
   // repetirla en cada arranque.
-  if (typeof (analizado as { version?: unknown }).version !== 'number' ||
-      (analizado as { version: number }).version !== migrado.version) {
+  if (
+    typeof (analizado as { version?: unknown }).version !== 'number' ||
+    (analizado as { version: number }).version !== migrado.version
+  ) {
     escribirAlmacen(migrado);
   }
 

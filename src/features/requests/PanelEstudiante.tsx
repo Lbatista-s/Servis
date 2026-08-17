@@ -33,7 +33,8 @@ export function PanelEstudiante() {
   const requierenCorreccion = lista.filter((s) => s.estado === 'devuelta').length;
   const aprobadas = lista.filter((s) => s.estado === 'aprobada').length;
   const completadas = lista.filter((s) => s.estado === 'completada').length;
-  const pendientesAtencion = requierenCorreccion + lista.filter((s) => s.estado === 'borrador').length;
+  const pendientesAtencion =
+    requierenCorreccion + lista.filter((s) => s.estado === 'borrador').length;
 
   const nombrePila = usuario.nombre.split(' ')[0] ?? usuario.nombre;
 
@@ -147,7 +148,11 @@ export function PanelEstudiante() {
             <p className="mb-3.5 mt-1.5 text-sm text-white/60">
               Consulta el catálogo de servicios disponibles o contacta al Área de Ingenierías.
             </p>
-            <Button variante="outline" className="border-white/30 text-white hover:bg-white/10" asChild>
+            <Button
+              variante="outline"
+              className="border-white/30 text-white hover:bg-white/10"
+              asChild
+            >
               <Link to={RUTAS.catalogo}>
                 <Icono nombre="cuadricula" />
                 Ver catálogo
@@ -197,7 +202,9 @@ function Notificaciones({ solicitudes }: { solicitudes: readonly Solicitud[] }) 
   const eventos = solicitudes
     .flatMap((solicitud) =>
       solicitud.historial
-        .filter((entrada) => ['devuelta', 'aprobada', 'completada', 'rechazada'].includes(entrada.estadoNuevo))
+        .filter((entrada) =>
+          ['devuelta', 'aprobada', 'completada', 'rechazada'].includes(entrada.estadoNuevo),
+        )
         .map((entrada) => ({ solicitud, entrada })),
     )
     .sort((a, b) => b.entrada.fecha.localeCompare(a.entrada.fecha))
@@ -208,14 +215,26 @@ function Notificaciones({ solicitudes }: { solicitudes: readonly Solicitud[] }) 
   }
 
   const ESTILO: Record<string, { fondo: string; borde: string; titulo: string }> = {
-    devuelta: { fondo: 'bg-primary-light', borde: 'border-l-primary', titulo: 'Solicitud devuelta' },
-    aprobada: { fondo: 'bg-success-light', borde: 'border-l-success', titulo: 'Solicitud aprobada' },
+    devuelta: {
+      fondo: 'bg-primary-light',
+      borde: 'border-l-primary',
+      titulo: 'Solicitud devuelta',
+    },
+    aprobada: {
+      fondo: 'bg-success-light',
+      borde: 'border-l-success',
+      titulo: 'Solicitud aprobada',
+    },
     completada: {
       fondo: 'bg-emerald-light',
       borde: 'border-l-emerald',
       titulo: 'Documento disponible',
     },
-    rechazada: { fondo: 'bg-danger-light', borde: 'border-l-danger', titulo: 'Solicitud rechazada' },
+    rechazada: {
+      fondo: 'bg-danger-light',
+      borde: 'border-l-danger',
+      titulo: 'Solicitud rechazada',
+    },
   };
 
   return (

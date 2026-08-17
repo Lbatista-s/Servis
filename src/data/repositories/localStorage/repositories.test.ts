@@ -67,7 +67,9 @@ describe('sembrado inicial', () => {
       expect(solicitud.historial.at(-1)?.estadoNuevo).toBe(solicitud.estado);
       // La cadena de estados no tiene saltos.
       for (let i = 1; i < solicitud.historial.length; i += 1) {
-        expect(solicitud.historial[i]?.estadoAnterior).toBe(solicitud.historial[i - 1]?.estadoNuevo);
+        expect(solicitud.historial[i]?.estadoAnterior).toBe(
+          solicitud.historial[i - 1]?.estadoNuevo,
+        );
       }
     }
   });
@@ -154,9 +156,9 @@ describe('repositorio de solicitudes', () => {
   });
 
   it('rechaza guardar sobre una solicitud inexistente', async () => {
-    await expect(solicitudes.guardar('SRV-9999', { comentarioInterno: 'x' }, RICARDO)).rejects.toThrow(
-      ErrorRepositorio,
-    );
+    await expect(
+      solicitudes.guardar('SRV-9999', { comentarioInterno: 'x' }, RICARDO),
+    ).rejects.toThrow(ErrorRepositorio);
   });
 
   it('propaga las reglas de dominio como ErrorRepositorio', async () => {
@@ -238,9 +240,9 @@ describe('repositorio de servicios', () => {
     });
     expect(sinRequisitos.activo).toBe(false);
 
-    await expect(
-      servicios.cambiarActivacion(sinRequisitos.id, true),
-    ).rejects.toMatchObject({ codigo: 'REGLA_DE_NEGOCIO' });
+    await expect(servicios.cambiarActivacion(sinRequisitos.id, true)).rejects.toMatchObject({
+      codigo: 'REGLA_DE_NEGOCIO',
+    });
   });
 
   it('permite activar un servicio que sí tiene requisitos', async () => {

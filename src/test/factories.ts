@@ -23,9 +23,7 @@ export function crearActor(parcial: Partial<Actor> = {}): Actor {
   };
 }
 
-export function crearEntradaHistorial(
-  parcial: Partial<EntradaHistorial> = {},
-): EntradaHistorial {
+export function crearEntradaHistorial(parcial: Partial<EntradaHistorial> = {}): EntradaHistorial {
   return {
     id: 'hist-1',
     solicitudId: 'SRV-1042',

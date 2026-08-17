@@ -6,14 +6,7 @@
  */
 
 import * as ToastPrimitive from '@radix-ui/react-toast';
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react';
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -106,7 +99,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                   </ToastPrimitive.Description>
                 ) : null}
               </div>
-              <ToastPrimitive.Close aria-label="Cerrar aviso" className="text-ink-4 hover:text-ink-2">
+              <ToastPrimitive.Close
+                aria-label="Cerrar aviso"
+                className="text-ink-4 hover:text-ink-2"
+              >
                 <Icono nombre="cerrar" className="h-3.5 w-3.5" />
               </ToastPrimitive.Close>
             </ToastPrimitive.Root>

@@ -68,7 +68,14 @@ describe('máquina de estados — grafo de transiciones', () => {
     expect(esEstadoFinal('completada')).toBe(true);
     expect(esEstadoFinal('cancelada')).toBe(true);
 
-    for (const estado of ['borrador', 'enviada', 'en_revision', 'devuelta', 'corregida', 'aprobada'] as const) {
+    for (const estado of [
+      'borrador',
+      'enviada',
+      'en_revision',
+      'devuelta',
+      'corregida',
+      'aprobada',
+    ] as const) {
       expect(esEstadoFinal(estado)).toBe(false);
     }
   });
@@ -113,11 +120,11 @@ describe('máquina de estados — autorización por rol', () => {
   });
 
   it('el coordinador sólo actúa sobre solicitudes en revisión', () => {
-    expect(accionesDisponibles('en_revision', 'coordinador').map((t) => t.hacia).sort()).toEqual([
-      'aprobada',
-      'devuelta',
-      'rechazada',
-    ]);
+    expect(
+      accionesDisponibles('en_revision', 'coordinador')
+        .map((t) => t.hacia)
+        .sort(),
+    ).toEqual(['aprobada', 'devuelta', 'rechazada']);
     expect(accionesDisponibles('enviada', 'coordinador')).toHaveLength(0);
     expect(accionesDisponibles('aprobada', 'coordinador')).toHaveLength(0);
   });

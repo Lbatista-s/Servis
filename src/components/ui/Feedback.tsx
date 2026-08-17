@@ -29,7 +29,11 @@ const ESTILO_NOTIFICACION: Record<
     nombreIcono: 'campana',
   },
   info: { contenedor: 'bg-info-light text-[#1E3A8A]', icono: 'text-info', nombreIcono: 'campana' },
-  error: { contenedor: 'bg-danger-light text-[#7F1D1D]', icono: 'text-danger', nombreIcono: 'cerrar' },
+  error: {
+    contenedor: 'bg-danger-light text-[#7F1D1D]',
+    icono: 'text-danger',
+    nombreIcono: 'cerrar',
+  },
 };
 
 export function InlineNotification({
@@ -46,7 +50,11 @@ export function InlineNotification({
     <div
       // Los errores se anuncian de inmediato; el resto, cuando el lector esté libre.
       role={tono === 'error' ? 'alert' : 'status'}
-      className={cn('flex items-start gap-2.5 rounded-md px-4 py-3.5 text-base', estilo.contenedor, className)}
+      className={cn(
+        'flex items-start gap-2.5 rounded-md px-4 py-3.5 text-base',
+        estilo.contenedor,
+        className,
+      )}
     >
       <Icono nombre={estilo.nombreIcono} className={cn('mt-px h-4 w-4', estilo.icono)} />
       <div className="min-w-0 flex-1">{children}</div>
@@ -134,7 +142,10 @@ export function Progress({
 /** Indicador de carga discreto, en español y accesible. */
 export function Loading({ mensaje = 'Cargando…' }: { mensaje?: string }) {
   return (
-    <div role="status" className="flex items-center justify-center gap-2 py-12 text-base text-ink-3">
+    <div
+      role="status"
+      className="flex items-center justify-center gap-2 py-12 text-base text-ink-3"
+    >
       <span
         aria-hidden="true"
         className="h-4 w-4 animate-spin rounded-full border-2 border-line-2 border-t-primary"

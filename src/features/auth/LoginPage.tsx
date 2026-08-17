@@ -135,9 +135,7 @@ export function LoginPage() {
               className="pl-[38px]"
             />
           </div>
-          <FieldHint>
-            Autenticación simulada: en esta fase la contraseña no se verifica.
-          </FieldHint>
+          <FieldHint>Autenticación simulada: en esta fase la contraseña no se verifica.</FieldHint>
         </Field>
 
         {/* Selector de cuenta de demostración: fija el rol activo. */}

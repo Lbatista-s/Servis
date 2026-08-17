@@ -25,7 +25,10 @@ export function Breadcrumb({ migas, className }: { migas: readonly Miga[]; class
                   {miga.etiqueta}
                 </Link>
               ) : (
-                <span className={cn(esUltima && 'font-medium text-ink')} aria-current={esUltima ? 'page' : undefined}>
+                <span
+                  className={cn(esUltima && 'font-medium text-ink')}
+                  aria-current={esUltima ? 'page' : undefined}
+                >
                   {miga.etiqueta}
                 </span>
               )}
