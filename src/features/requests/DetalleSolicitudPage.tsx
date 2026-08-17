@@ -22,7 +22,7 @@ import { useServicio, useSolicitud } from '@/hooks/useDatos';
 import { formatearFecha } from '@/lib/format';
 
 import { AccionesSolicitud } from './AccionesSolicitud';
-import { camposDe } from './formularios';
+import { camposDe, formatearValorCampo } from './formularios';
 import { HistorialTimeline } from './HistorialTimeline';
 
 export function DetalleSolicitudPage() {
@@ -70,7 +70,9 @@ export function DetalleSolicitudPage() {
 
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-ink">{servicio?.nombre ?? solicitud.servicioId}</h1>
+          <h1 className="text-3xl font-bold text-ink">
+            {servicio?.nombre ?? solicitud.servicioId}
+          </h1>
           <p className="mt-1 flex flex-wrap items-center gap-1.5 text-base text-ink-3">
             #{solicitud.id} · Creada el {formatearFecha(solicitud.creadaEn)}
             {usuario ? (
@@ -129,7 +131,7 @@ export function DetalleSolicitudPage() {
                     {campo.etiqueta}
                   </dt>
                   <dd className="mt-0.5 text-base text-ink">
-                    {solicitud.datosFormulario[campo.nombre]?.trim() || (
+                    {formatearValorCampo(campo, solicitud.datosFormulario[campo.nombre]) || (
                       <span className="text-ink-4">Sin completar</span>
                     )}
                   </dd>

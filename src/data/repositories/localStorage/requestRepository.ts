@@ -81,7 +81,7 @@ export class RepositorioSolicitudesLocal implements IRequestRepository {
             fecha: ahora,
             estadoAnterior: null,
             estadoNuevo: 'borrador' as EstadoSolicitud,
-            comentario: 'La solicitud fue guardada como borrador.',
+            comentario: null,
           }),
         ],
         comentarioInterno: '',

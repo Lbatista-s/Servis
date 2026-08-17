@@ -26,7 +26,7 @@ import { repositorios } from '@/data';
 import { esEstadoFinal } from '@/domain/requestStateMachine';
 import { useActor } from '@/features/auth/authStore';
 import { AccionesSolicitud } from '@/features/requests/AccionesSolicitud';
-import { camposDe } from '@/features/requests/formularios';
+import { camposDe, formatearValorCampo } from '@/features/requests/formularios';
 import { HistorialTimeline } from '@/features/requests/HistorialTimeline';
 import { mensajeDeError } from '@/hooks/useAsync';
 import { useRevalidar, useServicio, useSolicitud, useIndiceUsuarios } from '@/hooks/useDatos';
@@ -104,7 +104,7 @@ export function DetalleBandejaPage() {
                 <Dato
                   key={campo.nombre}
                   etiqueta={campo.etiqueta}
-                  valor={solicitud.datosFormulario[campo.nombre]}
+                  valor={formatearValorCampo(campo, solicitud.datosFormulario[campo.nombre])}
                 />
               ))}
             </dl>
@@ -134,7 +134,10 @@ export function DetalleBandejaPage() {
             )}
           </Card>
 
-          <ComentarioInterno solicitudId={solicitud.id} valorInicial={solicitud.comentarioInterno} />
+          <ComentarioInterno
+            solicitudId={solicitud.id}
+            valorInicial={solicitud.comentarioInterno}
+          />
 
           <Card>
             <SectionHeader titulo="Acción sobre la solicitud" />

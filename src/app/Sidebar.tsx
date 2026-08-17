@@ -2,11 +2,7 @@
 
 import { NavLink, useNavigate } from 'react-router-dom';
 
-import {
-  Avatar,
-  Icono,
-  Tooltip,
-} from '@/components/ui';
+import { Avatar, Icono, Tooltip } from '@/components/ui';
 import { useAuth, useUsuarioActual } from '@/features/auth/authStore';
 import { ConfiguracionDialog } from '@/features/settings/ConfiguracionDialog';
 import { useSolicitudes } from '@/hooks/useDatos';
@@ -22,7 +18,9 @@ export function Sidebar({ onNavegar }: { onNavegar?: () => void }) {
   const navegar = useNavigate();
 
   // Contadores de los distintivos de navegación.
-  const { datos: pendientes } = useSolicitudes({ estados: ['enviada', 'en_revision', 'corregida'] });
+  const { datos: pendientes } = useSolicitudes({
+    estados: ['enviada', 'en_revision', 'corregida'],
+  });
   const { datos: propias } = useSolicitudes(
     usuario?.rol === 'estudiante' ? { solicitanteId: usuario.id } : { solicitanteId: '—' },
   );
@@ -31,8 +29,10 @@ export function Sidebar({ onNavegar }: { onNavegar?: () => void }) {
 
   const contadores = {
     solicitudesPendientes: pendientes?.length ?? 0,
+    // Sólo lo que exige acción del estudiante, para que el distintivo coincida
+    // con el mensaje del panel.
     misSolicitudesActivas: (propias ?? []).filter(
-      (s) => s.estado === 'devuelta' || s.estado === 'en_revision',
+      (s) => s.estado === 'devuelta' || s.estado === 'borrador',
     ).length,
   };
 
@@ -48,7 +48,9 @@ export function Sidebar({ onNavegar }: { onNavegar?: () => void }) {
         </span>
         <span className="flex flex-col">
           <span className="text-lg font-bold leading-tight text-white">SERVIS</span>
-          <span className="text-2xs uppercase tracking-wider text-white/40">INTEC · Ingenierías</span>
+          <span className="text-2xs uppercase tracking-wider text-white/40">
+            INTEC · Ingenierías
+          </span>
         </span>
       </div>
 
@@ -82,7 +84,10 @@ export function Sidebar({ onNavegar }: { onNavegar?: () => void }) {
                         className="absolute -left-2 top-1/2 h-3/5 w-[3px] -translate-y-1/2 rounded-r-sm bg-primary"
                       />
                     ) : null}
-                    <Icono nombre={elemento.icono} className={cn(isActive ? 'opacity-100' : 'opacity-80')} />
+                    <Icono
+                      nombre={elemento.icono}
+                      className={cn(isActive ? 'opacity-100' : 'opacity-80')}
+                    />
                     <span className="flex-1">{elemento.etiqueta}</span>
                     {contador > 0 ? (
                       <span className="min-w-[18px] rounded-full bg-primary px-1.5 text-center text-2xs font-bold text-white">

@@ -41,6 +41,7 @@ import {
   agruparPorSeccion,
   camposDe,
   esquemaDe,
+  formatearValorCampo,
   valoresIniciales,
   type CampoFormulario,
 } from './formularios';
@@ -121,12 +122,12 @@ export function NuevaSolicitudPage() {
 
       if (enviar) {
         await repositorios.solicitudes.transicionar(creada.id, 'enviada', actor);
-        avisos.exito(
-          'Solicitud enviada',
-          `Tu solicitud ${creada.id} fue enviada para revisión.`,
-        );
+        avisos.exito('Solicitud enviada', `Tu solicitud ${creada.id} fue enviada para revisión.`);
       } else {
-        avisos.exito('Borrador guardado', `Tu solicitud ${creada.id} quedó guardada como borrador.`);
+        avisos.exito(
+          'Borrador guardado',
+          `Tu solicitud ${creada.id} quedó guardada como borrador.`,
+        );
       }
 
       revalidar();
@@ -177,7 +178,9 @@ export function NuevaSolicitudPage() {
                     {grupo.campos.map((campo) => (
                       <Field
                         key={campo.nombre}
-                        error={formulario.formState.errors[campo.nombre]?.message as string | undefined}
+                        error={
+                          formulario.formState.errors[campo.nombre]?.message as string | undefined
+                        }
                         className={cn(campo.anchoCompleto && 'sm:col-span-2')}
                       >
                         <FieldLabel requerido={campo.obligatorio}>{campo.etiqueta}</FieldLabel>
@@ -254,7 +257,7 @@ export function NuevaSolicitudPage() {
                         {campo.etiqueta}
                       </dt>
                       <dd className="mt-0.5 text-base text-ink">
-                        {valores[campo.nombre]?.trim() || (
+                        {formatearValorCampo(campo, valores[campo.nombre]) || (
                           <span className="text-ink-4">Sin completar</span>
                         )}
                       </dd>
@@ -286,7 +289,9 @@ export function NuevaSolicitudPage() {
                 </InlineNotification>
               ) : null}
 
-              {errorEnvio ? <InlineNotification tono="error">{errorEnvio}</InlineNotification> : null}
+              {errorEnvio ? (
+                <InlineNotification tono="error">{errorEnvio}</InlineNotification>
+              ) : null}
             </div>
           ) : null}
 

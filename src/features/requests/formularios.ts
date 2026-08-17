@@ -286,10 +286,11 @@ export function esquemaDe(campos: readonly CampoFormulario[]) {
 
     if (campo.tipo === 'correo') {
       // El correo sólo se valida si trae contenido: puede ser opcional.
-      regla = z.string().refine(
-        (valor) => valor.trim() === '' || z.string().email().safeParse(valor).success,
-        { message: 'El formato del correo no es válido.' },
-      );
+      regla = z
+        .string()
+        .refine((valor) => valor.trim() === '' || z.string().email().safeParse(valor).success, {
+          message: 'El formato del correo no es válido.',
+        });
     }
 
     if (campo.obligatorio) {
@@ -307,4 +308,24 @@ export function esquemaDe(campos: readonly CampoFormulario[]) {
 /** Valores iniciales vacíos para todos los campos del servicio. */
 export function valoresIniciales(campos: readonly CampoFormulario[]): Record<string, string> {
   return Object.fromEntries(campos.map((campo) => [campo.nombre, '']));
+}
+
+/**
+ * Presenta el valor de un campo tal como debe leerlo el usuario.
+ *
+ * Las fechas se guardan como `AAAA-MM-DD` (formato del control nativo) y se
+ * muestran como `DD/MM/AAAA`. Se formatean partiendo la cadena en lugar de
+ * construir un `Date`, porque interpretarlas como UTC desplazaría el día en la
+ * zona horaria de Santo Domingo.
+ */
+export function formatearValorCampo(campo: CampoFormulario, valor: string | undefined): string {
+  const texto = valor?.trim() ?? '';
+  if (texto === '') return '';
+
+  if (campo.tipo === 'fecha' && /^\d{4}-\d{2}-\d{2}$/.test(texto)) {
+    const [anio, mes, dia] = texto.split('-');
+    return `${dia}/${mes}/${anio}`;
+  }
+
+  return texto;
 }

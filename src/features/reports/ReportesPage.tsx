@@ -28,7 +28,8 @@ function diasDeResolucion(solicitud: Solicitud): number | null {
   );
   if (!resolucion || !solicitud.enviadaEn) return null;
 
-  const transcurrido = new Date(resolucion.fecha).getTime() - new Date(solicitud.enviadaEn).getTime();
+  const transcurrido =
+    new Date(resolucion.fecha).getTime() - new Date(solicitud.enviadaEn).getTime();
   return transcurrido / (1000 * 60 * 60 * 24);
 }
 
@@ -43,11 +44,10 @@ export function ReportesPage() {
   const total = lista.length;
 
   // Tasa de aprobación sobre las solicitudes ya resueltas.
-  const resueltas = lista.filter((s) =>
-    ['aprobada', 'rechazada', 'completada'].includes(s.estado),
-  );
+  const resueltas = lista.filter((s) => ['aprobada', 'rechazada', 'completada'].includes(s.estado));
   const favorables = resueltas.filter((s) => s.estado !== 'rechazada').length;
-  const tasaAprobacion = resueltas.length > 0 ? Math.round((favorables / resueltas.length) * 100) : 0;
+  const tasaAprobacion =
+    resueltas.length > 0 ? Math.round((favorables / resueltas.length) * 100) : 0;
 
   const tiempos = lista.map(diasDeResolucion).filter((d): d is number => d !== null);
   const tiempoPromedio =
@@ -181,7 +181,7 @@ export function ReportesPage() {
                     <span>
                       <span className="block font-medium">{usuario.nombre}</span>
                       <span className="block text-xs text-ink-3">
-                        {cantidad} intervención{cantidad === 1 ? '' : 'es'}
+                        {cantidad} {cantidad === 1 ? 'intervención' : 'intervenciones'}
                       </span>
                     </span>
                   </li>

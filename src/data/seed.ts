@@ -8,13 +8,7 @@
  */
 
 import { aplicarTransicion } from '@/domain/businessRules';
-import type {
-  Actor,
-  EstadoSolicitud,
-  Servicio,
-  Solicitud,
-  Usuario,
-} from '@/domain/types';
+import type { Actor, EstadoSolicitud, Servicio, Solicitud, Usuario } from '@/domain/types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Usuarios
@@ -184,8 +178,16 @@ export const SERVICIOS_DEMO: readonly Servicio[] = [
     diasEstimados: 5,
     requisitos: [
       { id: 'reingreso-r1', descripcion: 'Copia de la cédula de identidad', obligatorio: true },
-      { id: 'reingreso-r2', descripcion: 'Carta explicativa del período de baja', obligatorio: true },
-      { id: 'reingreso-r3', descripcion: 'Constancia de no deuda con Tesorería', obligatorio: false },
+      {
+        id: 'reingreso-r2',
+        descripcion: 'Carta explicativa del período de baja',
+        obligatorio: true,
+      },
+      {
+        id: 'reingreso-r3',
+        descripcion: 'Constancia de no deuda con Tesorería',
+        obligatorio: false,
+      },
     ],
   },
   {
@@ -201,7 +203,11 @@ export const SERVICIOS_DEMO: readonly Servicio[] = [
     requisitos: [
       { id: 'grado-r1', descripcion: 'Récord de notas completo', obligatorio: true },
       { id: 'grado-r2', descripcion: 'Acta de nacimiento legalizada', obligatorio: true },
-      { id: 'grado-r3', descripcion: 'Comprobante de pago de derechos de grado', obligatorio: true },
+      {
+        id: 'grado-r3',
+        descripcion: 'Comprobante de pago de derechos de grado',
+        obligatorio: true,
+      },
       { id: 'grado-r4', descripcion: 'Fotografía tamaño 2x2 de fondo blanco', obligatorio: false },
     ],
   },
@@ -232,7 +238,11 @@ export const SERVICIOS_DEMO: readonly Servicio[] = [
     requisitos: [
       { id: 'reembolso-r1', descripcion: 'Comprobante del pago realizado', obligatorio: true },
       { id: 'reembolso-r2', descripcion: 'Justificación escrita del reembolso', obligatorio: true },
-      { id: 'reembolso-r3', descripcion: 'Certificación bancaria de la cuenta', obligatorio: false },
+      {
+        id: 'reembolso-r3',
+        descripcion: 'Certificación bancaria de la cuenta',
+        obligatorio: false,
+      },
     ],
   },
   {
@@ -260,8 +270,16 @@ export const SERVICIOS_DEMO: readonly Servicio[] = [
     activo: true,
     diasEstimados: 6,
     requisitos: [
-      { id: 'descuento-r1', descripcion: 'Acta de nacimiento que acredite el vínculo', obligatorio: true },
-      { id: 'descuento-r2', descripcion: 'Constancia de inscripción de ambos familiares', obligatorio: true },
+      {
+        id: 'descuento-r1',
+        descripcion: 'Acta de nacimiento que acredite el vínculo',
+        obligatorio: true,
+      },
+      {
+        id: 'descuento-r2',
+        descripcion: 'Constancia de inscripción de ambos familiares',
+        obligatorio: true,
+      },
     ],
   },
   {
@@ -305,7 +323,11 @@ export const SERVICIOS_DEMO: readonly Servicio[] = [
     diasEstimados: 5,
     requisitos: [
       { id: 'resultados-r1', descripcion: 'Copia de la evaluación cuestionada', obligatorio: true },
-      { id: 'resultados-r2', descripcion: 'Argumentación escrita de la revisión', obligatorio: true },
+      {
+        id: 'resultados-r2',
+        descripcion: 'Argumentación escrita de la revisión',
+        obligatorio: true,
+      },
     ],
   },
 ];
@@ -478,7 +500,9 @@ export function construirSolicitudesDemo(): Solicitud[] {
   return PLANTILLAS.map((plantilla, indice) => {
     const usuario = USUARIOS_DEMO.find((u) => u.id === plantilla.solicitanteId);
     if (!usuario) {
-      throw new Error(`Solicitante desconocido en los datos de demostración: ${plantilla.solicitanteId}`);
+      throw new Error(
+        `Solicitante desconocido en los datos de demostración: ${plantilla.solicitanteId}`,
+      );
     }
     const solicitante: Actor = { id: usuario.id, nombre: usuario.nombre, rol: usuario.rol };
 
@@ -501,14 +525,15 @@ export function construirSolicitudesDemo(): Solicitud[] {
           fecha: plantilla.creadaEn,
           estadoAnterior: null,
           estadoNuevo: 'borrador' as EstadoSolicitud,
-          comentario: 'La solicitud fue guardada como borrador.',
+          comentario: null,
         }),
       ],
       comentarioInterno: plantilla.comentarioInterno ?? '',
       asignadaA: null,
-      prioridad: plantilla.estadoFinal === 'devuelta' || plantilla.estadoFinal === 'en_revision'
-        ? 'alta'
-        : 'normal',
+      prioridad:
+        plantilla.estadoFinal === 'devuelta' || plantilla.estadoFinal === 'en_revision'
+          ? 'alta'
+          : 'normal',
     };
 
     let paso = 0;
