@@ -42,6 +42,12 @@ module.exports = {
       rules: { 'no-restricted-globals': 'off' },
     },
     {
+      // La biblioteca de componentes exporta también variantes y hooks junto a
+      // los componentes; Fast Refresh no aplica a estos módulos.
+      files: ['src/components/ui/**/*.tsx'],
+      rules: { 'react-refresh/only-export-components': 'off' },
+    },
+    {
       files: ['**/*.test.ts', '**/*.test.tsx'],
       env: { node: true },
       rules: { '@typescript-eslint/no-explicit-any': 'off' },

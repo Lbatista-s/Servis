@@ -26,7 +26,7 @@ interface ContextoCampo {
 
 const CampoContexto = createContext<ContextoCampo | null>(null);
 
-function usarCampo(): ContextoCampo | null {
+function useCampo(): ContextoCampo | null {
   return useContext(CampoContexto);
 }
 
@@ -69,7 +69,7 @@ export interface FieldLabelProps {
 }
 
 export function FieldLabel({ children, requerido, className, htmlFor }: FieldLabelProps) {
-  const campo = usarCampo();
+  const campo = useCampo();
   return (
     <LabelPrimitive.Root
       htmlFor={htmlFor ?? campo?.idControl}
@@ -90,7 +90,7 @@ export function FieldLabel({ children, requerido, className, htmlFor }: FieldLab
 }
 
 export function FieldHint({ children, className }: { children: ReactNode; className?: string }) {
-  const campo = usarCampo();
+  const campo = useCampo();
   return (
     <p id={campo?.idAyuda} className={cn('text-xs text-ink-3', className)}>
       {children}
@@ -116,7 +116,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   { className, id, ...props },
   ref,
 ) {
-  const campo = usarCampo();
+  const campo = useCampo();
   return (
     <input
       ref={ref}
@@ -135,7 +135,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
   { className, id, ...props },
   ref,
 ) {
-  const campo = usarCampo();
+  const campo = useCampo();
   return (
     <textarea
       ref={ref}
