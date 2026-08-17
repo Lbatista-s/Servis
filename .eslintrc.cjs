@@ -32,7 +32,10 @@ module.exports = {
     // `src/data/repositories/localStorage/` tiene permiso (ver overrides).
     'no-restricted-globals': [
       'error',
-      { name: 'localStorage', message: 'Usa la capa de repositorios (src/data), no localStorage directo.' },
+      {
+        name: 'localStorage',
+        message: 'Usa la capa de repositorios (src/data), no localStorage directo.',
+      },
     ],
   },
   overrides: [
@@ -48,9 +51,13 @@ module.exports = {
       rules: { 'react-refresh/only-export-components': 'off' },
     },
     {
+      // Las pruebas sí necesitan limpiar el almacenamiento entre casos.
       files: ['**/*.test.ts', '**/*.test.tsx'],
       env: { node: true },
-      rules: { '@typescript-eslint/no-explicit-any': 'off' },
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'off',
+        'no-restricted-globals': 'off',
+      },
     },
   ],
 };
