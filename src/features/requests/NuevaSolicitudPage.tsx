@@ -16,17 +16,13 @@ import {
   Breadcrumb,
   Button,
   Card,
-  Field,
-  FieldLabel,
   FileChip,
   Icono,
   InlineNotification,
-  Input,
   Loading,
   NoteBlock,
   SectionHeader,
   Steps,
-  Textarea,
   UploadZone,
   useToast,
 } from '@/components/ui';
@@ -37,24 +33,10 @@ import { mensajeDeError } from '@/hooks/useAsync';
 import { useRevalidar, useServicio } from '@/hooks/useDatos';
 import { cn } from '@/lib/utils';
 
-import {
-  agruparPorSeccion,
-  camposDe,
-  esquemaDe,
-  formatearValorCampo,
-  valoresIniciales,
-  type CampoFormulario,
-} from './formularios';
+import { CamposFormulario } from './CamposFormulario';
+import { camposDe, esquemaDe, formatearValorCampo, valoresIniciales } from './formularios';
 
 const PASOS = ['Datos del servicio', 'Documentos', 'Revisión y envío'] as const;
-
-const TIPO_HTML: Record<CampoFormulario['tipo'], string> = {
-  texto: 'text',
-  fecha: 'date',
-  correo: 'email',
-  telefono: 'tel',
-  area: 'text',
-};
 
 export function NuevaSolicitudPage() {
   const { servicioId } = useParams<{ servicioId: string }>();
@@ -169,40 +151,7 @@ export function NuevaSolicitudPage() {
           <Steps pasos={PASOS} actual={paso} className="mb-7" />
 
           {/* ── Paso 1: datos del servicio ── */}
-          {paso === 0 ? (
-            <div className="flex flex-col gap-4">
-              {agruparPorSeccion(campos).map((grupo) => (
-                <Card key={grupo.seccion}>
-                  <SectionHeader titulo={grupo.seccion} />
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    {grupo.campos.map((campo) => (
-                      <Field
-                        key={campo.nombre}
-                        error={
-                          formulario.formState.errors[campo.nombre]?.message as string | undefined
-                        }
-                        className={cn(campo.anchoCompleto && 'sm:col-span-2')}
-                      >
-                        <FieldLabel requerido={campo.obligatorio}>{campo.etiqueta}</FieldLabel>
-                        {campo.tipo === 'area' ? (
-                          <Textarea
-                            placeholder={campo.placeholder}
-                            {...formulario.register(campo.nombre)}
-                          />
-                        ) : (
-                          <Input
-                            type={TIPO_HTML[campo.tipo]}
-                            placeholder={campo.placeholder}
-                            {...formulario.register(campo.nombre)}
-                          />
-                        )}
-                      </Field>
-                    ))}
-                  </div>
-                </Card>
-              ))}
-            </div>
-          ) : null}
+          {paso === 0 ? <CamposFormulario campos={campos} formulario={formulario} /> : null}
 
           {/* ── Paso 2: documentos ── */}
           {paso === 1 ? (

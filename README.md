@@ -143,6 +143,10 @@ estados para verificarlo.
   autor, fecha, estado anterior, estado nuevo y comentario.
 - Una solicitud `completada` no puede modificarse (igual que `rechazada` y `cancelada`).
 - Sólo el estudiante propietario puede ejecutar las acciones de estudiante sobre su solicitud.
+- El estudiante puede modificar los datos y los documentos de su solicitud **sólo** mientras está
+  en `borrador` o `devuelta`: mientras el expediente está en manos del personal administrativo
+  (`enviada`, `en_revision`, `corregida`) los datos quedan congelados, para que cambiarlos no
+  invalide el trabajo del revisor.
 
 Toda esta lógica es pura y vive en `src/domain/`: no importa React, no toca el almacenamiento y se
 prueba sin renderizar nada.

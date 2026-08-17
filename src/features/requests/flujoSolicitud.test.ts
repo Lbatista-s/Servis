@@ -169,6 +169,79 @@ describe('flujo crítico: devolución y corrección', () => {
   });
 });
 
+describe('flujo crítico: el estudiante corrige datos y documentos tras una devolución', () => {
+  it('permite modificar campos y adjuntos, y el revisor ve la versión corregida', async () => {
+    const borrador = await crearBorrador();
+    await repos.solicitudes.transicionar(borrador.id, 'enviada', ESTUDIANTE);
+    await repos.solicitudes.transicionar(borrador.id, 'en_revision', PERSONAL);
+    await repos.solicitudes.transicionar(borrador.id, 'devuelta', PERSONAL, {
+      comentario: 'La carta no está en papel membretado; adjunta la versión correcta.',
+    });
+
+    // El estudiante corrige el formulario y sustituye el documento.
+    const corregidaEnDatos = await repos.solicitudes.guardar(
+      borrador.id,
+      {
+        datosFormulario: {
+          empresa: 'TechCorp Solutions S.R.L.',
+          cargo: 'Pasante de ingeniería de datos',
+        },
+        adjuntos: [
+          {
+            id: 'adj-corregido',
+            nombre: 'carta_aceptacion_membretada.pdf',
+            tamano: 412_000,
+            tipo: 'application/pdf',
+            subidoEn: new Date().toISOString(),
+          },
+        ],
+      },
+      ESTUDIANTE,
+    );
+
+    expect(corregidaEnDatos.datosFormulario.cargo).toBe('Pasante de ingeniería de datos');
+    expect(corregidaEnDatos.adjuntos).toHaveLength(1);
+    expect(corregidaEnDatos.adjuntos[0]?.nombre).toBe('carta_aceptacion_membretada.pdf');
+    // Editar el contenido no altera el estado ni añade entradas al historial.
+    expect(corregidaEnDatos.estado).toBe('devuelta');
+    expect(corregidaEnDatos.historial).toHaveLength(4);
+
+    // Y sólo entonces envía la corrección.
+    const corregida = await repos.solicitudes.transicionar(borrador.id, 'corregida', ESTUDIANTE);
+    expect(corregida.estado).toBe('corregida');
+
+    // Lo que el revisor recupera es ya la versión corregida.
+    const vistaDelRevisor = await repos.solicitudes.obtener(borrador.id);
+    expect(vistaDelRevisor?.datosFormulario.cargo).toBe('Pasante de ingeniería de datos');
+    expect(vistaDelRevisor?.adjuntos[0]?.nombre).toBe('carta_aceptacion_membretada.pdf');
+  });
+
+  it('impide al estudiante editar mientras la solicitud está en revisión', async () => {
+    const borrador = await crearBorrador();
+    await repos.solicitudes.transicionar(borrador.id, 'enviada', ESTUDIANTE);
+    await repos.solicitudes.transicionar(borrador.id, 'en_revision', PERSONAL);
+
+    await expect(
+      repos.solicitudes.guardar(borrador.id, { datosFormulario: { cargo: 'Otro' } }, ESTUDIANTE),
+    ).rejects.toMatchObject({ codigo: 'REGLA_DE_NEGOCIO' });
+
+    // Los datos originales siguen intactos para el revisor.
+    const sinCambios = await repos.solicitudes.obtener(borrador.id);
+    expect(sinCambios?.datosFormulario.cargo).toBe('Pasante de desarrollo');
+  });
+
+  it('permite al estudiante seguir editando su borrador antes de enviarlo', async () => {
+    const borrador = await crearBorrador();
+    const editado = await repos.solicitudes.guardar(
+      borrador.id,
+      { datosFormulario: { empresa: 'Otra Empresa S.R.L.', cargo: 'Pasante' } },
+      ESTUDIANTE,
+    );
+    expect(editado.datosFormulario.empresa).toBe('Otra Empresa S.R.L.');
+    expect(editado.estado).toBe('borrador');
+  });
+});
+
 describe('flujo crítico: rechazo con justificación', () => {
   it('exige 30 caracteres y registra el motivo en el historial', async () => {
     const borrador = await crearBorrador();

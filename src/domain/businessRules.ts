@@ -27,6 +27,7 @@ export type CodigoError =
   | 'COMENTARIO_REQUERIDO'
   | 'COMENTARIO_MUY_CORTO'
   | 'SOLICITUD_INMUTABLE'
+  | 'EDICION_NO_PERMITIDA'
   | 'APROBACION_SIN_REVISION'
   | 'SERVICIO_SIN_REQUISITOS'
   | 'ADJUNTOS_FALTANTES';
@@ -49,6 +50,15 @@ const fallo = <T>(codigo: CodigoError, mensaje: string): Resultado<T> => ({
 // ─────────────────────────────────────────────────────────────────────────────
 // Invariantes sobre solicitudes
 // ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Estados en los que el estudiante puede modificar el contenido de su
+ * solicitud: mientras la prepara, y cuando se la devuelven para corregirla.
+ */
+export const ESTADOS_EDITABLES_POR_ESTUDIANTE: readonly EstadoSolicitud[] = [
+  'borrador',
+  'devuelta',
+];
 
 /**
  * Una solicitud en estado final ya no admite modificaciones. En particular,
@@ -224,13 +234,36 @@ export function validarEdicion(solicitud: Solicitud, actor: Actor): Resultado<So
       `La solicitud está ${ETIQUETA_ESTADO[solicitud.estado].toLowerCase()} y ya no admite cambios.`,
     );
   }
-  if (actor.rol === 'estudiante' && !esPropietario(solicitud, actor)) {
-    return fallo(
-      'NO_ES_PROPIETARIO',
-      'Sólo el estudiante que creó la solicitud puede modificarla.',
-    );
+
+  if (actor.rol === 'estudiante') {
+    if (!esPropietario(solicitud, actor)) {
+      return fallo(
+        'NO_ES_PROPIETARIO',
+        'Sólo el estudiante que creó la solicitud puede modificarla.',
+      );
+    }
+    // El estudiante corrige antes de enviar o después de que se lo pidan, nunca
+    // mientras el expediente está en manos del personal administrativo: cambiar
+    // los datos bajo revisión invalidaría el trabajo del revisor.
+    if (!ESTADOS_EDITABLES_POR_ESTUDIANTE.includes(solicitud.estado)) {
+      return fallo(
+        'EDICION_NO_PERMITIDA',
+        `No puedes modificar la solicitud mientras está ${ETIQUETA_ESTADO[
+          solicitud.estado
+        ].toLowerCase()}.`,
+      );
+    }
   }
+
   return exito(solicitud);
+}
+
+/**
+ * Versión booleana de `validarEdicion` para decidir si la interfaz muestra el
+ * formulario de edición al estudiante.
+ */
+export function puedeEditarEstudiante(solicitud: Solicitud, actor: Actor): boolean {
+  return validarEdicion(solicitud, actor).ok && actor.rol === 'estudiante';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

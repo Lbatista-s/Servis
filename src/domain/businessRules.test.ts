@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   accionesPara,
   aplicarTransicion,
+  puedeEditarEstudiante,
   haPasadoPorRevision,
   puedeModificarse,
   validarActivacionServicio,
@@ -142,6 +143,46 @@ describe('regla: sólo el propietario ejecuta acciones de estudiante', () => {
     const otro = crearActor({ id: 'usr-adan', rol: 'estudiante' });
     expect(accionesPara(crearSolicitud(), otro)).toHaveLength(0);
     expect(accionesPara(crearSolicitud(), ESTUDIANTE)).toHaveLength(2);
+  });
+});
+
+describe('regla: el estudiante sólo edita antes de enviar o tras una devolución', () => {
+  it('permite editar en borrador y en devuelta', () => {
+    for (const estado of ['borrador', 'devuelta'] as const) {
+      const solicitud = crearSolicitud({ estado });
+      expect(validarEdicion(solicitud, ESTUDIANTE).ok).toBe(true);
+      expect(puedeEditarEstudiante(solicitud, ESTUDIANTE)).toBe(true);
+    }
+  });
+
+  it('impide editar mientras la solicitud está en manos del personal', () => {
+    for (const estado of ['enviada', 'en_revision', 'corregida', 'aprobada'] as const) {
+      const solicitud = crearSolicitud({ estado });
+      const resultado = validarEdicion(solicitud, ESTUDIANTE);
+      expect(resultado.ok, `estado ${estado}`).toBe(false);
+      if (!resultado.ok) expect(resultado.error.codigo).toBe('EDICION_NO_PERMITIDA');
+      expect(puedeEditarEstudiante(solicitud, ESTUDIANTE)).toBe(false);
+    }
+  });
+
+  it('sigue impidiendo editar una solicitud en estado final', () => {
+    const resultado = validarEdicion(crearSolicitud({ estado: 'completada' }), ESTUDIANTE);
+    expect(resultado.ok).toBe(false);
+    // La inmutabilidad tiene prioridad sobre la restricción de estado editable.
+    if (!resultado.ok) expect(resultado.error.codigo).toBe('SOLICITUD_INMUTABLE');
+  });
+
+  it('no restringe al personal administrativo, que anota comentarios internos', () => {
+    expect(validarEdicion(crearSolicitudEnRevision(), PERSONAL).ok).toBe(true);
+    // Pero `puedeEditarEstudiante` es específico del estudiante.
+    expect(puedeEditarEstudiante(crearSolicitudEnRevision(), PERSONAL)).toBe(false);
+  });
+
+  it('impide a un estudiante ajeno editar una solicitud devuelta', () => {
+    const otro = crearActor({ id: 'usr-adan', rol: 'estudiante' });
+    const resultado = validarEdicion(crearSolicitud({ estado: 'devuelta' }), otro);
+    expect(resultado.ok).toBe(false);
+    if (!resultado.ok) expect(resultado.error.codigo).toBe('NO_ES_PROPIETARIO');
   });
 });
 

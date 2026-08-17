@@ -16,12 +16,14 @@ import {
   SectionHeader,
   StatusBadge,
 } from '@/components/ui';
+import { puedeEditarEstudiante } from '@/domain/businessRules';
 import { esEstadoFinal } from '@/domain/requestStateMachine';
 import { useActor, useUsuarioActual } from '@/features/auth/authStore';
 import { useServicio, useSolicitud } from '@/hooks/useDatos';
 import { formatearFecha } from '@/lib/format';
 
 import { AccionesSolicitud } from './AccionesSolicitud';
+import { EdicionSolicitud } from './EdicionSolicitud';
 import { camposDe, formatearValorCampo } from './formularios';
 import { HistorialTimeline } from './HistorialTimeline';
 
@@ -54,6 +56,8 @@ export function DetalleSolicitudPage() {
   }
 
   const campos = camposDe(solicitud.servicioId);
+  // El dominio decide si esta solicitud es editable ahora mismo por este actor.
+  const editable = actor !== null && puedeEditarEstudiante(solicitud, actor);
   const ultimoComentario = [...solicitud.historial]
     .reverse()
     .find((entrada) => entrada.comentario && entrada.estadoNuevo === solicitud.estado);
@@ -122,23 +126,29 @@ export function DetalleSolicitudPage() {
             <HistorialTimeline solicitud={solicitud} />
           </Card>
 
-          <Card>
-            <SectionHeader titulo="Datos enviados" />
-            <dl className="grid gap-3 sm:grid-cols-2">
-              {campos.map((campo) => (
-                <div key={campo.nombre}>
-                  <dt className="text-xs font-semibold uppercase tracking-wide text-ink-3">
-                    {campo.etiqueta}
-                  </dt>
-                  <dd className="mt-0.5 text-base text-ink">
-                    {formatearValorCampo(campo, solicitud.datosFormulario[campo.nombre]) || (
-                      <span className="text-ink-4">Sin completar</span>
-                    )}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </Card>
+          {/* Mientras el estudiante puede corregir, los datos son editables; el
+              resto del tiempo se muestran como registro de lo enviado. */}
+          {editable && actor ? (
+            <EdicionSolicitud solicitud={solicitud} servicio={servicio} actor={actor} />
+          ) : (
+            <Card>
+              <SectionHeader titulo="Datos enviados" />
+              <dl className="grid gap-3 sm:grid-cols-2">
+                {campos.map((campo) => (
+                  <div key={campo.nombre}>
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-ink-3">
+                      {campo.etiqueta}
+                    </dt>
+                    <dd className="mt-0.5 text-base text-ink">
+                      {formatearValorCampo(campo, solicitud.datosFormulario[campo.nombre]) || (
+                        <span className="text-ink-4">Sin completar</span>
+                      )}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </Card>
+          )}
 
           {actor && !esEstadoFinal(solicitud.estado) ? (
             <Card>
@@ -149,24 +159,28 @@ export function DetalleSolicitudPage() {
         </div>
 
         <aside className="flex flex-col gap-3.5">
-          <Card>
-            <SectionHeader titulo={`Documentos adjuntos (${solicitud.adjuntos.length})`} />
-            {solicitud.adjuntos.length === 0 ? (
-              <p className="text-base text-ink-3">No hay documentos adjuntos.</p>
-            ) : (
-              <ul className="flex flex-col gap-2">
-                {solicitud.adjuntos.map((adjunto) => (
-                  <li key={adjunto.id}>
-                    <FileChip adjunto={adjunto}>
-                      <Button variante="ghost" tamano="icon" aria-label={`Ver ${adjunto.nombre}`}>
-                        <Icono nombre="ojo" />
-                      </Button>
-                    </FileChip>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
+          {/* En modo edición los adjuntos se gestionan dentro del formulario,
+              así que aquí se omiten para no mostrarlos dos veces. */}
+          {editable ? null : (
+            <Card>
+              <SectionHeader titulo={`Documentos adjuntos (${solicitud.adjuntos.length})`} />
+              {solicitud.adjuntos.length === 0 ? (
+                <p className="text-base text-ink-3">No hay documentos adjuntos.</p>
+              ) : (
+                <ul className="flex flex-col gap-2">
+                  {solicitud.adjuntos.map((adjunto) => (
+                    <li key={adjunto.id}>
+                      <FileChip adjunto={adjunto}>
+                        <Button variante="ghost" tamano="icon" aria-label={`Ver ${adjunto.nombre}`}>
+                          <Icono nombre="ojo" />
+                        </Button>
+                      </FileChip>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          )}
 
           <Card className={solicitud.estado === 'completada' ? undefined : 'opacity-60'}>
             <SectionHeader titulo="Documento generado" />
