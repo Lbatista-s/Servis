@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "description": "SERVIS — Sistema de Emisión y Registro Virtual de Servicios Institucionales (INTEC, Área de Ingenierías)",
   "scripts": {
     "dev": "vite",

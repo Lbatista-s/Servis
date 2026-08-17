@@ -220,6 +220,33 @@ estado inicial. Conviene usarlo antes de una presentación para partir de datos 
 
 ---
 
+## Despliegue en Vercel
+
+El proyecto es una aplicación de una sola página completamente estática, así que no necesita
+servidor propio. `vercel.json` deja la configuración lista:
+
+1. En [vercel.com](https://vercel.com) → **Add New… → Project** e importar `Lbatista-s/Servis`.
+2. Seleccionar la rama que se quiere desplegar.
+3. **Deploy.** No hay que tocar los ajustes de compilación ni añadir variables de entorno: la
+   fuente de datos por defecto ya es `local`.
+
+La clave está en las **reescrituras** declaradas en `vercel.json`: sin ellas, recargar `/bandeja` o
+abrir un enlace directo a `/solicitudes/SRV-1042` devolvería 404, porque Vercel buscaría un archivo
+en esa ruta en lugar de dejar que React Router resuelva la navegación.
+
+Cada `push` genera un despliegue de vista previa con su propia URL, útil para compartir una rama en
+revisión sin tocar la principal.
+
+> **Sobre el selector rápido de rol:** sólo se monta en modo desarrollo, por lo que **no aparece en
+> el despliegue de Vercel**. Para cambiar de rol en la demostración se usa el desplegable
+> «Acceder como» de la pantalla de acceso, cerrando sesión antes desde la barra lateral.
+
+> **Sobre los datos:** al vivir en `localStorage`, cada visitante tiene su propia copia sembrada en
+> su navegador. Los cambios de una persona no se ven en el dispositivo de otra. Es suficiente para
+> la demostración y desaparecerá al conectar el backend real.
+
+---
+
 ## Pruebas
 
 ```bash
