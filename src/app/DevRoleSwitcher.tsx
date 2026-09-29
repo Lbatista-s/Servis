@@ -35,7 +35,7 @@ export function DevRoleSwitcher() {
   }
 
   return (
-    <div className="flex h-11 shrink-0 items-center gap-3 border-b-2 border-primary bg-ink px-4">
+    <div className="flex h-11 shrink-0 items-center gap-3 border-b-2 border-primary bg-black px-4">
       <span className="text-sm font-bold uppercase tracking-widest text-white/90">
         ▸ Servis · desarrollo
       </span>
@@ -56,6 +56,8 @@ export function DevRoleSwitcher() {
               shape="round"
               type={activo ? 'primary' : 'default'}
               ghost={!activo}
+              // Sobre la franja negra: texto blanco también en el tema oscuro.
+              className={activo ? undefined : '!border-white/40 !text-white'}
               disabled={!disponible}
               onClick={() => cambiarA(rol)}
               aria-pressed={activo}

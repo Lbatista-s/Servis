@@ -32,8 +32,10 @@ export { DateInput, Field, FieldHint, FieldLabel, Input, Textarea } from './Fiel
 export { FileChip, UploadZone } from './Files';
 export { CampoBusqueda, SelectorFiltro } from './Filtros';
 export { Icono, type NombreIcono } from './Icons';
+export { Logotipo, SimboloServis, type LogotipoProps } from './Logotipo';
 export { Tooltip } from './Overlays';
 export { ProveedorUI } from './Proveedor';
+export { SelectorTema } from './SelectorTema';
 export { StatCard } from './StatCard';
 export { Steps } from './Steps';
 export { Timeline, type EstadoPunto, type HitoTimeline } from './Timeline';

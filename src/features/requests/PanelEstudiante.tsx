@@ -142,7 +142,7 @@ export function PanelEstudiante() {
 
           <Card fondo="institucional">
             <p className="text-md font-semibold text-white">¿Necesitas ayuda?</p>
-            <p className="mb-3.5 mt-1.5 text-sm text-white/80">
+            <p className="mb-3.5 mt-1.5 text-sm text-white/90">
               Consulta el catálogo de servicios disponibles o contacta al Área de Ingenierías.
             </p>
             <ButtonLink to={RUTAS.catalogo} variante="outline">

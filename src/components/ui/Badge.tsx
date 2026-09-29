@@ -4,20 +4,20 @@ import { Tag } from 'antd';
 import type { CSSProperties, ReactNode } from 'react';
 
 import { ETIQUETA_ESTADO, ETIQUETA_ROL, type EstadoSolicitud, type Rol } from '@/domain/types';
-import { COLORES } from '@/theme/tokens';
+import { cv } from '@/theme/css';
 
 export type TonoBadge = 'gray' | 'blue' | 'amber' | 'orange' | 'green' | 'red' | 'emerald' | 'sky';
 
 /** Fondo, texto y punto de cada tono. Todos los pares superan 4,5:1. */
 const TONO: Record<TonoBadge, { fondo: string; texto: string }> = {
-  gray: { fondo: COLORES.neutral.light, texto: COLORES.neutral.DEFAULT },
-  blue: { fondo: COLORES.info.light, texto: COLORES.info.DEFAULT },
-  amber: { fondo: COLORES.warning.light, texto: COLORES.warning.DEFAULT },
-  orange: { fondo: COLORES.warning.soft, texto: COLORES.warning.DEFAULT },
-  green: { fondo: COLORES.success.light, texto: COLORES.success.DEFAULT },
-  red: { fondo: COLORES.danger.light, texto: COLORES.danger.DEFAULT },
-  emerald: { fondo: COLORES.emerald.light, texto: COLORES.emerald.DEFAULT },
-  sky: { fondo: COLORES.sky.light, texto: COLORES.sky.DEFAULT },
+  gray: { fondo: cv('neutral.light'), texto: cv('neutral') },
+  blue: { fondo: cv('info.light'), texto: cv('info') },
+  amber: { fondo: cv('warning.light'), texto: cv('warning') },
+  orange: { fondo: cv('warning.soft'), texto: cv('warning') },
+  green: { fondo: cv('success.light'), texto: cv('success') },
+  red: { fondo: cv('danger.light'), texto: cv('danger') },
+  emerald: { fondo: cv('emerald.light'), texto: cv('emerald') },
+  sky: { fondo: cv('sky.light'), texto: cv('sky') },
 };
 
 /**
@@ -87,7 +87,7 @@ const TONO_ESTADO: Record<EstadoSolicitud, TonoBadge> = {
 
 /** Detalles propios de algunos estados, calcados del prototipo. */
 const EXTRA_ESTADO: Partial<Record<EstadoSolicitud, CSSProperties>> = {
-  borrador: { border: `1px dashed ${COLORES.neutral.dashed}` },
+  borrador: { border: `1px dashed ${cv('neutral.dashed')}` },
   cancelada: { textDecoration: 'line-through' },
 };
 

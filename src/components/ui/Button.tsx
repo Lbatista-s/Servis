@@ -39,17 +39,20 @@ function propsDeVariante(variante: VarianteBoton): Pick<AntButtonProps, 'type' |
       return { type: 'default' };
     case 'ghost':
       return { type: 'text' };
-    case 'danger':
-      return { type: 'primary', danger: true };
     default:
       return { type: 'primary' };
   }
 }
 
-/** Color primario sustituto para las variantes que Ant Design no trae. */
+/**
+ * Relleno de las variantes semánticas. Se toma siempre del tema claro: son
+ * rellenos saturados con texto blanco, y los tonos claros que el tema oscuro
+ * usa para *texto* de éxito, advertencia o error no servirían como fondo.
+ */
 const PRIMARIO_ALTERNATIVO: Partial<Record<VarianteBoton, string>> = {
   success: COLORES.success.DEFAULT,
   warning: COLORES.warning.DEFAULT,
+  danger: COLORES.danger.DEFAULT,
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(

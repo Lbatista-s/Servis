@@ -3,7 +3,7 @@
 import { Alert, Divider, Empty, Progress as AntProgress, Spin } from 'antd';
 import type { ReactNode } from 'react';
 
-import { COLORES } from '@/theme/tokens';
+import { cv } from '@/theme/css';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Aviso en línea
@@ -104,8 +104,8 @@ export function Progress({
       percent={Math.max(0, Math.min(100, valor))}
       showInfo={false}
       size="small"
-      strokeColor={COLORES.primary.DEFAULT}
-      railColor={COLORES.canvas[3]}
+      strokeColor={cv('primary')}
+      railColor={cv('canvas.3')}
       aria-label={etiqueta}
       className={className}
     />

@@ -4,14 +4,15 @@ import { Card as AntCard, type CardProps as AntCardProps } from 'antd';
 import type { CSSProperties, ReactNode } from 'react';
 
 import { cn } from '@/lib/utils';
-import { COLORES } from '@/theme/tokens';
+import { cv } from '@/theme/css';
 
-/** Fondos admitidos. Se aplican en línea porque el de Ant Design tiene prioridad. */
+/** Fondos admitidos. Se aplican en línea porque el de Ant Design tiene prioridad; siguen al tema. */
 const FONDO = {
   superficie: undefined,
-  suave: { background: COLORES.surface[2] },
+  suave: { background: cv('surface.2') },
   institucional: {
-    background: `linear-gradient(135deg, ${COLORES.shell.DEFAULT}, ${COLORES.shell.gradient})`,
+    // Gris INTEC del marco con el Vino asomando en la esquina.
+    background: `linear-gradient(135deg, ${cv('chrome')} 55%, ${cv('chrome.activo')})`,
     borderColor: 'transparent',
   },
 } satisfies Record<string, CSSProperties | undefined>;

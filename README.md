@@ -29,11 +29,19 @@ Esta aplicación es la implementación en React del prototipo de alta fidelidad
 | Pruebas       | Vitest + React Testing Library                   |
 | Calidad       | ESLint + Prettier                                |
 
-Los componentes de interfaz son de Ant Design, configurados con la línea gráfica institucional
-(Rojo INTEC `#E4002B`, Vino `#93070A`, Gris `#63666A`, azul de apoyo `#052A47`, Montserrat y
-Open Sans). La paleta vive en `src/theme/tokens.ts` y alimenta a la vez el tema de Ant Design
-(`src/theme/antd.ts`) y Tailwind, que se usa sólo para la maquetación y los detalles que la
-librería no cubre.
+Los componentes de interfaz son de Ant Design, configurados con la paleta del manual de identidad
+de INTEC: Rojo INTEC `#E4002B` como color de acción, Vino `#93070A` para lo seleccionado y los
+estados de interacción, y Gris `#63666A` para el marco de la aplicación (barra lateral y superior).
+Tipografía: Montserrat para títulos y Open Sans para el texto.
+
+- `src/theme/tokens.ts` define las paletas **clara y oscura** (mismas claves) y es la única fuente
+  de color. `src/theme/css.ts` las publica como variables CSS, que usan Tailwind y los estilos en
+  línea; `src/theme/antd.ts` genera el tema de Ant Design de cada modo.
+- El tema arranca en claro y se cambia con el botón sol/luna de la barra superior o del acceso; la
+  elección se recuerda en el navegador.
+- `src/components/ui/Logotipo.tsx` es el logotipo en vector: logo comercial oficial de INTEC más el
+  hexágono de SERVIS (125 %), según la regla de logos auxiliares del manual.
+- Todo par de texto y fondo de ambas paletas supera 4,5:1; lo comprueba `src/theme/tema.test.tsx`.
 
 ---
 

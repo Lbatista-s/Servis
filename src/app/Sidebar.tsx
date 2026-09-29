@@ -4,12 +4,12 @@ import { Badge, Menu, type MenuProps } from 'antd';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
-import { AvatarUsuario, Icono, Tooltip } from '@/components/ui';
+import { AvatarUsuario, Icono, Logotipo, Tooltip } from '@/components/ui';
 import { ETIQUETA_ROL } from '@/domain/types';
 import { useUsuarioActual } from '@/features/auth/authStore';
 import { ConfiguracionDialog } from '@/features/settings/ConfiguracionDialog';
 import { useSolicitudes } from '@/hooks/useDatos';
-import { COLORES } from '@/theme/tokens';
+import { COLORES_MARCA } from '@/theme/tokens';
 
 import { claveActiva, NAVEGACION_POR_ROL } from './navegacion';
 import { useCerrarSesion } from './useCerrarSesion';
@@ -63,8 +63,9 @@ export function Sidebar({ onNavegar }: { onNavegar?: () => void }) {
               <Badge
                 count={contador}
                 size="small"
-                color={COLORES.white}
-                style={{ color: COLORES.primary.dark, fontWeight: 700, boxShadow: 'none' }}
+                color="#FFFFFF"
+                // Distintivo blanco con cifra en Vino: se lee igual en ambos temas.
+                style={{ color: COLORES_MARCA.vino, fontWeight: 700, boxShadow: 'none' }}
               />
             ) : undefined,
         };
@@ -88,19 +89,12 @@ export function Sidebar({ onNavegar }: { onNavegar?: () => void }) {
   return (
     <nav
       aria-label="Navegación principal"
-      className="flex h-full w-sidebar shrink-0 flex-col overflow-y-auto bg-shell"
+      className="flex h-full w-sidebar shrink-0 flex-col overflow-y-auto bg-chrome"
     >
       {/* Marca */}
-      <div className="mb-2 flex items-center gap-2.5 border-b border-white/[0.07] px-4 pb-4 pt-5">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-primary">
-          <Icono nombre="documento" className="h-5 w-5 text-white" />
-        </span>
-        <span className="flex flex-col">
-          <span className="font-display text-lg font-bold leading-tight text-white">SERVIS</span>
-          <span className="text-2xs uppercase tracking-wider text-white/60">
-            INTEC · Ingenierías
-          </span>
-        </span>
+      <div className="mb-2 flex flex-col gap-1.5 border-b border-white/10 px-4 pb-4 pt-5">
+        <Logotipo formato="compacto" version="negativo" alto={50} />
+        <span className="text-2xs uppercase tracking-wider text-white/90">Área de Ingenierías</span>
       </div>
 
       <Menu
@@ -117,19 +111,19 @@ export function Sidebar({ onNavegar }: { onNavegar?: () => void }) {
       />
 
       {/* Usuario activo */}
-      <div className="mt-auto border-t border-white/[0.07] p-2 pt-3">
+      <div className="mt-auto border-t border-white/10 p-2 pt-3">
         <div className="flex items-center gap-2.5 rounded px-2 py-2.5">
           <AvatarUsuario usuario={usuario} tamano="lg" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-base font-semibold text-white">{usuario.nombre}</p>
-            <p className="truncate text-xs text-white/60">{ETIQUETA_ROL[usuario.rol]}</p>
+            <p className="truncate text-xs text-white/90">{ETIQUETA_ROL[usuario.rol]}</p>
           </div>
           <Tooltip contenido="Cerrar sesión">
             <button
               type="button"
               aria-label="Cerrar sesión"
               onClick={salir}
-              className="rounded-sm p-1 text-white/70 transition-opacity hover:text-white"
+              className="rounded-sm p-1 text-white/90 transition-opacity hover:text-white"
             >
               <Icono nombre="salir" />
             </button>

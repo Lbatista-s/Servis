@@ -10,7 +10,7 @@
 import { Progress } from 'antd';
 
 import { cn } from '@/lib/utils';
-import { COLORES } from '@/theme/tokens';
+import { cv } from '@/theme/css';
 
 export interface BarraDato {
   etiqueta: string;
@@ -41,8 +41,8 @@ export function BarChart({
               percent={Math.round((dato.valor / maximo) * 100)}
               showInfo={false}
               size={['100%', 14]}
-              strokeColor={COLORES.primary.DEFAULT}
-              railColor={COLORES.canvas[3]}
+              strokeColor={cv('primary')}
+              railColor={cv('canvas.3')}
             />
           </div>
           <dd className="w-8 shrink-0 text-right text-sm font-semibold text-ink-2">

@@ -3,13 +3,13 @@
 import { Timeline as AntTimeline } from 'antd';
 import type { ReactNode } from 'react';
 
-import { COLORES } from '@/theme/tokens';
+import { cv } from '@/theme/css';
 
 export type EstadoPunto = 'completado' | 'activo' | 'pendiente';
 
 const COLOR_PUNTO: Record<EstadoPunto, string> = {
-  completado: COLORES.success.DEFAULT,
-  activo: COLORES.primary.DEFAULT,
+  completado: cv('success'),
+  activo: cv('primary'),
   // Ant Design dibuja hueco el punto gris: indica un hito que aún no ocurre.
   pendiente: 'gray',
 };

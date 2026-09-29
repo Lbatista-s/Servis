@@ -4,15 +4,15 @@ import { Avatar as AntAvatar } from 'antd';
 
 import type { ColorAvatar, Usuario } from '@/domain/types';
 import { cn, iniciales as calcularIniciales } from '@/lib/utils';
-import { COLORES } from '@/theme/tokens';
+import { cv } from '@/theme/css';
 
 const PALETA: Record<ColorAvatar, { fondo: string; texto: string }> = {
-  red: { fondo: COLORES.avatar['red-bg'], texto: COLORES.avatar['red-fg'] },
-  blue: { fondo: COLORES.avatar['blue-bg'], texto: COLORES.avatar['blue-fg'] },
-  green: { fondo: COLORES.avatar['green-bg'], texto: COLORES.avatar['green-fg'] },
-  amber: { fondo: COLORES.avatar['amber-bg'], texto: COLORES.avatar['amber-fg'] },
-  purple: { fondo: COLORES.avatar['purple-bg'], texto: COLORES.avatar['purple-fg'] },
-  teal: { fondo: COLORES.avatar['teal-bg'], texto: COLORES.avatar['teal-fg'] },
+  red: { fondo: cv('avatar.red-bg'), texto: cv('avatar.red-fg') },
+  blue: { fondo: cv('avatar.blue-bg'), texto: cv('avatar.blue-fg') },
+  green: { fondo: cv('avatar.green-bg'), texto: cv('avatar.green-fg') },
+  amber: { fondo: cv('avatar.amber-bg'), texto: cv('avatar.amber-fg') },
+  purple: { fondo: cv('avatar.purple-bg'), texto: cv('avatar.purple-fg') },
+  teal: { fondo: cv('avatar.teal-bg'), texto: cv('avatar.teal-fg') },
 };
 
 /** Diámetro y tamaño de letra de cada tamaño. */

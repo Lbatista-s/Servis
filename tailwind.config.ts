@@ -1,12 +1,14 @@
 import type { Config } from 'tailwindcss';
 
-import { COLORES, ESTRUCTURA, FUENTES, RADIOS } from './src/theme/tokens';
+import { coloresTailwind } from './src/theme/css';
+import { ESTRUCTURA, FUENTES, RADIOS } from './src/theme/tokens';
 
 /**
  * Tailwind se usa para la maquetación y los detalles que Ant Design no cubre.
  * La paleta, las fuentes y los radios salen de `src/theme/tokens.ts`, la misma
- * fuente que alimenta el tema de Ant Design, para que ambos sistemas no se
- * desalineen. Ningún componente debe declarar valores hexadecimales sueltos.
+ * fuente que alimenta el tema de Ant Design. Los colores apuntan a variables
+ * CSS (`src/theme/css.ts`), así que cada clase cambia sola con el tema claro u
+ * oscuro. Ningún componente debe declarar valores hexadecimales sueltos.
  */
 const px = (valor: number) => `${valor}px`;
 
@@ -14,7 +16,7 @@ const config: Config = {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
-      colors: COLORES,
+      colors: coloresTailwind(),
       fontFamily: {
         sans: [...FUENTES.texto],
         display: [...FUENTES.titulos],

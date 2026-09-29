@@ -4,17 +4,17 @@ import { Card, Statistic } from 'antd';
 import type { ReactNode } from 'react';
 
 import { cn } from '@/lib/utils';
-import { COLORES } from '@/theme/tokens';
+import { cv } from '@/theme/css';
 
 import { Icono, type NombreIcono } from './Icons';
 
-/** Color del valor principal. Todos superan 4,5:1 sobre blanco. */
+/** Color del valor principal; sigue al tema y supera 4,5:1 sobre la tarjeta en ambos. */
 const COLOR_VALOR = {
-  ink: COLORES.ink.DEFAULT,
-  info: COLORES.info.DEFAULT,
-  success: COLORES.success.DEFAULT,
-  warning: COLORES.warning.DEFAULT,
-  danger: COLORES.danger.DEFAULT,
+  ink: cv('ink'),
+  info: cv('info'),
+  success: cv('success'),
+  warning: cv('warning'),
+  danger: cv('danger'),
 } as const;
 
 export interface StatCardProps {
