@@ -7,6 +7,7 @@
  */
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Descriptions } from 'antd';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
@@ -74,8 +75,8 @@ export function NuevaSolicitudPage() {
     setPaso((actual) => Math.min(PASOS.length - 1, actual + 1));
   }
 
-  function agregarArchivos(archivos: FileList) {
-    const nuevos: Adjunto[] = Array.from(archivos).map((archivo, indice) => ({
+  function agregarArchivos(archivos: readonly File[]) {
+    const nuevos: Adjunto[] = archivos.map((archivo, indice) => ({
       id: `adj-${Date.now()}-${indice}`,
       nombre: archivo.name,
       tamano: archivo.size,
@@ -199,20 +200,24 @@ export function NuevaSolicitudPage() {
             <div className="flex flex-col gap-4">
               <Card>
                 <SectionHeader titulo="Revisa los datos antes de enviar" />
-                <dl className="grid gap-3 sm:grid-cols-2">
-                  {campos.map((campo) => (
-                    <div key={campo.nombre} className={cn(campo.anchoCompleto && 'sm:col-span-2')}>
-                      <dt className="text-xs font-semibold uppercase tracking-wide text-ink-3">
+                <Descriptions
+                  layout="vertical"
+                  size="small"
+                  colon={false}
+                  column={{ xs: 1, sm: 2 }}
+                  items={campos.map((campo) => ({
+                    key: campo.nombre,
+                    span: campo.anchoCompleto ? 'filled' : 1,
+                    label: (
+                      <span className="text-xs font-semibold uppercase tracking-wide">
                         {campo.etiqueta}
-                      </dt>
-                      <dd className="mt-0.5 text-base text-ink">
-                        {formatearValorCampo(campo, valores[campo.nombre]) || (
-                          <span className="text-ink-4">Sin completar</span>
-                        )}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
+                      </span>
+                    ),
+                    children: formatearValorCampo(campo, valores[campo.nombre]) || (
+                      <span className="text-ink-3">Sin completar</span>
+                    ),
+                  }))}
+                />
               </Card>
 
               <Card>
@@ -303,7 +308,7 @@ export function NuevaSolicitudPage() {
             </NoteBlock>
           </Card>
 
-          <Card className="bg-surface-2">
+          <Card fondo="suave">
             <p className="mb-2.5 text-sm font-semibold uppercase tracking-wide text-ink-3">
               Estado de tu solicitud
             </p>

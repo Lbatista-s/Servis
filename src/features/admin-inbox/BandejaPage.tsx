@@ -1,5 +1,6 @@
 /** Pantalla 7 — Bandeja administrativa. */
 
+import { Select, Table, type TableColumnsType } from 'antd';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -14,23 +15,10 @@ import {
   Input,
   Loading,
   PageHeader,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   StatCard,
   StatusBadge,
-  Table,
-  TableWrapper,
-  Tbody,
-  Td,
-  TdMono,
-  Th,
-  Thead,
-  Tr,
 } from '@/components/ui';
-import { ESTADOS, ETIQUETA_ESTADO, type EstadoSolicitud } from '@/domain/types';
+import { ESTADOS, ETIQUETA_ESTADO, type EstadoSolicitud, type Solicitud } from '@/domain/types';
 import { useIndiceServicios, useIndiceUsuarios, useSolicitudes } from '@/hooks/useDatos';
 import { formatearFecha, formatearFechaLarga } from '@/lib/format';
 
@@ -64,6 +52,82 @@ export function BandejaPage() {
   const cuenta = (estados: readonly EstadoSolicitud[]) =>
     universo.filter((s) => estados.includes(s.estado)).length;
 
+  const columnas: TableColumnsType<Solicitud> = [
+    {
+      title: 'ID',
+      dataIndex: 'id',
+      render: (id: string) => <span className="font-mono text-sm text-ink-2">{id}</span>,
+    },
+    {
+      title: 'Estudiante',
+      key: 'estudiante',
+      render: (_, solicitud) => {
+        const estudiante = usuarios.get(solicitud.solicitanteId);
+        return (
+          <span className="flex items-center gap-2">
+            {estudiante ? (
+              <Avatar
+                nombre={estudiante.nombre}
+                iniciales={estudiante.iniciales}
+                color={estudiante.colorAvatar}
+                tamano="md"
+              />
+            ) : null}
+            <span>
+              <span className="block font-medium">
+                {estudiante?.nombre ?? 'Usuario desconocido'}
+              </span>
+              <span className="block text-xs text-ink-3">{estudiante?.carrera ?? '—'}</span>
+            </span>
+          </span>
+        );
+      },
+    },
+    {
+      title: 'Servicio',
+      key: 'servicio',
+      render: (_, solicitud) => servicios.get(solicitud.servicioId)?.nombre ?? solicitud.servicioId,
+    },
+    {
+      title: 'Recibida',
+      key: 'recibida',
+      render: (_, solicitud) => (
+        <span className="text-ink-3">
+          {formatearFecha(solicitud.enviadaEn ?? solicitud.creadaEn)}
+        </span>
+      ),
+    },
+    {
+      title: 'Estado',
+      dataIndex: 'estado',
+      render: (valor: EstadoSolicitud) => <StatusBadge estado={valor} />,
+    },
+    {
+      title: 'Prioridad',
+      dataIndex: 'prioridad',
+      render: (prioridad: Solicitud['prioridad']) => (
+        <Badge tono={prioridad === 'alta' ? 'amber' : 'gray'} sinPunto>
+          {prioridad === 'alta' ? 'Alta' : 'Normal'}
+        </Badge>
+      ),
+    },
+    {
+      title: 'Acción',
+      key: 'accion',
+      render: (_, solicitud) => (
+        <Button
+          tamano="sm"
+          onClick={(evento) => {
+            evento.stopPropagation();
+            navegar(RUTAS.detalleBandeja(solicitud.id));
+          }}
+        >
+          Revisar
+        </Button>
+      ),
+    },
+  ];
+
   return (
     <>
       <PageHeader
@@ -82,28 +146,28 @@ export function BandejaPage() {
           valor={cuenta(['enviada'])}
           icono="bandeja"
           fondoIcono="bg-info-light"
-          colorValor="text-info"
+          tono="info"
         />
         <StatCard
           etiqueta="En revisión"
           valor={cuenta(['en_revision', 'corregida'])}
           icono="ojo"
           fondoIcono="bg-warning-light"
-          colorValor="text-warning"
+          tono="warning"
         />
         <StatCard
           etiqueta="Aprobadas"
           valor={cuenta(['aprobada'])}
           icono="verificar"
           fondoIcono="bg-success-light"
-          colorValor="text-success"
+          tono="success"
         />
         <StatCard
           etiqueta="Rechazadas"
           valor={cuenta(['rechazada'])}
           icono="cerrar"
           fondoIcono="bg-danger-light"
-          colorValor="text-danger"
+          tono="danger"
         />
         <StatCard
           etiqueta="Completadas"
@@ -114,53 +178,44 @@ export function BandejaPage() {
       </div>
 
       <div className="mb-5 flex flex-wrap items-center gap-2">
-        <div className="relative w-full sm:w-64">
-          <Icono
-            nombre="buscar"
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3"
-          />
+        <div className="w-full sm:w-64">
           <Input
             type="search"
+            allowClear
             value={busqueda}
             onChange={(evento) => setBusqueda(evento.target.value)}
             placeholder="Buscar por estudiante o ID…"
             aria-label="Buscar por estudiante o identificador"
-            className="pl-[38px]"
+            prefix={<Icono nombre="buscar" className="text-ink-3" />}
           />
         </div>
 
-        <Select value={servicioId} onValueChange={setServicioId}>
-          <SelectTrigger className="w-full sm:w-52" aria-label="Filtrar por servicio">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={TODOS}>Todos los servicios</SelectItem>
-            {[...servicios.values()].map((servicio) => (
-              <SelectItem key={servicio.id} value={servicio.id}>
-                {servicio.nombre}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Select
+          value={servicioId}
+          onChange={(valor: string) => setServicioId(valor)}
+          aria-label="Filtrar por servicio"
+          className="w-full sm:w-52"
+          options={[
+            { value: TODOS, label: 'Todos los servicios' },
+            ...[...servicios.values()].map((servicio) => ({
+              value: servicio.id,
+              label: servicio.nombre,
+            })),
+          ]}
+        />
 
         <Select
           value={estado}
-          onValueChange={(valor) => setEstado(valor as EstadoSolicitud | typeof TODOS)}
-        >
-          <SelectTrigger className="w-full sm:w-44" aria-label="Filtrar por estado">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={TODOS}>Todos los estados</SelectItem>
-            {ESTADOS.map((clave) => (
-              <SelectItem key={clave} value={clave}>
-                {ETIQUETA_ESTADO[clave]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          onChange={(valor: EstadoSolicitud | typeof TODOS) => setEstado(valor)}
+          aria-label="Filtrar por estado"
+          className="w-full sm:w-44"
+          options={[
+            { value: TODOS, label: 'Todos los estados' },
+            ...ESTADOS.map((clave) => ({ value: clave, label: ETIQUETA_ESTADO[clave] })),
+          ]}
+        />
 
-        <Badge tono="gray" sinPunto className="px-2.5 py-1.5 text-sm">
+        <Badge tono="gray" sinPunto>
           {lista.length} de {universo.length}
         </Badge>
       </div>
@@ -177,80 +232,17 @@ export function BandejaPage() {
         </Card>
       ) : (
         <Card sinRelleno>
-          <TableWrapper>
-            <Table>
-              <Thead>
-                <Tr>
-                  <Th>ID</Th>
-                  <Th>Estudiante</Th>
-                  <Th>Servicio</Th>
-                  <Th>Recibida</Th>
-                  <Th>Estado</Th>
-                  <Th>Prioridad</Th>
-                  <Th>Acción</Th>
-                </Tr>
-              </Thead>
-              <Tbody>
-                {lista.map((solicitud) => {
-                  const estudiante = usuarios.get(solicitud.solicitanteId);
-                  const servicio = servicios.get(solicitud.servicioId);
-                  const alta = solicitud.prioridad === 'alta';
-
-                  return (
-                    <Tr
-                      key={solicitud.id}
-                      onClick={() => navegar(RUTAS.detalleBandeja(solicitud.id))}
-                    >
-                      <TdMono>{solicitud.id}</TdMono>
-                      <Td>
-                        <span className="flex items-center gap-2">
-                          {estudiante ? (
-                            <Avatar
-                              nombre={estudiante.nombre}
-                              iniciales={estudiante.iniciales}
-                              color={estudiante.colorAvatar}
-                              tamano="md"
-                            />
-                          ) : null}
-                          <span>
-                            <span className="block font-medium">
-                              {estudiante?.nombre ?? 'Usuario desconocido'}
-                            </span>
-                            <span className="block text-xs text-ink-3">
-                              {estudiante?.carrera ?? '—'}
-                            </span>
-                          </span>
-                        </span>
-                      </Td>
-                      <Td>{servicio?.nombre ?? solicitud.servicioId}</Td>
-                      <Td className="text-ink-3">
-                        {formatearFecha(solicitud.enviadaEn ?? solicitud.creadaEn)}
-                      </Td>
-                      <Td>
-                        <StatusBadge estado={solicitud.estado} />
-                      </Td>
-                      <Td>
-                        <Badge tono={alta ? 'amber' : 'gray'} sinPunto>
-                          {alta ? 'Alta' : 'Normal'}
-                        </Badge>
-                      </Td>
-                      <Td>
-                        <Button
-                          tamano="sm"
-                          onClick={(evento) => {
-                            evento.stopPropagation();
-                            navegar(RUTAS.detalleBandeja(solicitud.id));
-                          }}
-                        >
-                          Revisar
-                        </Button>
-                      </Td>
-                    </Tr>
-                  );
-                })}
-              </Tbody>
-            </Table>
-          </TableWrapper>
+          <Table<Solicitud>
+            rowKey="id"
+            columns={columnas}
+            dataSource={lista}
+            pagination={false}
+            scroll={{ x: 720 }}
+            onRow={(solicitud) => ({
+              onClick: () => navegar(RUTAS.detalleBandeja(solicitud.id)),
+              className: 'cursor-pointer',
+            })}
+          />
         </Card>
       )}
     </>

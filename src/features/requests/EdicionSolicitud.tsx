@@ -59,8 +59,8 @@ export function EdicionSolicitud({
   const obligatorios = servicio?.requisitos.filter((r) => r.obligatorio).length ?? 0;
   const requisitosCubiertos = adjuntos.length >= obligatorios;
 
-  function agregarArchivos(archivos: FileList) {
-    const nuevos: Adjunto[] = Array.from(archivos).map((archivo, indice) => ({
+  function agregarArchivos(archivos: readonly File[]) {
+    const nuevos: Adjunto[] = archivos.map((archivo, indice) => ({
       id: `adj-${Date.now()}-${indice}`,
       nombre: archivo.name,
       tamano: archivo.size,

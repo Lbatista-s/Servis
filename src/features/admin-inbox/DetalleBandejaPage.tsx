@@ -1,15 +1,15 @@
 /** Pantalla 8 — Detalle de solicitud con acciones de revisión. */
 
-import { useEffect, useState } from 'react';
-
+import { Checkbox, Descriptions } from 'antd';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { RUTAS } from '@/app/rutas';
 import {
   Breadcrumb,
   Button,
+  ButtonLink,
   Card,
-  CheckboxField,
   EmptyState,
   FieldHint,
   FileChip,
@@ -48,9 +48,7 @@ export function DetalleBandejaPage() {
         titulo="No encontramos esa solicitud"
         descripcion="Es posible que haya sido eliminada o que el enlace sea incorrecto."
       >
-        <Button asChild>
-          <a href={RUTAS.bandeja}>Volver a la bandeja</a>
-        </Button>
+        <ButtonLink to={RUTAS.bandeja}>Volver a la bandeja</ButtonLink>
       </EmptyState>
     );
   }
@@ -89,25 +87,26 @@ export function DetalleBandejaPage() {
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-ink-3">
                 Datos del estudiante
               </p>
-              <dl className="grid gap-2.5 text-base sm:grid-cols-2">
-                <Dato etiqueta="Nombre" valor={estudiante?.nombre} destacado />
-                <Dato etiqueta="Matrícula" valor={estudiante?.matricula} />
-                <Dato etiqueta="Carrera" valor={estudiante?.carrera} />
-                <Dato etiqueta="Semestre" valor={estudiante?.semestre} />
-                <Dato etiqueta="Correo" valor={estudiante?.correo} />
-              </dl>
+              <Datos
+                datos={[
+                  ['Nombre', <strong key="nombre">{estudiante?.nombre ?? '—'}</strong>],
+                  ['Matrícula', estudiante?.matricula],
+                  ['Carrera', estudiante?.carrera],
+                  ['Semestre', estudiante?.semestre],
+                  ['Correo', estudiante?.correo],
+                ]}
+              />
             </div>
 
             {/* Datos del formulario */}
-            <dl className="mb-4 grid gap-2.5 text-base sm:grid-cols-2">
-              {campos.map((campo) => (
-                <Dato
-                  key={campo.nombre}
-                  etiqueta={campo.etiqueta}
-                  valor={formatearValorCampo(campo, solicitud.datosFormulario[campo.nombre])}
-                />
-              ))}
-            </dl>
+            <div className="mb-4">
+              <Datos
+                datos={campos.map((campo) => [
+                  campo.etiqueta,
+                  formatearValorCampo(campo, solicitud.datosFormulario[campo.nombre]),
+                ])}
+              />
+            </div>
 
             <SectionHeader titulo={`Documentos adjuntos (${solicitud.adjuntos.length})`} />
             {solicitud.adjuntos.length === 0 ? (
@@ -165,7 +164,7 @@ export function DetalleBandejaPage() {
           </Card>
 
           {servicio ? (
-            <Card className="bg-surface-2">
+            <Card fondo="suave">
               <p className="mb-2.5 text-sm font-semibold uppercase tracking-wide text-ink-3">
                 Checklist de revisión
               </p>
@@ -181,22 +180,23 @@ export function DetalleBandejaPage() {
   );
 }
 
-function Dato({
-  etiqueta,
-  valor,
-  destacado,
-}: {
-  etiqueta: string;
-  valor?: string;
-  destacado?: boolean;
-}) {
+/** Pares etiqueta–valor en dos columnas, sobre `Descriptions` de Ant Design. */
+function Datos({ datos }: { datos: readonly (readonly [string, ReactNode])[] }) {
   return (
-    <div>
-      <dt className="text-xs font-semibold uppercase tracking-wide text-ink-3">{etiqueta}</dt>
-      <dd className={destacado ? 'mt-0.5 font-semibold text-ink' : 'mt-0.5 text-ink'}>
-        {valor?.trim() || <span className="text-ink-4">—</span>}
-      </dd>
-    </div>
+    <Descriptions
+      layout="vertical"
+      size="small"
+      colon={false}
+      column={{ xs: 1, sm: 2 }}
+      items={datos.map(([etiqueta, valor]) => ({
+        key: etiqueta,
+        label: <span className="text-xs font-semibold uppercase tracking-wide">{etiqueta}</span>,
+        children:
+          typeof valor === 'string' || valor == null
+            ? valor?.trim() || <span className="text-ink-3">—</span>
+            : valor,
+      }))}
+    />
   );
 }
 
@@ -264,40 +264,27 @@ function ComentarioInterno({
 function ChecklistRevision({ requisitos }: { requisitos: readonly string[] }) {
   const [marcados, setMarcados] = useState<Set<number>>(new Set());
 
+  function alternar(indice: number, marcado: boolean) {
+    setMarcados((actuales) => {
+      const siguiente = new Set(actuales);
+      if (marcado) siguiente.add(indice);
+      else siguiente.delete(indice);
+      return siguiente;
+    });
+  }
+
+  const elementos = ['Identidad del estudiante verificada', ...requisitos];
+
   return (
     <ul className="flex flex-col gap-2">
-      <li>
-        <CheckboxField
-          id="check-identidad"
-          checked={marcados.has(-1)}
-          onCheckedChange={(valor) =>
-            setMarcados((actuales) => {
-              const siguiente = new Set(actuales);
-              if (valor) siguiente.add(-1);
-              else siguiente.delete(-1);
-              return siguiente;
-            })
-          }
-        >
-          Identidad del estudiante verificada
-        </CheckboxField>
-      </li>
-      {requisitos.map((requisito, indice) => (
-        <li key={requisito}>
-          <CheckboxField
-            id={`check-${indice}`}
+      {elementos.map((texto, indice) => (
+        <li key={texto}>
+          <Checkbox
             checked={marcados.has(indice)}
-            onCheckedChange={(valor) =>
-              setMarcados((actuales) => {
-                const siguiente = new Set(actuales);
-                if (valor) siguiente.add(indice);
-                else siguiente.delete(indice);
-                return siguiente;
-              })
-            }
+            onChange={(evento) => alternar(indice, evento.target.checked)}
           >
-            {requisito}
-          </CheckboxField>
+            {texto}
+          </Checkbox>
         </li>
       ))}
     </ul>

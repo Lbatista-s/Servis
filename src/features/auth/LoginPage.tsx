@@ -8,8 +8,9 @@
  */
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Input as AntInput, Select } from 'antd';
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
@@ -23,11 +24,6 @@ import {
   Icono,
   InlineNotification,
   Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
 } from '@/components/ui';
 import { ETIQUETA_ROL } from '@/domain/types';
 import { useServicios, useUsuarios } from '@/hooks/useDatos';
@@ -105,36 +101,29 @@ export function LoginPage() {
       <form onSubmit={formulario.handleSubmit(enviar)} noValidate>
         <Field error={formulario.formState.errors.correo?.message} className="mb-4">
           <FieldLabel requerido>Correo institucional</FieldLabel>
-          <div className="relative">
-            <Icono
-              nombre="correo"
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3"
-            />
-            <Input
-              type="email"
-              autoComplete="username"
-              placeholder="tu.nombre@intec.edu.do"
-              className="pl-[38px]"
-              {...formulario.register('correo')}
-            />
-          </div>
+          <Controller
+            control={formulario.control}
+            name="correo"
+            render={({ field }) => (
+              <Input
+                type="email"
+                autoComplete="username"
+                placeholder="tu.nombre@intec.edu.do"
+                prefix={<Icono nombre="correo" className="text-ink-3" />}
+                {...field}
+              />
+            )}
+          />
         </Field>
 
         <Field className="mb-4">
           <FieldLabel htmlFor="clave">Contraseña</FieldLabel>
-          <div className="relative">
-            <Icono
-              nombre="candado"
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3"
-            />
-            <Input
-              id="clave"
-              type="password"
-              autoComplete="current-password"
-              defaultValue="demostracion"
-              className="pl-[38px]"
-            />
-          </div>
+          <AntInput.Password
+            id="clave"
+            autoComplete="current-password"
+            defaultValue="demostracion"
+            prefix={<Icono nombre="candado" className="text-ink-3" />}
+          />
           <FieldHint>Autenticación simulada: en esta fase la contraseña no se verifica.</FieldHint>
         </Field>
 
@@ -142,33 +131,32 @@ export function LoginPage() {
         <Field className="mb-5">
           <FieldLabel htmlFor="cuenta">Acceder como</FieldLabel>
           <Select
+            id="cuenta"
+            className="w-full"
+            aria-label="Seleccionar cuenta de demostración"
+            placeholder="Selecciona una cuenta"
             value={correoActual}
-            onValueChange={(valor) =>
+            onChange={(valor: string) =>
               formulario.setValue('correo', valor, { shouldValidate: true })
             }
-          >
-            <SelectTrigger id="cuenta" aria-label="Seleccionar cuenta de demostración">
-              <SelectValue placeholder="Selecciona una cuenta" />
-            </SelectTrigger>
-            <SelectContent>
-              {(usuarios ?? []).map((cuenta) => (
-                <SelectItem key={cuenta.id} value={cuenta.correo}>
-                  <span className="flex items-center gap-2">
-                    <Avatar
-                      nombre={cuenta.nombre}
-                      iniciales={cuenta.iniciales}
-                      color={cuenta.colorAvatar}
-                      tamano="md"
-                    />
-                    <span>
-                      {cuenta.nombre}
-                      <span className="text-ink-3"> · {ETIQUETA_ROL[cuenta.rol]}</span>
-                    </span>
+            options={(usuarios ?? []).map((cuenta) => ({
+              value: cuenta.correo,
+              label: (
+                <span className="flex items-center gap-2">
+                  <Avatar
+                    nombre={cuenta.nombre}
+                    iniciales={cuenta.iniciales}
+                    color={cuenta.colorAvatar}
+                    tamano="md"
+                  />
+                  <span>
+                    {cuenta.nombre}
+                    <span className="text-ink-3"> · {ETIQUETA_ROL[cuenta.rol]}</span>
                   </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                </span>
+              ),
+            }))}
+          />
         </Field>
 
         {error ? (
@@ -180,13 +168,13 @@ export function LoginPage() {
         <div className="mb-6 flex items-center justify-end">
           <Link
             to={RUTAS.recuperar}
-            className="rounded-xs text-sm text-primary underline hover:text-primary-hover"
+            className="rounded-xs text-sm text-primary-dark underline hover:text-primary"
           >
             ¿Olvidaste tu contraseña?
           </Link>
         </div>
 
-        <Button type="submit" tamano="lg" className="w-full" disabled={cargando}>
+        <Button type="submit" tamano="lg" block disabled={cargando}>
           <Icono nombre="chevron" />
           {cargando ? 'Accediendo…' : 'Iniciar sesión'}
         </Button>

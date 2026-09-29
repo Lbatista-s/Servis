@@ -1,33 +1,23 @@
 /** Alta de usuario, con validación de Zod y React Hook Form. */
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Modal, Select } from 'antd';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import {
   Button,
-  Dialog,
-  DialogBody,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTrigger,
   Field,
   FieldHint,
   FieldLabel,
   Icono,
   InlineNotification,
   Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   useToast,
 } from '@/components/ui';
 import { repositorios } from '@/data';
-import { ETIQUETA_ROL, ROLES, type ColorAvatar, type Rol } from '@/domain/types';
+import { ETIQUETA_ROL, ROLES, type ColorAvatar } from '@/domain/types';
 import { mensajeDeError } from '@/hooks/useAsync';
 import { useRevalidar } from '@/hooks/useDatos';
 import { iniciales } from '@/lib/utils';
@@ -94,81 +84,89 @@ export function NuevoUsuarioDialog() {
   }
 
   return (
-    <Dialog open={abierto} onOpenChange={setAbierto}>
-      <DialogTrigger asChild>
-        <Button tamano="sm">
-          <Icono nombre="mas" />
-          Crear usuario
-        </Button>
-      </DialogTrigger>
+    <>
+      <Button tamano="sm" onClick={() => setAbierto(true)}>
+        <Icono nombre="mas" />
+        Crear usuario
+      </Button>
 
-      <DialogContent>
-        <DialogHeader
-          titulo="Crear usuario"
-          descripcion="Alta de una cuenta en el Área de Ingenierías."
-        />
+      <Modal
+        open={abierto}
+        onCancel={() => setAbierto(false)}
+        title="Crear usuario"
+        footer={null}
+        destroyOnHidden
+      >
+        <p className="mb-5 text-base text-ink-3">Alta de una cuenta en el Área de Ingenierías.</p>
 
-        <form onSubmit={formulario.handleSubmit(crear)} noValidate>
-          <DialogBody>
-            <Field error={formulario.formState.errors.nombre?.message}>
-              <FieldLabel requerido>Nombre completo</FieldLabel>
-              <Input placeholder="Ej. Ana García" {...formulario.register('nombre')} />
-            </Field>
+        <form onSubmit={formulario.handleSubmit(crear)} noValidate className="flex flex-col gap-4">
+          <Field error={formulario.formState.errors.nombre?.message}>
+            <FieldLabel requerido>Nombre completo</FieldLabel>
+            <Controller
+              control={formulario.control}
+              name="nombre"
+              render={({ field }) => <Input placeholder="Ej. Ana García" {...field} />}
+            />
+          </Field>
 
-            <Field error={formulario.formState.errors.correo?.message}>
-              <FieldLabel requerido>Correo institucional</FieldLabel>
-              <Input
-                type="email"
-                placeholder="a.garcia@intec.edu.do"
-                {...formulario.register('correo')}
-              />
-              <FieldHint>Debe pertenecer al dominio @intec.edu.do.</FieldHint>
-            </Field>
+          <Field error={formulario.formState.errors.correo?.message}>
+            <FieldLabel requerido>Correo institucional</FieldLabel>
+            <Controller
+              control={formulario.control}
+              name="correo"
+              render={({ field }) => (
+                <Input type="email" placeholder="a.garcia@intec.edu.do" {...field} />
+              )}
+            />
+            <FieldHint>Debe pertenecer al dominio @intec.edu.do.</FieldHint>
+          </Field>
 
-            <Field error={formulario.formState.errors.rol?.message}>
-              <FieldLabel htmlFor="rol-nuevo" requerido>
-                Rol
-              </FieldLabel>
-              <Select
-                value={rolSeleccionado}
-                onValueChange={(valor) =>
-                  formulario.setValue('rol', valor as Rol, { shouldValidate: true })
-                }
-              >
-                <SelectTrigger id="rol-nuevo">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {ROLES.map((clave) => (
-                    <SelectItem key={clave} value={clave}>
-                      {ETIQUETA_ROL[clave]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
+          <Field error={formulario.formState.errors.rol?.message}>
+            <FieldLabel htmlFor="rol-nuevo" requerido>
+              Rol
+            </FieldLabel>
+            <Controller
+              control={formulario.control}
+              name="rol"
+              render={({ field }) => (
+                <Select
+                  id="rol-nuevo"
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  options={ROLES.map((clave) => ({ value: clave, label: ETIQUETA_ROL[clave] }))}
+                />
+              )}
+            />
+          </Field>
 
-            {/* Datos académicos: sólo tienen sentido para estudiantes. */}
-            {rolSeleccionado === 'estudiante' ? (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field>
-                  <FieldLabel>Matrícula</FieldLabel>
-                  <Input placeholder="Ej. 2022-0219" {...formulario.register('matricula')} />
-                </Field>
-                <Field>
-                  <FieldLabel>Carrera</FieldLabel>
-                  <Input
-                    placeholder="Ej. Ingeniería de Software"
-                    {...formulario.register('carrera')}
-                  />
-                </Field>
-              </div>
-            ) : null}
+          {/* Datos académicos: sólo tienen sentido para estudiantes. */}
+          {rolSeleccionado === 'estudiante' ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field>
+                <FieldLabel>Matrícula</FieldLabel>
+                <Controller
+                  control={formulario.control}
+                  name="matricula"
+                  render={({ field }) => <Input placeholder="Ej. 2022-0219" {...field} />}
+                />
+              </Field>
+              <Field>
+                <FieldLabel>Carrera</FieldLabel>
+                <Controller
+                  control={formulario.control}
+                  name="carrera"
+                  render={({ field }) => (
+                    <Input placeholder="Ej. Ingeniería de Software" {...field} />
+                  )}
+                />
+              </Field>
+            </div>
+          ) : null}
 
-            {error ? <InlineNotification tono="error">{error}</InlineNotification> : null}
-          </DialogBody>
+          {error ? <InlineNotification tono="error">{error}</InlineNotification> : null}
 
-          <DialogFooter>
+          <div className="mt-2 flex justify-end gap-2">
             <Button variante="outline" onClick={() => setAbierto(false)}>
               Cancelar
             </Button>
@@ -176,9 +174,9 @@ export function NuevoUsuarioDialog() {
               <Icono nombre="verificar" />
               Crear usuario
             </Button>
-          </DialogFooter>
+          </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </Modal>
+    </>
   );
 }

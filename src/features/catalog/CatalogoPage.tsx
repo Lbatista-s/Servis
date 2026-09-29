@@ -1,23 +1,11 @@
 /** Pantalla 4 — Catálogo de servicios. */
 
+import { Select } from 'antd';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { RUTAS } from '@/app/rutas';
-import {
-  Badge,
-  Button,
-  EmptyState,
-  Icono,
-  Input,
-  Loading,
-  PageHeader,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui';
+import { Badge, EmptyState, Icono, Input, Loading, PageHeader } from '@/components/ui';
 import { ETIQUETA_CATEGORIA, type CategoriaServicio } from '@/domain/types';
 import { useServicios } from '@/hooks/useDatos';
 
@@ -43,39 +31,33 @@ export function CatalogoPage() {
       />
 
       <div className="mb-5 flex flex-wrap items-center gap-2">
-        <div className="relative w-full sm:w-64">
-          <Icono
-            nombre="buscar"
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3"
-          />
+        <div className="w-full sm:w-64">
           <Input
             type="search"
+            allowClear
             value={busqueda}
             onChange={(evento) => setBusqueda(evento.target.value)}
             placeholder="Buscar servicio…"
             aria-label="Buscar servicio"
-            className="pl-[38px]"
+            prefix={<Icono nombre="buscar" className="text-ink-3" />}
           />
         </div>
 
         <Select
           value={categoria}
-          onValueChange={(valor) => setCategoria(valor as CategoriaServicio | typeof TODAS)}
-        >
-          <SelectTrigger className="w-full sm:w-48" aria-label="Filtrar por categoría">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={TODAS}>Todas las categorías</SelectItem>
-            {(Object.keys(ETIQUETA_CATEGORIA) as CategoriaServicio[]).map((clave) => (
-              <SelectItem key={clave} value={clave}>
-                {ETIQUETA_CATEGORIA[clave]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          onChange={(valor: CategoriaServicio | typeof TODAS) => setCategoria(valor)}
+          aria-label="Filtrar por categoría"
+          className="w-full sm:w-48"
+          options={[
+            { value: TODAS, label: 'Todas las categorías' },
+            ...(Object.keys(ETIQUETA_CATEGORIA) as CategoriaServicio[]).map((clave) => ({
+              value: clave,
+              label: ETIQUETA_CATEGORIA[clave],
+            })),
+          ]}
+        />
 
-        <Badge tono="gray" sinPunto className="px-2.5 py-1.5 text-sm">
+        <Badge tono="gray" sinPunto>
           {lista.length} servicio{lista.length === 1 ? '' : 's'}
         </Badge>
       </div>
@@ -120,9 +102,10 @@ export function CatalogoPage() {
                         ? ` · ${obligatorios} obligatorio${obligatorios === 1 ? '' : 's'}`
                         : ''}
                     </span>
-                    <Button tamano="sm" asChild>
-                      <span>Solicitar</span>
-                    </Button>
+                    {/* Toda la tarjeta es el enlace: esto sólo lo señala visualmente. */}
+                    <span className="rounded bg-primary px-3 py-1 text-sm font-semibold text-white">
+                      Solicitar
+                    </span>
                   </div>
                 </Link>
               </li>

@@ -13,6 +13,7 @@ import {
   Icono,
   Loading,
   PageHeader,
+  Progress,
   Separator,
   SectionHeader,
   StatCard,
@@ -119,13 +120,13 @@ export function ReportesPage() {
         <StatCard
           etiqueta="Tasa de aprobación"
           valor={`${tasaAprobacion}%`}
-          colorValor="text-success"
+          tono="success"
           detalle={`${favorables} de ${resueltas.length} resueltas`}
         />
         <StatCard
           etiqueta="Pendientes de acción"
           valor={pendientes}
-          colorValor="text-warning"
+          tono="warning"
           detalle={pendientes > 0 ? 'Acción requerida' : 'Sin pendientes'}
           detalleNegativo={pendientes > 0}
         />
@@ -146,13 +147,11 @@ export function ReportesPage() {
           <ul className="flex flex-col gap-2">
             {porEstado.map(({ estado, cantidad }) => (
               <li key={estado} className="flex items-center gap-2.5 text-base">
-                <StatusBadge estado={estado as EstadoSolicitud} />
-                <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-canvas-3">
-                  <span
-                    aria-hidden="true"
-                    className="block h-full rounded-full bg-primary"
-                    style={{ width: `${Math.round((cantidad / maximoEstado) * 100)}%` }}
-                  />
+                <span className="w-28 shrink-0">
+                  <StatusBadge estado={estado as EstadoSolicitud} />
+                </span>
+                <span className="flex-1" aria-hidden="true">
+                  <Progress valor={(cantidad / maximoEstado) * 100} />
                 </span>
                 <span className="w-7 text-right font-semibold">{cantidad}</span>
               </li>

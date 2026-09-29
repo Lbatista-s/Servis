@@ -1,25 +1,27 @@
-/** Avatar con iniciales, sobre la paleta de seis colores del prototipo. */
+/** Avatar con iniciales sobre el `Avatar` de Ant Design y la paleta de seis colores. */
 
-import * as AvatarPrimitive from '@radix-ui/react-avatar';
+import { Avatar as AntAvatar } from 'antd';
 
 import type { ColorAvatar } from '@/domain/types';
 import { cn, iniciales as calcularIniciales } from '@/lib/utils';
+import { COLORES } from '@/theme/tokens';
 
-const PALETA: Record<ColorAvatar, string> = {
-  red: 'bg-avatar-red-bg text-avatar-red-fg',
-  blue: 'bg-avatar-blue-bg text-avatar-blue-fg',
-  green: 'bg-avatar-green-bg text-avatar-green-fg',
-  amber: 'bg-avatar-amber-bg text-avatar-amber-fg',
-  purple: 'bg-avatar-purple-bg text-avatar-purple-fg',
-  teal: 'bg-avatar-teal-bg text-avatar-teal-fg',
+const PALETA: Record<ColorAvatar, { fondo: string; texto: string }> = {
+  red: { fondo: COLORES.avatar['red-bg'], texto: COLORES.avatar['red-fg'] },
+  blue: { fondo: COLORES.avatar['blue-bg'], texto: COLORES.avatar['blue-fg'] },
+  green: { fondo: COLORES.avatar['green-bg'], texto: COLORES.avatar['green-fg'] },
+  amber: { fondo: COLORES.avatar['amber-bg'], texto: COLORES.avatar['amber-fg'] },
+  purple: { fondo: COLORES.avatar['purple-bg'], texto: COLORES.avatar['purple-fg'] },
+  teal: { fondo: COLORES.avatar['teal-bg'], texto: COLORES.avatar['teal-fg'] },
 };
 
+/** Diámetro y tamaño de letra de cada tamaño. */
 const TAMANOS = {
-  xs: 'h-4 w-4 text-[8px]',
-  sm: 'h-[26px] w-[26px] text-xs',
-  md: 'h-7 w-7 text-2xs',
-  lg: 'h-8 w-8 text-sm',
-  xl: 'h-10 w-10 text-md',
+  xs: { lado: 16, letra: 8 },
+  sm: { lado: 26, letra: 11 },
+  md: { lado: 28, letra: 10 },
+  lg: { lado: 32, letra: 12 },
+  xl: { lado: 40, letra: 14 },
 } as const;
 
 export interface AvatarProps {
@@ -50,33 +52,26 @@ export function Avatar({
   className,
 }: AvatarProps) {
   const texto = iniciales ?? calcularIniciales(nombre);
+  const { lado, letra } = TAMANOS[tamano];
+  const { fondo, texto: colorTexto } = PALETA[color];
 
   return (
-    <AvatarPrimitive.Root
-      // Sin etiqueta, el avatar es puramente decorativo: las iniciales no
-      // aportan nada a quien no ve la pantalla.
+    // Sin etiqueta, el avatar es puramente decorativo para el lector de pantalla.
+    <span
+      className={cn('inline-flex shrink-0', className)}
       aria-hidden={etiquetar ? undefined : true}
-      className={cn(
-        'inline-flex shrink-0 select-none items-center justify-center overflow-hidden rounded-full',
-        TAMANOS[tamano],
-        PALETA[color],
-        className,
-      )}
+      role={etiquetar ? 'img' : undefined}
+      aria-label={etiquetar ? nombre : undefined}
     >
-      {src ? (
-        <AvatarPrimitive.Image
-          src={src}
-          alt={etiquetar ? nombre : ''}
-          className="h-full w-full object-cover"
-        />
-      ) : null}
-      <AvatarPrimitive.Fallback
-        className="flex h-full w-full items-center justify-center font-bold leading-none"
-        delayMs={src ? 300 : 0}
+      <AntAvatar
+        size={lado}
+        src={src}
+        alt=""
+        className="font-bold"
+        style={{ background: fondo, color: colorTexto, fontSize: letra }}
       >
-        <span aria-hidden="true">{texto}</span>
-        {etiquetar ? <span className="sr-only">{nombre}</span> : null}
-      </AvatarPrimitive.Fallback>
-    </AvatarPrimitive.Root>
+        {texto}
+      </AntAvatar>
+    </span>
   );
 }

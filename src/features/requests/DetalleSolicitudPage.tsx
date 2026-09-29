@@ -1,5 +1,6 @@
 /** Pantalla 6 — Detalle y seguimiento de una solicitud (vista del estudiante). */
 
+import { Descriptions } from 'antd';
 import { Navigate, useParams } from 'react-router-dom';
 
 import { RUTAS } from '@/app/rutas';
@@ -7,6 +8,7 @@ import {
   Avatar,
   Breadcrumb,
   Button,
+  ButtonLink,
   Card,
   EmptyState,
   FileChip,
@@ -43,9 +45,7 @@ export function DetalleSolicitudPage() {
         titulo="No encontramos esa solicitud"
         descripcion="Es posible que haya sido eliminada o que el enlace sea incorrecto."
       >
-        <Button asChild>
-          <a href={RUTAS.inicio}>Volver al inicio</a>
-        </Button>
+        <ButtonLink to={RUTAS.inicio}>Volver al inicio</ButtonLink>
       </EmptyState>
     );
   }
@@ -133,20 +133,23 @@ export function DetalleSolicitudPage() {
           ) : (
             <Card>
               <SectionHeader titulo="Datos enviados" />
-              <dl className="grid gap-3 sm:grid-cols-2">
-                {campos.map((campo) => (
-                  <div key={campo.nombre}>
-                    <dt className="text-xs font-semibold uppercase tracking-wide text-ink-3">
+              <Descriptions
+                layout="vertical"
+                size="small"
+                colon={false}
+                column={{ xs: 1, sm: 2 }}
+                items={campos.map((campo) => ({
+                  key: campo.nombre,
+                  label: (
+                    <span className="text-xs font-semibold uppercase tracking-wide">
                       {campo.etiqueta}
-                    </dt>
-                    <dd className="mt-0.5 text-base text-ink">
-                      {formatearValorCampo(campo, solicitud.datosFormulario[campo.nombre]) || (
-                        <span className="text-ink-4">Sin completar</span>
-                      )}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
+                    </span>
+                  ),
+                  children: formatearValorCampo(campo, solicitud.datosFormulario[campo.nombre]) || (
+                    <span className="text-ink-3">Sin completar</span>
+                  ),
+                }))}
+              />
             </Card>
           )}
 

@@ -5,10 +5,11 @@
  * panel deslizante que se cierra al navegar.
  */
 
+import { Drawer, Layout } from 'antd';
 import { useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 
-import { cn } from '@/lib/utils';
+import { ESTRUCTURA } from '@/theme/tokens';
 
 import { DevRoleSwitcher } from './DevRoleSwitcher';
 import { Sidebar } from './Sidebar';
@@ -44,34 +45,32 @@ export function AppLayout() {
     <div className="flex h-dvh flex-col overflow-hidden bg-canvas">
       <DevRoleSwitcher />
 
-      <div className="flex min-h-0 flex-1">
+      <Layout hasSider className="min-h-0 flex-1">
         {/* Barra lateral fija en escritorio */}
-        <div className="hidden lg:block">
+        <Layout.Sider width={ESTRUCTURA.barraLateral} className="hidden lg:block">
           <Sidebar />
-        </div>
+        </Layout.Sider>
 
         {/* Panel deslizante en pantallas estrechas */}
-        {menuAbierto ? (
-          <div className="fixed inset-0 z-40 lg:hidden">
-            <button
-              type="button"
-              aria-label="Cerrar navegación"
-              className="absolute inset-0 bg-ink/50"
-              onClick={() => setMenuAbierto(false)}
-            />
-            <div className="absolute inset-y-0 left-0 animate-overlay-in">
-              <Sidebar onNavegar={() => setMenuAbierto(false)} />
-            </div>
-          </div>
-        ) : null}
+        <Drawer
+          placement="left"
+          open={menuAbierto}
+          onClose={() => setMenuAbierto(false)}
+          closable={false}
+          size={ESTRUCTURA.barraLateral}
+          styles={{ body: { padding: 0 } }}
+          aria-label="Navegación"
+        >
+          <Sidebar onNavegar={() => setMenuAbierto(false)} />
+        </Drawer>
 
-        <div className="flex min-w-0 flex-1 flex-col">
+        <Layout className="min-w-0">
           <Topbar titulo={titulo} subtitulo={subtitulo} onAbrirMenu={() => setMenuAbierto(true)} />
-          <main className={cn('flex-1 overflow-y-auto bg-canvas p-4 lg:p-7')}>
+          <Layout.Content className="overflow-y-auto p-4 lg:p-7">
             <Outlet />
-          </main>
-        </div>
-      </div>
+          </Layout.Content>
+        </Layout>
+      </Layout>
     </div>
   );
 }

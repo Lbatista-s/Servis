@@ -21,16 +21,19 @@ Esta aplicación es la implementación en React del prototipo de alta fidelidad
 | ------------- | ------------------------------------------------ |
 | Interfaz      | React 18 + TypeScript en modo `strict`           |
 | Empaquetado   | Vite 5                                           |
-| Componentes   | Radix UI Primitives (sin estilos propios)        |
-| Estilos       | Tailwind CSS con los design tokens del prototipo |
+| Componentes   | Ant Design 6 con el tema institucional de SERVIS |
+| Estilos       | Tailwind CSS para maquetación, mismos tokens     |
 | Enrutamiento  | React Router v6                                  |
 | Estado global | Zustand (con `persist` para la sesión)           |
 | Formularios   | React Hook Form + Zod                            |
 | Pruebas       | Vitest + React Testing Library                   |
 | Calidad       | ESLint + Prettier                                |
 
-No se usan librerías de componentes ya estilizados (MUI, Ant, Chakra): el diseño del prototipo se
-reproduce sobre las primitivas sin estilo de Radix.
+Los componentes de interfaz son de Ant Design, configurados con la línea gráfica institucional
+(Rojo INTEC `#E4002B`, Vino `#93070A`, Gris `#63666A`, azul de apoyo `#052A47`, Montserrat y
+Open Sans). La paleta vive en `src/theme/tokens.ts` y alimenta a la vez el tema de Ant Design
+(`src/theme/antd.ts`) y Tailwind, que se usa sólo para la maquetación y los detalles que la
+librería no cubre.
 
 ---
 
@@ -178,7 +181,8 @@ src/
     user-management/      Gestión de usuarios
     service-management/   Gestión del catálogo
     settings/             Configuración y datos de demostración
-  components/ui/          Wrappers de Radix con los estilos del prototipo
+  components/ui/          Envoltorios finos de Ant Design con la API en español
+  theme/                  Tokens de la línea gráfica y tema de Ant Design
   hooks/                  Acceso a datos y utilidades de React
   lib/                    Formato y utilidades sin dependencias de React
   test/                   Configuración y fábricas de prueba

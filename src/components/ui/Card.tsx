@@ -1,25 +1,43 @@
 /** Tarjetas y encabezados de sección. */
 
-import type { HTMLAttributes, ReactNode } from 'react';
+import { Card as AntCard, type CardProps as AntCardProps } from 'antd';
+import type { CSSProperties, ReactNode } from 'react';
 
 import { cn } from '@/lib/utils';
+import { COLORES } from '@/theme/tokens';
 
-export interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  /** Variante compacta (`card-sm` en el prototipo): radio y relleno menores. */
+/** Fondos admitidos. Se aplican en línea porque el de Ant Design tiene prioridad. */
+const FONDO = {
+  superficie: undefined,
+  suave: { background: COLORES.surface[2] },
+  institucional: {
+    background: `linear-gradient(135deg, ${COLORES.shell.DEFAULT}, ${COLORES.shell.gradient})`,
+    borderColor: 'transparent',
+  },
+} satisfies Record<string, CSSProperties | undefined>;
+
+export interface CardProps extends Omit<AntCardProps, 'variant'> {
+  /** Variante compacta: relleno menor. */
   compacta?: boolean;
-  /** Elimina el relleno interior; útil para tarjetas que envuelven una tabla. */
+  /** Elimina el relleno interior; útil para tarjetas que envuelven una tabla o lista. */
   sinRelleno?: boolean;
+  fondo?: keyof typeof FONDO;
 }
 
-export function Card({ compacta, sinRelleno, className, ...props }: CardProps) {
+export function Card({
+  compacta,
+  sinRelleno,
+  fondo = 'superficie',
+  style,
+  styles,
+  ...props
+}: CardProps) {
+  const relleno = sinRelleno ? 0 : compacta ? 16 : 20;
   return (
-    <div
-      className={cn(
-        'border border-line bg-surface',
-        compacta ? 'rounded-md' : 'rounded-lg',
-        sinRelleno ? 'overflow-hidden p-0' : compacta ? 'p-4' : 'p-5',
-        className,
-      )}
+    <AntCard
+      variant="outlined"
+      style={{ ...FONDO[fondo], ...style }}
+      styles={{ ...styles, body: { padding: relleno, ...(sinRelleno && { overflow: 'hidden' }) } }}
       {...props}
     />
   );
@@ -70,13 +88,16 @@ export function PageHeader({
   );
 }
 
-/** Bloque de nota con el filete rojo institucional a la izquierda. */
+/**
+ * Nota con el filete rojo institucional a la izquierda. Se mantiene propia:
+ * `Alert` de Ant Design no admite el filete de la línea gráfica.
+ */
 export function NoteBlock({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div
       className={cn(
         'rounded-r border-l-[3px] border-primary bg-primary-light px-4 py-3 text-base text-ink-2',
-        '[&_strong]:text-primary',
+        '[&_strong]:text-primary-dark',
         className,
       )}
     >

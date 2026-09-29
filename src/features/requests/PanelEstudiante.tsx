@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 
 import { RUTAS } from '@/app/rutas';
 import {
-  Button,
+  ButtonLink,
   Card,
   EmptyState,
   Icono,
@@ -47,7 +47,7 @@ export function PanelEstudiante() {
             {pendientesAtencion > 0 ? (
               <>
                 Tienes{' '}
-                <strong className="text-primary">
+                <strong className="text-primary-dark">
                   {pendientesAtencion} solicitud{pendientesAtencion === 1 ? '' : 'es'}
                 </strong>{' '}
                 que {pendientesAtencion === 1 ? 'requiere' : 'requieren'} tu atención.
@@ -57,12 +57,10 @@ export function PanelEstudiante() {
             )}
           </p>
         </div>
-        <Button asChild>
-          <Link to={RUTAS.catalogo}>
-            <Icono nombre="mas" />
-            Nueva solicitud
-          </Link>
-        </Button>
+        <ButtonLink to={RUTAS.catalogo}>
+          <Icono nombre="mas" />
+          Nueva solicitud
+        </ButtonLink>
       </div>
 
       <div className="mb-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -71,7 +69,7 @@ export function PanelEstudiante() {
           valor={enCurso}
           icono="documento"
           fondoIcono="bg-warning-light"
-          colorValor="text-warning"
+          tono="warning"
           detalle="En proceso de revisión"
         />
         <StatCard
@@ -79,7 +77,7 @@ export function PanelEstudiante() {
           valor={requierenCorreccion}
           icono="rotar"
           fondoIcono="bg-warning-soft"
-          colorValor="text-warning"
+          tono="warning"
           detalle={requierenCorreccion > 0 ? 'Acción requerida' : 'Sin pendientes'}
           detalleNegativo={requierenCorreccion > 0}
         />
@@ -88,7 +86,7 @@ export function PanelEstudiante() {
           valor={aprobadas}
           icono="verificar"
           fondoIcono="bg-success-light"
-          colorValor="text-success"
+          tono="success"
           detalle="Listas para completarse"
         />
         <StatCard
@@ -103,9 +101,9 @@ export function PanelEstudiante() {
       <div className="grid gap-5 xl:grid-cols-[1fr_340px]">
         <section aria-labelledby="titulo-solicitudes">
           <SectionHeader titulo={<span id="titulo-solicitudes">Mis solicitudes</span>}>
-            <Button variante="ghost" tamano="sm" asChild>
-              <Link to={RUTAS.catalogo}>Ver catálogo →</Link>
-            </Button>
+            <ButtonLink to={RUTAS.catalogo} variante="ghost" tamano="sm">
+              Ver catálogo →
+            </ButtonLink>
           </SectionHeader>
 
           <Card sinRelleno>
@@ -115,9 +113,7 @@ export function PanelEstudiante() {
                 titulo="Todavía no tienes solicitudes"
                 descripcion="Explora el catálogo y elige el servicio que necesitas tramitar."
               >
-                <Button asChild>
-                  <Link to={RUTAS.catalogo}>Ver catálogo de servicios</Link>
-                </Button>
+                <ButtonLink to={RUTAS.catalogo}>Ver catálogo de servicios</ButtonLink>
               </EmptyState>
             ) : (
               <ul>
@@ -143,21 +139,15 @@ export function PanelEstudiante() {
             <Notificaciones solicitudes={lista} />
           </Card>
 
-          <Card className="bg-gradient-to-br from-shell to-shell-gradient">
+          <Card fondo="institucional">
             <p className="text-md font-semibold text-white">¿Necesitas ayuda?</p>
-            <p className="mb-3.5 mt-1.5 text-sm text-white/60">
+            <p className="mb-3.5 mt-1.5 text-sm text-white/80">
               Consulta el catálogo de servicios disponibles o contacta al Área de Ingenierías.
             </p>
-            <Button
-              variante="outline"
-              className="border-white/30 text-white hover:bg-white/10"
-              asChild
-            >
-              <Link to={RUTAS.catalogo}>
-                <Icono nombre="cuadricula" />
-                Ver catálogo
-              </Link>
-            </Button>
+            <ButtonLink to={RUTAS.catalogo} variante="outline">
+              <Icono nombre="cuadricula" />
+              Ver catálogo
+            </ButtonLink>
           </Card>
         </aside>
       </div>
@@ -255,7 +245,7 @@ function Notificaciones({ solicitudes }: { solicitudes: readonly Solicitud[] }) 
               <span className="mt-0.5 block text-sm text-ink-3">
                 #{solicitud.id} — {entrada.comentario ?? 'Consulta el detalle de la solicitud.'}
               </span>
-              <span className="mt-1 block text-xs text-ink-4">{tiempoRelativo(entrada.fecha)}</span>
+              <span className="mt-1 block text-xs text-ink-3">{tiempoRelativo(entrada.fecha)}</span>
             </Link>
           </li>
         );

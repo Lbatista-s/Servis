@@ -5,12 +5,12 @@
  * de producción el componente no renderiza nada y el empaquetador lo descarta.
  */
 
+import { Button } from 'antd';
 import { useNavigate } from 'react-router-dom';
 
 import { ETIQUETA_ROL, ROLES, type Rol } from '@/domain/types';
 import { useAuth, useUsuarioActual } from '@/features/auth/authStore';
 import { useUsuarios } from '@/hooks/useDatos';
-import { cn } from '@/lib/utils';
 
 import { INICIO_POR_ROL } from './rutas';
 
@@ -50,22 +50,18 @@ export function DevRoleSwitcher() {
           const disponible = usuarioDe(rol);
           const activo = usuario?.rol === rol;
           return (
-            <button
+            <Button
               key={rol}
-              type="button"
+              size="small"
+              shape="round"
+              type={activo ? 'primary' : 'default'}
+              ghost={!activo}
               disabled={!disponible}
               onClick={() => cambiarA(rol)}
               aria-pressed={activo}
-              className={cn(
-                'rounded-full border-[1.5px] px-2.5 py-1 text-xs font-medium transition-all',
-                activo
-                  ? 'border-primary bg-primary text-white'
-                  : 'border-white/25 text-white/70 hover:border-white/50 hover:text-white',
-                !disponible && 'cursor-not-allowed opacity-40',
-              )}
             >
               {ETIQUETA_ROL[rol]}
-            </button>
+            </Button>
           );
         })}
       </div>

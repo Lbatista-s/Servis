@@ -15,6 +15,13 @@
     @apply bg-canvas font-sans text-base text-ink antialiased;
   }
 
+  /* Línea gráfica: Montserrat para los títulos, Open Sans para el texto. */
+  h1,
+  h2,
+  h3 {
+    @apply font-display;
+  }
+
   /* Foco visible y consistente en todo el sistema (accesibilidad). */
   :focus-visible {
     @apply outline-none ring-2 ring-primary/60 ring-offset-1 ring-offset-surface;
@@ -43,12 +50,5 @@
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
-  }
-}
-
-@layer components {
-  /* Tarjeta base reutilizada por casi todas las pantallas. */
-  .servis-card {
-    @apply rounded-lg border border-line bg-surface p-5;
   }
 }

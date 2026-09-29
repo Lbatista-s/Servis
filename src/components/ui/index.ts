@@ -1,21 +1,24 @@
-/** Punto único de importación de los componentes de interfaz. */
+/**
+ * Punto único de importación de los componentes de interfaz.
+ *
+ * Son envoltorios finos sobre Ant Design que fijan el aspecto y la API en
+ * español de SERVIS. Para los componentes cuya API de Ant Design ya encaja
+ * (Modal, Select, Table, Dropdown, Popover, Checkbox, Switch, Descriptions…)
+ * las pantallas importan directamente desde `antd`.
+ */
 
 export { Avatar } from './Avatar';
-export { Badge, RoleBadge, StatusBadge } from './Badge';
+export { Badge, RoleBadge, StatusBadge, type TonoBadge } from './Badge';
 export { BarChart, type BarraDato } from './BarChart';
 export { Breadcrumb, type Miga } from './Breadcrumb';
-export { Button, variantesBoton, type ButtonProps } from './Button';
-export { Card, NoteBlock, PageHeader, SectionHeader } from './Card';
-export { Table, TableWrapper, Tbody, Td, TdMono, Th, Thead, Tr } from './DataTable';
 export {
-  Dialog,
-  DialogBody,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTrigger,
-} from './Dialog';
+  Button,
+  ButtonLink,
+  type ButtonProps,
+  type TamanoBoton,
+  type VarianteBoton,
+} from './Button';
+export { Card, NoteBlock, PageHeader, SectionHeader } from './Card';
 export {
   EmptyState,
   InlineNotification,
@@ -24,34 +27,12 @@ export {
   Separator,
   type TonoNotificacion,
 } from './Feedback';
-export { Field, FieldHint, FieldLabel, Input, Textarea } from './Field';
+export { DateInput, Field, FieldHint, FieldLabel, Input, Textarea } from './Field';
 export { FileChip, UploadZone } from './Files';
 export { Icono, type NombreIcono } from './Icons';
-export {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-  Tooltip,
-  TooltipProvider,
-} from './Overlays';
-export {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from './Select';
+export { Tooltip } from './Overlays';
+export { ProveedorUI } from './Proveedor';
 export { StatCard } from './StatCard';
 export { Steps } from './Steps';
-export { Tabs, TabsContent, TabsList, TabsTrigger } from './Tabs';
-export { Timeline, TimelineItem, type EstadoPunto } from './Timeline';
-export { ToastProvider, useToast } from './Toast';
-export { Checkbox, CheckboxField, Switch } from './Toggles';
+export { Timeline, type EstadoPunto, type HitoTimeline } from './Timeline';
+export { useToast } from './Toast';
