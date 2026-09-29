@@ -52,3 +52,16 @@
     }
   }
 }
+
+/*
+ * Ítem activo del menú lateral: además del relleno Vino, un filete con el
+ * rojo del logo a la izquierda. El Vino apenas contrasta con el marco
+ * (1,5:1); el filete supera 3:1, así el estado no depende sólo del relleno.
+ *
+ * Va fuera de `@layer`: Tailwind descarta las reglas de una capa cuyas clases
+ * no aparecen en el código, y las de Ant Design sólo existen en tiempo de
+ * ejecución.
+ */
+.ant-menu-dark .ant-menu-item-selected {
+  box-shadow: inset 3px 0 0 rgb(var(--c-chrome-filete)) !important;
+}

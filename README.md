@@ -31,8 +31,10 @@ Esta aplicación es la implementación en React del prototipo de alta fidelidad
 
 Los componentes de interfaz son de Ant Design, configurados con la paleta del manual de identidad
 de INTEC: Rojo INTEC `#E4002B` como color de acción, Vino `#93070A` para lo seleccionado y los
-estados de interacción, y Gris `#63666A` para el marco de la aplicación (barra lateral y superior).
-Tipografía: Montserrat para títulos y Open Sans para el texto.
+estados de interacción, y Gris INTEC para bordes y texto secundario. El marco de la aplicación
+(barra lateral y superior) usa el Gris INTEC sombreado `#2B2C2E` (Gris `#63666A` al 43 % con negro)
+en ambos temas, para que el logo comercial y el texto blanco destaquen. Tipografía: Montserrat para
+títulos y Open Sans para el texto.
 
 - `src/theme/tokens.ts` define las paletas **clara y oscura** (mismas claves) y es la única fuente
   de color. `src/theme/css.ts` las publica como variables CSS, que usan Tailwind y los estilos en

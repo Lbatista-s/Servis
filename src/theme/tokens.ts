@@ -8,11 +8,12 @@
  * Colores oficiales: Rojo INTEC `#E4002B` (primario), Vino INTEC `#93070A` y
  * Gris INTEC `#63666A` (secundarios), con sus tintes al 70, 50, 30 y 10 %.
  * En la interfaz el Rojo es el color de acción, el Vino marca lo seleccionado
- * y los estados de interacción, y el Gris viste el marco de la aplicación.
- * El azul `#052A47` queda como color de apoyo, fuera del marco.
+ * y los estados de interacción, y el marco de la aplicación (barras lateral y
+ * superior, panel del acceso) usa el Gris INTEC sombreado, igual en ambos
+ * temas. El azul `#052A47` queda como color de apoyo, fuera del marco.
  *
  * Todo par de texto y fondo de ambas paletas supera 4,5:1 (lo comprueba
- * `tokens.test.ts`).
+ * `tema.test.tsx`).
  */
 
 /** Estructura común de las dos paletas: mismas claves, distintos valores. */
@@ -30,14 +31,32 @@ export interface Paleta {
   emerald: { DEFAULT: string; light: string };
   sky: { DEFAULT: string; light: string };
   neutral: { DEFAULT: string; light: string; dashed: string; ink: string };
-  /** Marco de la aplicación: barra lateral, barra superior y panel del acceso. */
-  chrome: { DEFAULT: string; activo: string };
+  /**
+   * Marco de la aplicación: barra lateral, barra superior y panel del acceso.
+   * `filete` marca el ítem seleccionado del menú.
+   */
+  chrome: { DEFAULT: string; activo: string; filete: string };
   /** Azul de apoyo: acento ultrasecundario. */
   apoyo: { DEFAULT: string };
   avatar: Record<`${ColorPaleta}-${'bg' | 'fg'}`, string>;
 }
 
 type ColorPaleta = 'red' | 'blue' | 'green' | 'amber' | 'purple' | 'teal';
+
+/**
+ * Gris INTEC sombreado: el Gris 100 % (`#63666A`) al 43 % con negro, color que
+ * el manual admite para reproducción. Viste el marco en ambos temas: sobre él
+ * el hexágono rojo del logo comercial supera 3:1 y el texto blanco 14:1 (sobre
+ * el Gris 100 % serían 1,3:1 y 5,8:1).
+ */
+const GRIS_SOMBREADO = '#2B2C2E';
+
+/**
+ * Rojo del logo comercial (`#ED1B30`): sobre el marco llega a 3,2:1, mientras
+ * que el Rojo INTEC `#E4002B` se queda en 2,9:1. Por eso es el filete del
+ * ítem seleccionado.
+ */
+const ROJO_LOGO = '#ED1B30';
 
 /** Tema claro: tintes oficiales del manual siempre que existen. */
 const CLARO: Paleta = {
@@ -60,7 +79,7 @@ const CLARO: Paleta = {
   emerald: { DEFAULT: '#047857', light: '#ECFDF5' },
   sky: { DEFAULT: '#0369A1', light: '#E0F2FE' },
   neutral: { DEFAULT: '#63666A', light: '#EFF0F0', dashed: '#B1B2B4', ink: '#63666A' },
-  chrome: { DEFAULT: '#63666A', activo: '#93070A' }, // Gris INTEC y Vino INTEC
+  chrome: { DEFAULT: GRIS_SOMBREADO, activo: '#93070A', filete: ROJO_LOGO }, // Gris sombreado, Vino, rojo del logo
   apoyo: { DEFAULT: '#052A47' },
   avatar: {
     'red-bg': '#F4E5E7', // Vino 10 %
@@ -103,7 +122,7 @@ const OSCURO: Paleta = {
   emerald: { DEFAULT: '#6EE7B7', light: '#062A20' },
   sky: { DEFAULT: '#7DD3FC', light: '#0C2A3A' },
   neutral: { DEFAULT: '#B1B2B4', light: '#26282B', dashed: '#4A4D51', ink: '#B1B2B4' },
-  chrome: { DEFAULT: '#2B2D31', activo: '#93070A' },
+  chrome: { DEFAULT: GRIS_SOMBREADO, activo: '#93070A', filete: ROJO_LOGO },
   apoyo: { DEFAULT: '#93C5FD' },
   avatar: {
     'red-bg': '#3A1418',
@@ -134,7 +153,7 @@ export const COLORES = CLARO;
 
 /** Colores del logotipo, tal como vienen en los archivos oficiales. */
 export const COLORES_MARCA = {
-  rojoIntec: '#ED1B30',
+  rojoIntec: ROJO_LOGO,
   rojo: '#E4002B',
   vino: '#93070A',
   gris: '#63666A',

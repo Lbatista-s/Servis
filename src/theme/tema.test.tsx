@@ -8,7 +8,7 @@ import { ProveedorUI, SelectorTema } from '@/components/ui';
 
 import { cv, NOMBRES_TOKENS, variablesCss } from './css';
 import { useTema } from './temaStore';
-import { PALETAS, type ModoTema, type Paleta } from './tokens';
+import { COLORES_MARCA, PALETAS, type ModoTema, type Paleta } from './tokens';
 
 /** Contraste WCAG entre dos colores hexadecimales. */
 function contraste(a: string, b: string): number {
@@ -62,11 +62,27 @@ describe('paleta', () => {
     },
   );
 
-  it('usa los colores oficiales de INTEC en el tema claro', () => {
+  it('usa los colores oficiales de INTEC y el mismo marco en ambos temas', () => {
     expect(PALETAS.claro.primary.DEFAULT).toBe('#E4002B');
     expect(PALETAS.claro.chrome.activo).toBe('#93070A');
-    expect(PALETAS.claro.chrome.DEFAULT).toBe('#63666A');
+    // Gris INTEC sombreado (Gris 100 % al 43 % con negro).
+    expect(PALETAS.claro.chrome.DEFAULT).toBe('#2B2C2E');
+    expect(PALETAS.oscuro.chrome.DEFAULT).toBe(PALETAS.claro.chrome.DEFAULT);
   });
+
+  it.each(['claro', 'oscuro'] as ModoTema[])(
+    'en el tema %s el logo y el filete del seleccionado superan 3:1 sobre el marco',
+    (modo) => {
+      const marco = PALETAS[modo].chrome.DEFAULT;
+      expect(contraste(COLORES_MARCA.rojoIntec, marco), 'hexágono del logo').toBeGreaterThanOrEqual(
+        3,
+      );
+      expect(
+        contraste(PALETAS[modo].chrome.filete, marco),
+        'filete del seleccionado',
+      ).toBeGreaterThanOrEqual(3);
+    },
+  );
 });
 
 describe('variables CSS', () => {

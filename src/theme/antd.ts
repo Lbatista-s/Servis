@@ -3,8 +3,9 @@
  *
  * Los tokens globales fijan la marca: Rojo INTEC como color de acción, Open
  * Sans, radios y alturas de control. Por componente sólo se ajusta lo que la
- * línea gráfica pide: el marco (barra lateral y superior) en Gris INTEC, con el
- * Vino para lo seleccionado y el hover, las cabeceras de tabla y los botones.
+ * línea gráfica pide: el marco (barra lateral y superior) en Gris INTEC
+ * sombreado, con el Vino para lo seleccionado y el hover, las cabeceras de
+ * tabla y los botones.
  */
 
 import { theme, type ThemeConfig } from 'antd';
@@ -15,7 +16,7 @@ const fuente = (familias: readonly string[]) => familias.join(', ');
 
 /** Vino INTEC translúcido para el hover del menú sobre el marco gris. */
 const HOVER_MENU = 'rgba(147,7,10,.45)';
-/** Blanco con opacidad suficiente para superar 4,5:1 sobre el Gris INTEC. */
+/** Blanco con opacidad suficiente para superar 4,5:1 sobre el marco. */
 const TEXTO_MARCO = 'rgba(255,255,255,.9)';
 
 export function crearTemaAntd(modo: ModoTema): ThemeConfig {
