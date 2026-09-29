@@ -148,13 +148,12 @@ export function DateInput({
   onBlur?: () => void;
   placeholder?: string;
 }) {
-  const { status, id: idControl } = useAtributosControl(id);
+  const atributos = useAtributosControl(id);
   // `AAAA-MM-DD` es ISO 8601: dayjs lo interpreta sin plugins de formato.
   const fecha = value ? dayjs(value) : null;
   return (
     <DatePicker
-      id={idControl}
-      status={status}
+      {...atributos}
       className="w-full"
       format="DD/MM/YYYY"
       placeholder={placeholder}
