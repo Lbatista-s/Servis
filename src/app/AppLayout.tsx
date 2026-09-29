@@ -13,23 +13,8 @@ import { ESTRUCTURA } from '@/theme/tokens';
 
 import { DevRoleSwitcher } from './DevRoleSwitcher';
 import { Sidebar } from './Sidebar';
-import { TITULOS } from './navegacion';
+import { titulosDe } from './navegacion';
 import { Topbar } from './Topbar';
-
-/** Resuelve el título de la barra superior, admitiendo rutas con parámetros. */
-function titulosDe(ruta: string): { titulo: string; subtitulo: string } {
-  if (TITULOS[ruta]) return TITULOS[ruta];
-  if (ruta.startsWith('/solicitudes/nueva')) {
-    return { titulo: 'Nueva solicitud', subtitulo: 'Completa el formulario por pasos' };
-  }
-  if (ruta.startsWith('/solicitudes/')) {
-    return { titulo: 'Detalle de la solicitud', subtitulo: 'Seguimiento del trámite' };
-  }
-  if (ruta.startsWith('/bandeja/')) {
-    return { titulo: 'Revisión de solicitud', subtitulo: 'Acciones del personal administrativo' };
-  }
-  return { titulo: 'SERVIS', subtitulo: 'Servicios institucionales' };
-}
 
 export function AppLayout() {
   const ubicacion = useLocation();

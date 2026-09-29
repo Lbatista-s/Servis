@@ -1,7 +1,7 @@
 /** Pantalla 8 — Detalle de solicitud con acciones de revisión. */
 
-import { Checkbox, Descriptions } from 'antd';
-import { useEffect, useState, type ReactNode } from 'react';
+import { Checkbox } from 'antd';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { RUTAS } from '@/app/rutas';
@@ -15,9 +15,11 @@ import {
   FileChip,
   Icono,
   InlineNotification,
+  ListaDatos,
   Loading,
   NoteBlock,
   SectionHeader,
+  Sobretitulo,
   StatusBadge,
   Textarea,
   useToast,
@@ -84,27 +86,29 @@ export function DetalleBandejaPage() {
 
             {/* Datos del estudiante */}
             <div className="mb-4 rounded-md border border-line bg-surface-2 p-4">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-ink-3">
-                Datos del estudiante
-              </p>
-              <Datos
+              <Sobretitulo>Datos del estudiante</Sobretitulo>
+              <ListaDatos
                 datos={[
-                  ['Nombre', <strong key="nombre">{estudiante?.nombre ?? '—'}</strong>],
-                  ['Matrícula', estudiante?.matricula],
-                  ['Carrera', estudiante?.carrera],
-                  ['Semestre', estudiante?.semestre],
-                  ['Correo', estudiante?.correo],
+                  {
+                    etiqueta: 'Nombre',
+                    valor: estudiante ? <strong>{estudiante.nombre}</strong> : null,
+                  },
+                  { etiqueta: 'Matrícula', valor: estudiante?.matricula },
+                  { etiqueta: 'Carrera', valor: estudiante?.carrera },
+                  { etiqueta: 'Semestre', valor: estudiante?.semestre },
+                  { etiqueta: 'Correo', valor: estudiante?.correo },
                 ]}
               />
             </div>
 
             {/* Datos del formulario */}
             <div className="mb-4">
-              <Datos
-                datos={campos.map((campo) => [
-                  campo.etiqueta,
-                  formatearValorCampo(campo, solicitud.datosFormulario[campo.nombre]),
-                ])}
+              <ListaDatos
+                datos={campos.map((campo) => ({
+                  etiqueta: campo.etiqueta,
+                  valor: formatearValorCampo(campo, solicitud.datosFormulario[campo.nombre]),
+                  anchoCompleto: campo.anchoCompleto,
+                }))}
               />
             </div>
 
@@ -165,9 +169,7 @@ export function DetalleBandejaPage() {
 
           {servicio ? (
             <Card fondo="suave">
-              <p className="mb-2.5 text-sm font-semibold uppercase tracking-wide text-ink-3">
-                Checklist de revisión
-              </p>
+              <Sobretitulo>Checklist de revisión</Sobretitulo>
               <ChecklistRevision requisitos={servicio.requisitos.map((r) => r.descripcion)} />
               <FieldHint className="mt-3">
                 Lista de apoyo para el revisor. No se guarda con la solicitud.
@@ -177,26 +179,6 @@ export function DetalleBandejaPage() {
         </aside>
       </div>
     </>
-  );
-}
-
-/** Pares etiqueta–valor en dos columnas, sobre `Descriptions` de Ant Design. */
-function Datos({ datos }: { datos: readonly (readonly [string, ReactNode])[] }) {
-  return (
-    <Descriptions
-      layout="vertical"
-      size="small"
-      colon={false}
-      column={{ xs: 1, sm: 2 }}
-      items={datos.map(([etiqueta, valor]) => ({
-        key: etiqueta,
-        label: <span className="text-xs font-semibold uppercase tracking-wide">{etiqueta}</span>,
-        children:
-          typeof valor === 'string' || valor == null
-            ? valor?.trim() || <span className="text-ink-3">—</span>
-            : valor,
-      }))}
-    />
   );
 }
 

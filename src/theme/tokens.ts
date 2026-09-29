@@ -14,6 +14,7 @@
  */
 
 export const COLORES = {
+  white: '#FFFFFF',
   primary: {
     DEFAULT: '#E4002B',
     hover: '#93070A',

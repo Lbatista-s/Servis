@@ -1,11 +1,10 @@
 /** Pantalla 6 — Detalle y seguimiento de una solicitud (vista del estudiante). */
 
-import { Descriptions } from 'antd';
 import { Navigate, useParams } from 'react-router-dom';
 
 import { RUTAS } from '@/app/rutas';
 import {
-  Avatar,
+  AvatarUsuario,
   Breadcrumb,
   Button,
   ButtonLink,
@@ -14,6 +13,7 @@ import {
   FileChip,
   Icono,
   InlineNotification,
+  ListaDatos,
   Loading,
   SectionHeader,
   StatusBadge,
@@ -82,12 +82,7 @@ export function DetalleSolicitudPage() {
             {usuario ? (
               <>
                 {' · '}
-                <Avatar
-                  nombre={usuario.nombre}
-                  iniciales={usuario.iniciales}
-                  color={usuario.colorAvatar}
-                  tamano="xs"
-                />
+                <AvatarUsuario usuario={usuario} tamano="xs" />
                 {usuario.nombre}
               </>
             ) : null}
@@ -133,21 +128,12 @@ export function DetalleSolicitudPage() {
           ) : (
             <Card>
               <SectionHeader titulo="Datos enviados" />
-              <Descriptions
-                layout="vertical"
-                size="small"
-                colon={false}
-                column={{ xs: 1, sm: 2 }}
-                items={campos.map((campo) => ({
-                  key: campo.nombre,
-                  label: (
-                    <span className="text-xs font-semibold uppercase tracking-wide">
-                      {campo.etiqueta}
-                    </span>
-                  ),
-                  children: formatearValorCampo(campo, solicitud.datosFormulario[campo.nombre]) || (
-                    <span className="text-ink-3">Sin completar</span>
-                  ),
+              <ListaDatos
+                vacio="Sin completar"
+                datos={campos.map((campo) => ({
+                  etiqueta: campo.etiqueta,
+                  valor: formatearValorCampo(campo, solicitud.datosFormulario[campo.nombre]),
+                  anchoCompleto: campo.anchoCompleto,
                 }))}
               />
             </Card>

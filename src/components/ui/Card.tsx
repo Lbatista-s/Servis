@@ -88,6 +88,15 @@ export function PageHeader({
   );
 }
 
+/** Rótulo pequeño en mayúsculas que encabeza un bloque dentro de una tarjeta. */
+export function Sobretitulo({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <p className={cn('mb-3 text-xs font-semibold uppercase tracking-wide text-ink-3', className)}>
+      {children}
+    </p>
+  );
+}
+
 /**
  * Nota con el filete rojo institucional a la izquierda. Se mantiene propia:
  * `Alert` de Ant Design no admite el filete de la línea gráfica.

@@ -18,7 +18,7 @@ import { UsuariosPage } from '@/features/user-management/UsuariosPage';
 
 import { AppLayout } from './AppLayout';
 import { RaizRedirect } from './RaizRedirect';
-import { ROLES_BANDEJA, RUTAS } from './rutas';
+import { PATRONES, ROLES_BANDEJA, RUTAS } from './rutas';
 
 export function App() {
   return (
@@ -48,7 +48,7 @@ export function App() {
               }
             />
             <Route
-              path="/solicitudes/nueva/:servicioId"
+              path={PATRONES.nuevaSolicitud}
               element={
                 <RequireRole roles={['estudiante']}>
                   <NuevaSolicitudPage />
@@ -56,7 +56,7 @@ export function App() {
               }
             />
             <Route
-              path="/solicitudes/:id"
+              path={PATRONES.detalleSolicitud}
               element={
                 <RequireRole roles={['estudiante']}>
                   <DetalleSolicitudPage />
@@ -73,7 +73,7 @@ export function App() {
               }
             />
             <Route
-              path="/bandeja/:id"
+              path={PATRONES.detalleBandeja}
               element={
                 <RequireRole roles={ROLES_BANDEJA}>
                   <DetalleBandejaPage />

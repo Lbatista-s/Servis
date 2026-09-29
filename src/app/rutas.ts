@@ -16,6 +16,20 @@ export const RUTAS = {
   servicios: '/admin/servicios',
 } as const;
 
+/** Patrones con parámetros para React Router, derivados de las mismas rutas. */
+export const PATRONES = {
+  nuevaSolicitud: RUTAS.nuevaSolicitud(':servicioId'),
+  detalleSolicitud: RUTAS.detalleSolicitud(':id'),
+  detalleBandeja: RUTAS.detalleBandeja(':id'),
+} as const;
+
+/** Prefijos de las rutas con parámetros, para reconocerlas sin repetir cadenas. */
+export const PREFIJOS = {
+  nuevaSolicitud: RUTAS.nuevaSolicitud(''),
+  detalleSolicitud: RUTAS.detalleSolicitud(''),
+  detalleBandeja: RUTAS.detalleBandeja(''),
+} as const;
+
 /**
  * Pantalla inicial de cada rol tras iniciar sesión. También es el destino al
  * que se redirige a quien intenta entrar en una ruta que no le corresponde.

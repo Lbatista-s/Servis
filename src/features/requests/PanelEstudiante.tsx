@@ -17,6 +17,7 @@ import type { Solicitud } from '@/domain/types';
 import { useUsuarioActual } from '@/features/auth/authStore';
 import { useIndiceServicios, useSolicitudes } from '@/hooks/useDatos';
 import { formatearFecha, tiempoRelativo } from '@/lib/format';
+import { contar } from '@/lib/texto';
 
 export function PanelEstudiante() {
   const usuario = useUsuarioActual();
@@ -48,7 +49,7 @@ export function PanelEstudiante() {
               <>
                 Tienes{' '}
                 <strong className="text-primary-dark">
-                  {pendientesAtencion} solicitud{pendientesAtencion === 1 ? '' : 'es'}
+                  {contar(pendientesAtencion, 'solicitud', 'solicitudes')}
                 </strong>{' '}
                 que {pendientesAtencion === 1 ? 'requiere' : 'requieren'} tu atención.
               </>

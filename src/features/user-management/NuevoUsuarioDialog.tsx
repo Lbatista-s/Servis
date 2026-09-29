@@ -17,9 +17,10 @@ import {
   useToast,
 } from '@/components/ui';
 import { repositorios } from '@/data';
-import { ETIQUETA_ROL, ROLES, type ColorAvatar } from '@/domain/types';
+import { COLORES_AVATAR, ETIQUETA_ROL, ROLES } from '@/domain/types';
 import { mensajeDeError } from '@/hooks/useAsync';
 import { useRevalidar } from '@/hooks/useDatos';
+import { correoInstitucional, DOMINIO_INSTITUCIONAL } from '@/lib/esquemas';
 import { iniciales } from '@/lib/utils';
 
 const esquemaUsuario = z.object({
@@ -29,22 +30,16 @@ const esquemaUsuario = z.object({
     .refine((valor) => valor.trim().split(/\s+/).length >= 2, {
       message: 'Indica nombre y apellido.',
     }),
-  correo: z
-    .string()
-    .min(1, 'El correo es obligatorio.')
-    .email('El formato del correo no es válido.')
-    .refine((valor) => valor.trim().toLowerCase().endsWith('@intec.edu.do'), {
-      message: 'Debe ser un correo institucional del INTEC (@intec.edu.do).',
-    }),
+  correo: correoInstitucional({
+    requerido: 'El correo es obligatorio.',
+    dominio: `Debe ser un correo institucional del INTEC (${DOMINIO_INSTITUCIONAL}).`,
+  }),
   rol: z.enum(ROLES),
   matricula: z.string().optional(),
   carrera: z.string().optional(),
 });
 
 type DatosUsuario = z.infer<typeof esquemaUsuario>;
-
-/** Paleta rotatoria para asignar color de avatar a cada usuario nuevo. */
-const COLORES: readonly ColorAvatar[] = ['blue', 'green', 'amber', 'purple', 'teal', 'red'];
 
 export function NuevoUsuarioDialog() {
   const [abierto, setAbierto] = useState(false);
@@ -67,7 +62,7 @@ export function NuevoUsuarioDialog() {
         correo: datos.correo.trim().toLowerCase(),
         rol: datos.rol,
         iniciales: iniciales(datos.nombre),
-        colorAvatar: COLORES[Math.floor(Math.random() * COLORES.length)] ?? 'blue',
+        colorAvatar: COLORES_AVATAR[Math.floor(Math.random() * COLORES_AVATAR.length)] ?? 'blue',
         activo: true,
         ...(datos.rol === 'estudiante'
           ? { matricula: datos.matricula?.trim(), carrera: datos.carrera?.trim() }
@@ -118,7 +113,7 @@ export function NuevoUsuarioDialog() {
                 <Input type="email" placeholder="a.garcia@intec.edu.do" {...field} />
               )}
             />
-            <FieldHint>Debe pertenecer al dominio @intec.edu.do.</FieldHint>
+            <FieldHint>Debe pertenecer al dominio {DOMINIO_INSTITUCIONAL}.</FieldHint>
           </Field>
 
           <Field error={formulario.formState.errors.rol?.message}>

@@ -22,6 +22,7 @@ import { repositorios } from '@/data';
 import { ETIQUETA_CATEGORIA, type Servicio } from '@/domain/types';
 import { mensajeDeError } from '@/hooks/useAsync';
 import { useRevalidar, useServicios } from '@/hooks/useDatos';
+import { contar } from '@/lib/texto';
 
 export function ServiciosPage() {
   const { datos: servicios, cargando } = useServicios();
@@ -80,7 +81,7 @@ export function ServiciosPage() {
       key: 'requisitos',
       render: (_, servicio) => (
         <Badge tono={servicio.requisitos.length === 0 ? 'red' : 'gray'} sinPunto>
-          {servicio.requisitos.length} requisito{servicio.requisitos.length === 1 ? '' : 's'}
+          {contar(servicio.requisitos.length, 'requisito')}
         </Badge>
       ),
     },

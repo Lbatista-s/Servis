@@ -2,31 +2,23 @@
 
 import { Badge, Menu, type MenuProps } from 'antd';
 import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
-import { Avatar, Icono, Tooltip } from '@/components/ui';
+import { AvatarUsuario, Icono, Tooltip } from '@/components/ui';
 import { ETIQUETA_ROL } from '@/domain/types';
-import { useAuth, useUsuarioActual } from '@/features/auth/authStore';
+import { useUsuarioActual } from '@/features/auth/authStore';
 import { ConfiguracionDialog } from '@/features/settings/ConfiguracionDialog';
 import { useSolicitudes } from '@/hooks/useDatos';
 import { COLORES } from '@/theme/tokens';
 
-import { NAVEGACION_POR_ROL, type ElementoNavegacion } from './navegacion';
-import { RUTAS } from './rutas';
+import { claveActiva, NAVEGACION_POR_ROL } from './navegacion';
+import { useCerrarSesion } from './useCerrarSesion';
 
 const CLAVE_CONFIGURACION = 'configuracion';
 
-/** Entrada del menú que corresponde a la ruta actual, incluidas las de detalle. */
-function claveActiva(ruta: string, elementos: readonly ElementoNavegacion[]): string {
-  if (ruta.startsWith('/solicitudes/nueva')) return RUTAS.catalogo;
-  if (ruta.startsWith('/solicitudes/')) return RUTAS.inicio;
-  return elementos.find((e) => ruta === e.a || ruta.startsWith(`${e.a}/`))?.a ?? '';
-}
-
 export function Sidebar({ onNavegar }: { onNavegar?: () => void }) {
   const usuario = useUsuarioActual();
-  const cerrarSesion = useAuth((estado) => estado.cerrarSesion);
-  const navegar = useNavigate();
+  const salir = useCerrarSesion();
   const ubicacion = useLocation();
   const [configuracionAbierta, setConfiguracionAbierta] = useState(false);
 
@@ -71,7 +63,7 @@ export function Sidebar({ onNavegar }: { onNavegar?: () => void }) {
               <Badge
                 count={contador}
                 size="small"
-                color="#FFFFFF"
+                color={COLORES.white}
                 style={{ color: COLORES.primary.dark, fontWeight: 700, boxShadow: 'none' }}
               />
             ) : undefined,
@@ -127,12 +119,7 @@ export function Sidebar({ onNavegar }: { onNavegar?: () => void }) {
       {/* Usuario activo */}
       <div className="mt-auto border-t border-white/[0.07] p-2 pt-3">
         <div className="flex items-center gap-2.5 rounded px-2 py-2.5">
-          <Avatar
-            nombre={usuario.nombre}
-            iniciales={usuario.iniciales}
-            color={usuario.colorAvatar}
-            tamano="lg"
-          />
+          <AvatarUsuario usuario={usuario} tamano="lg" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-base font-semibold text-white">{usuario.nombre}</p>
             <p className="truncate text-xs text-white/60">{ETIQUETA_ROL[usuario.rol]}</p>
@@ -141,10 +128,7 @@ export function Sidebar({ onNavegar }: { onNavegar?: () => void }) {
             <button
               type="button"
               aria-label="Cerrar sesión"
-              onClick={() => {
-                cerrarSesion();
-                navegar(RUTAS.login, { replace: true });
-              }}
+              onClick={salir}
               className="rounded-sm p-1 text-white/70 transition-opacity hover:text-white"
             >
               <Icono nombre="salir" />

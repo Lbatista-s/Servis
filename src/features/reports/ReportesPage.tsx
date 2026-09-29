@@ -6,7 +6,7 @@
  */
 
 import {
-  Avatar,
+  AvatarUsuario,
   BarChart,
   Button,
   Card,
@@ -171,12 +171,7 @@ export function ReportesPage() {
                     key={usuario.id}
                     className="flex items-center gap-2.5 border-b border-line py-2 text-base last:border-b-0"
                   >
-                    <Avatar
-                      nombre={usuario.nombre}
-                      iniciales={usuario.iniciales}
-                      color={usuario.colorAvatar}
-                      tamano="md"
-                    />
+                    <AvatarUsuario usuario={usuario} tamano="md" />
                     <span>
                       <span className="block font-medium">{usuario.nombre}</span>
                       <span className="block text-xs text-ink-3">

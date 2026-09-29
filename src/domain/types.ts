@@ -68,7 +68,9 @@ export const ESTADOS_FINALES: readonly EstadoSolicitud[] = [
 // Entidades
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type ColorAvatar = 'red' | 'blue' | 'green' | 'amber' | 'purple' | 'teal';
+export const COLORES_AVATAR = ['red', 'blue', 'green', 'amber', 'purple', 'teal'] as const;
+
+export type ColorAvatar = (typeof COLORES_AVATAR)[number];
 
 export interface Usuario {
   id: string;

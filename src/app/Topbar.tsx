@@ -1,13 +1,11 @@
 /** Barra superior: título de la pantalla, búsqueda, avisos y menú de usuario. */
 
 import { Badge, Button, Dropdown, Input, Layout } from 'antd';
-import { useNavigate } from 'react-router-dom';
-
-import { Avatar, Icono } from '@/components/ui';
+import { AvatarUsuario, Icono } from '@/components/ui';
 import { ETIQUETA_ROL } from '@/domain/types';
-import { useAuth, useUsuarioActual } from '@/features/auth/authStore';
+import { useUsuarioActual } from '@/features/auth/authStore';
 
-import { RUTAS } from './rutas';
+import { useCerrarSesion } from './useCerrarSesion';
 
 export function Topbar({
   titulo,
@@ -20,13 +18,7 @@ export function Topbar({
   onAbrirMenu: () => void;
 }) {
   const usuario = useUsuarioActual();
-  const cerrarSesion = useAuth((estado) => estado.cerrarSesion);
-  const navegar = useNavigate();
-
-  function salir() {
-    cerrarSesion();
-    navegar(RUTAS.login, { replace: true });
-  }
+  const salir = useCerrarSesion();
 
   return (
     <Layout.Header
@@ -85,12 +77,7 @@ export function Topbar({
           }}
         >
           <Button shape="round" className="flex shrink-0 items-center gap-2 pl-1">
-            <Avatar
-              nombre={usuario.nombre}
-              iniciales={usuario.iniciales}
-              color={usuario.colorAvatar}
-              tamano="sm"
-            />
+            <AvatarUsuario usuario={usuario} tamano="sm" />
             <span className="hidden text-base font-medium text-ink sm:inline">
               {usuario.nombre}
             </span>

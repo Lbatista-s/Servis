@@ -1,33 +1,33 @@
 /** Pantalla 7 — Bandeja administrativa. */
 
-import { Select, Table, type TableColumnsType } from 'antd';
+import { Table, type TableColumnsType } from 'antd';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { RUTAS } from '@/app/rutas';
 import {
-  Avatar,
+  AvatarUsuario,
   Badge,
   Button,
   Card,
   EmptyState,
+  CampoBusqueda,
   Icono,
-  Input,
   Loading,
   PageHeader,
+  SelectorFiltro,
   StatCard,
   StatusBadge,
 } from '@/components/ui';
-import { ESTADOS, ETIQUETA_ESTADO, type EstadoSolicitud, type Solicitud } from '@/domain/types';
+import { ETIQUETA_ESTADO, type EstadoSolicitud, type Solicitud } from '@/domain/types';
 import { useIndiceServicios, useIndiceUsuarios, useSolicitudes } from '@/hooks/useDatos';
+import { opcionesConTodos, TODOS, type ConTodos } from '@/lib/filtros';
 import { formatearFecha, formatearFechaLarga } from '@/lib/format';
-
-const TODOS = 'todos';
 
 export function BandejaPage() {
   const [busqueda, setBusqueda] = useState('');
-  const [estado, setEstado] = useState<EstadoSolicitud | typeof TODOS>(TODOS);
-  const [servicioId, setServicioId] = useState<string>(TODOS);
+  const [estado, setEstado] = useState<ConTodos<EstadoSolicitud>>(TODOS);
+  const [servicioId, setServicioId] = useState<ConTodos<string>>(TODOS);
   const navegar = useNavigate();
 
   const { datos: todas, cargando } = useSolicitudes();
@@ -65,14 +65,7 @@ export function BandejaPage() {
         const estudiante = usuarios.get(solicitud.solicitanteId);
         return (
           <span className="flex items-center gap-2">
-            {estudiante ? (
-              <Avatar
-                nombre={estudiante.nombre}
-                iniciales={estudiante.iniciales}
-                color={estudiante.colorAvatar}
-                tamano="md"
-              />
-            ) : null}
+            {estudiante ? <AvatarUsuario usuario={estudiante} tamano="md" /> : null}
             <span>
               <span className="block font-medium">
                 {estudiante?.nombre ?? 'Usuario desconocido'}
@@ -178,41 +171,30 @@ export function BandejaPage() {
       </div>
 
       <div className="mb-5 flex flex-wrap items-center gap-2">
-        <div className="w-full sm:w-64">
-          <Input
-            type="search"
-            allowClear
-            value={busqueda}
-            onChange={(evento) => setBusqueda(evento.target.value)}
-            placeholder="Buscar por estudiante o ID…"
-            aria-label="Buscar por estudiante o identificador"
-            prefix={<Icono nombre="buscar" className="text-ink-3" />}
-          />
-        </div>
-
-        <Select
-          value={servicioId}
-          onChange={(valor: string) => setServicioId(valor)}
-          aria-label="Filtrar por servicio"
-          className="w-full sm:w-52"
-          options={[
-            { value: TODOS, label: 'Todos los servicios' },
-            ...[...servicios.values()].map((servicio) => ({
-              value: servicio.id,
-              label: servicio.nombre,
-            })),
-          ]}
+        <CampoBusqueda
+          valor={busqueda}
+          onCambio={setBusqueda}
+          placeholder="Buscar por estudiante o ID…"
+          etiqueta="Buscar por estudiante o identificador"
         />
 
-        <Select
-          value={estado}
-          onChange={(valor: EstadoSolicitud | typeof TODOS) => setEstado(valor)}
-          aria-label="Filtrar por estado"
-          className="w-full sm:w-44"
-          options={[
-            { value: TODOS, label: 'Todos los estados' },
-            ...ESTADOS.map((clave) => ({ value: clave, label: ETIQUETA_ESTADO[clave] })),
-          ]}
+        <SelectorFiltro
+          valor={servicioId}
+          onCambio={setServicioId}
+          etiqueta="Filtrar por servicio"
+          className="sm:w-52"
+          opciones={opcionesConTodos(
+            'Todos los servicios',
+            new Map([...servicios.values()].map((servicio) => [servicio.id, servicio.nombre])),
+          )}
+        />
+
+        <SelectorFiltro
+          valor={estado}
+          onCambio={setEstado}
+          etiqueta="Filtrar por estado"
+          className="sm:w-44"
+          opciones={opcionesConTodos('Todos los estados', ETIQUETA_ESTADO)}
         />
 
         <Badge tono="gray" sinPunto>

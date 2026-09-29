@@ -7,7 +7,7 @@
  * las pantallas importan directamente desde `antd`.
  */
 
-export { Avatar } from './Avatar';
+export { Avatar, AvatarUsuario } from './Avatar';
 export { Badge, RoleBadge, StatusBadge, type TonoBadge } from './Badge';
 export { BarChart, type BarraDato } from './BarChart';
 export { Breadcrumb, type Miga } from './Breadcrumb';
@@ -18,7 +18,8 @@ export {
   type TamanoBoton,
   type VarianteBoton,
 } from './Button';
-export { Card, NoteBlock, PageHeader, SectionHeader } from './Card';
+export { Card, NoteBlock, PageHeader, SectionHeader, Sobretitulo } from './Card';
+export { ListaDatos, type Dato } from './Datos';
 export {
   EmptyState,
   InlineNotification,
@@ -29,6 +30,7 @@ export {
 } from './Feedback';
 export { DateInput, Field, FieldHint, FieldLabel, Input, Textarea } from './Field';
 export { FileChip, UploadZone } from './Files';
+export { CampoBusqueda, SelectorFiltro } from './Filtros';
 export { Icono, type NombreIcono } from './Icons';
 export { Tooltip } from './Overlays';
 export { ProveedorUI } from './Proveedor';

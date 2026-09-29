@@ -16,7 +16,7 @@ import { z } from 'zod';
 
 import { INICIO_POR_ROL, RUTAS } from '@/app/rutas';
 import {
-  Avatar,
+  AvatarUsuario,
   Button,
   Field,
   FieldHint,
@@ -28,17 +28,13 @@ import {
 import { ETIQUETA_ROL } from '@/domain/types';
 import { useServicios, useUsuarios } from '@/hooks/useDatos';
 
+import { correoInstitucional, EJEMPLO_CORREO } from '@/lib/esquemas';
+
 import { AuthLayout } from './AuthLayout';
 import { useAuth, useUsuarioActual } from './authStore';
 
 const esquemaAcceso = z.object({
-  correo: z
-    .string()
-    .min(1, 'Indica tu correo institucional.')
-    .email('El formato del correo no es válido.')
-    .refine((valor) => valor.trim().toLowerCase().endsWith('@intec.edu.do'), {
-      message: 'Debes usar tu correo institucional del INTEC (@intec.edu.do).',
-    }),
+  correo: correoInstitucional(),
 });
 
 type DatosAcceso = z.infer<typeof esquemaAcceso>;
@@ -108,7 +104,7 @@ export function LoginPage() {
               <Input
                 type="email"
                 autoComplete="username"
-                placeholder="tu.nombre@intec.edu.do"
+                placeholder={EJEMPLO_CORREO}
                 prefix={<Icono nombre="correo" className="text-ink-3" />}
                 {...field}
               />
@@ -143,12 +139,7 @@ export function LoginPage() {
               value: cuenta.correo,
               label: (
                 <span className="flex items-center gap-2">
-                  <Avatar
-                    nombre={cuenta.nombre}
-                    iniciales={cuenta.iniciales}
-                    color={cuenta.colorAvatar}
-                    tamano="md"
-                  />
+                  <AvatarUsuario usuario={cuenta} tamano="md" />
                   <span>
                     {cuenta.nombre}
                     <span className="text-ink-3"> · {ETIQUETA_ROL[cuenta.rol]}</span>

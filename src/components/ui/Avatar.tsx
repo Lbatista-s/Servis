@@ -2,7 +2,7 @@
 
 import { Avatar as AntAvatar } from 'antd';
 
-import type { ColorAvatar } from '@/domain/types';
+import type { ColorAvatar, Usuario } from '@/domain/types';
 import { cn, iniciales as calcularIniciales } from '@/lib/utils';
 import { COLORES } from '@/theme/tokens';
 
@@ -73,5 +73,22 @@ export function Avatar({
         {texto}
       </AntAvatar>
     </span>
+  );
+}
+
+/** Avatar de un usuario del sistema, con sus iniciales y su color asignado. */
+export function AvatarUsuario({
+  usuario,
+  ...props
+}: {
+  usuario: Pick<Usuario, 'nombre' | 'iniciales' | 'colorAvatar'>;
+} & Omit<AvatarProps, 'nombre' | 'iniciales' | 'color'>) {
+  return (
+    <Avatar
+      nombre={usuario.nombre}
+      iniciales={usuario.iniciales}
+      color={usuario.colorAvatar}
+      {...props}
+    />
   );
 }

@@ -7,7 +7,6 @@
  */
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Descriptions } from 'antd';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
@@ -20,9 +19,11 @@ import {
   FileChip,
   Icono,
   InlineNotification,
+  ListaDatos,
   Loading,
   NoteBlock,
   SectionHeader,
+  Sobretitulo,
   Steps,
   UploadZone,
   useToast,
@@ -33,7 +34,9 @@ import { useActor } from '@/features/auth/authStore';
 import { mensajeDeError } from '@/hooks/useAsync';
 import { useRevalidar, useServicio } from '@/hooks/useDatos';
 import { cn } from '@/lib/utils';
+import { contar } from '@/lib/texto';
 
+import { adjuntosDesde } from './adjuntos';
 import { CamposFormulario } from './CamposFormulario';
 import { camposDe, esquemaDe, formatearValorCampo, valoresIniciales } from './formularios';
 
@@ -76,14 +79,7 @@ export function NuevaSolicitudPage() {
   }
 
   function agregarArchivos(archivos: readonly File[]) {
-    const nuevos: Adjunto[] = archivos.map((archivo, indice) => ({
-      id: `adj-${Date.now()}-${indice}`,
-      nombre: archivo.name,
-      tamano: archivo.size,
-      tipo: archivo.type || 'application/octet-stream',
-      subidoEn: new Date().toISOString(),
-    }));
-    setAdjuntos((actuales) => [...actuales, ...nuevos]);
+    setAdjuntos((actuales) => [...actuales, ...adjuntosDesde(archivos)]);
   }
 
   /** Crea el borrador y, si se pide, lo envía a revisión en la misma acción. */
@@ -183,9 +179,9 @@ export function NuevaSolicitudPage() {
 
               {!requisitosCubiertos ? (
                 <InlineNotification tono="aviso" className="mt-4">
-                  Este servicio exige {obligatorios.length} documento
-                  {obligatorios.length === 1 ? '' : 's'} obligatorio
-                  {obligatorios.length === 1 ? '' : 's'}. Has adjuntado {adjuntos.length}.
+                  Este servicio exige{' '}
+                  {contar(obligatorios.length, 'documento obligatorio', 'documentos obligatorios')}.
+                  Has adjuntado {adjuntos.length}.
                 </InlineNotification>
               ) : (
                 <InlineNotification tono="exito" className="mt-4">
@@ -200,22 +196,12 @@ export function NuevaSolicitudPage() {
             <div className="flex flex-col gap-4">
               <Card>
                 <SectionHeader titulo="Revisa los datos antes de enviar" />
-                <Descriptions
-                  layout="vertical"
-                  size="small"
-                  colon={false}
-                  column={{ xs: 1, sm: 2 }}
-                  items={campos.map((campo) => ({
-                    key: campo.nombre,
-                    span: campo.anchoCompleto ? 'filled' : 1,
-                    label: (
-                      <span className="text-xs font-semibold uppercase tracking-wide">
-                        {campo.etiqueta}
-                      </span>
-                    ),
-                    children: formatearValorCampo(campo, valores[campo.nombre]) || (
-                      <span className="text-ink-3">Sin completar</span>
-                    ),
+                <ListaDatos
+                  vacio="Sin completar"
+                  datos={campos.map((campo) => ({
+                    etiqueta: campo.etiqueta,
+                    valor: formatearValorCampo(campo, valores[campo.nombre]),
+                    anchoCompleto: campo.anchoCompleto,
                   }))}
                 />
               </Card>
@@ -237,9 +223,9 @@ export function NuevaSolicitudPage() {
 
               {!requisitosCubiertos ? (
                 <InlineNotification tono="aviso">
-                  Puedes guardar el borrador, pero no enviar la solicitud hasta adjuntar los{' '}
-                  {obligatorios.length} documento{obligatorios.length === 1 ? '' : 's'} obligatorio
-                  {obligatorios.length === 1 ? '' : 's'}.
+                  Puedes guardar el borrador, pero no enviar la solicitud hasta adjuntar{' '}
+                  {obligatorios.length === 1 ? 'el' : 'los'}{' '}
+                  {contar(obligatorios.length, 'documento obligatorio', 'documentos obligatorios')}.
                 </InlineNotification>
               ) : null}
 
@@ -309,9 +295,7 @@ export function NuevaSolicitudPage() {
           </Card>
 
           <Card fondo="suave">
-            <p className="mb-2.5 text-sm font-semibold uppercase tracking-wide text-ink-3">
-              Estado de tu solicitud
-            </p>
+            <Sobretitulo>Estado de tu solicitud</Sobretitulo>
             <ul className="flex flex-col gap-1.5 text-base">
               <EstadoPreparacion
                 cumplido={formulario.formState.isValid}
@@ -319,7 +303,7 @@ export function NuevaSolicitudPage() {
               />
               <EstadoPreparacion
                 cumplido={adjuntos.length > 0}
-                texto={`${adjuntos.length} documento${adjuntos.length === 1 ? '' : 's'} adjunto${adjuntos.length === 1 ? '' : 's'}`}
+                texto={contar(adjuntos.length, 'documento adjunto', 'documentos adjuntos')}
               />
               <EstadoPreparacion
                 cumplido={requisitosCubiertos}

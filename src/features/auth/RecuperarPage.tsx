@@ -21,16 +21,12 @@ import {
   Input,
 } from '@/components/ui';
 
+import { correoInstitucional, EJEMPLO_CORREO } from '@/lib/esquemas';
+
 import { AuthLayout } from './AuthLayout';
 
 const esquemaRecuperacion = z.object({
-  correo: z
-    .string()
-    .min(1, 'Indica tu correo institucional.')
-    .email('El formato del correo no es válido.')
-    .refine((valor) => valor.trim().toLowerCase().endsWith('@intec.edu.do'), {
-      message: 'Debes usar tu correo institucional del INTEC (@intec.edu.do).',
-    }),
+  correo: correoInstitucional(),
 });
 
 type DatosRecuperacion = z.infer<typeof esquemaRecuperacion>;
@@ -72,7 +68,7 @@ export function RecuperarPage() {
               <Input
                 type="email"
                 autoComplete="username"
-                placeholder="tu.nombre@intec.edu.do"
+                placeholder={EJEMPLO_CORREO}
                 prefix={<Icono nombre="correo" className="text-ink-3" />}
                 {...field}
               />
