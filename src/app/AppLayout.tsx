@@ -31,8 +31,9 @@ export function AppLayout() {
       <DevRoleSwitcher />
 
       <Layout hasSider className="min-h-0 flex-1">
-        {/* Barra lateral fija en escritorio */}
-        <Layout.Sider width={ESTRUCTURA.barraLateral} className="hidden lg:block">
+        {/* Barra lateral fija en escritorio. El `!` hace falta porque el
+            `display` de Ant Design (hashPriority alto) ganaría a Tailwind. */}
+        <Layout.Sider width={ESTRUCTURA.barraLateral} className="!hidden lg:!block">
           <Sidebar />
         </Layout.Sider>
 

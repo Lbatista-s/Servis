@@ -34,8 +34,10 @@ export function Topbar({
       // El encabezado de Ant Design hereda un alto de línea igual a su altura.
       style={{ lineHeight: 'normal', paddingInline: 16 }}
     >
+      {/* Sobre componentes de Ant Design, las utilidades de visibilidad llevan
+          `!`: con `hashPriority="high"` su `display` ganaría a Tailwind. */}
       <Button
-        className={cn('lg:hidden', BOTON_MARCO)}
+        className={cn('lg:!hidden', BOTON_MARCO)}
         aria-label="Abrir navegación"
         onClick={onAbrirMenu}
         icon={<Icono nombre="cuadricula" />}
@@ -63,7 +65,7 @@ export function Topbar({
 
       <SelectorTema />
 
-      <Badge dot offset={[-6, 6]} className="hidden sm:inline-block">
+      <Badge dot offset={[-6, 6]} className="!hidden sm:!inline-block">
         <Button
           className={BOTON_MARCO}
           aria-label="Notificaciones"
