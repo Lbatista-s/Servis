@@ -1,13 +1,15 @@
 /**
  * Selector rápido de rol heredado del prototipo.
  *
- * Sólo se monta en modo desarrollo (`import.meta.env.DEV`); en la compilación
- * de producción el componente no renderiza nada y el empaquetador lo descarta.
+ * Sólo se monta en modo desarrollo (`import.meta.env.DEV`) y con datos locales:
+ * en la compilación de producción no renderiza nada, y contra la API real no
+ * se puede cambiar de cuenta sin credenciales.
  */
 
 import { Button } from 'antd';
 import { useNavigate } from 'react-router-dom';
 
+import { fuenteActiva } from '@/data';
 import { ETIQUETA_ROL, ROLES, type Rol } from '@/domain/types';
 import { useAuth, useUsuarioActual } from '@/features/auth/authStore';
 import { useUsuarios } from '@/hooks/useDatos';
@@ -17,10 +19,11 @@ import { INICIO_POR_ROL } from './rutas';
 export function DevRoleSwitcher() {
   const usuario = useUsuarioActual();
   const iniciarSesionComo = useAuth((estado) => estado.iniciarSesionComo);
-  const { datos: usuarios } = useUsuarios({ activo: true });
+  const disponible = import.meta.env.DEV && fuenteActiva() === 'local';
+  const { datos: usuarios } = useUsuarios({ activo: true }, disponible);
   const navegar = useNavigate();
 
-  if (!import.meta.env.DEV || !usuario) return null;
+  if (!disponible || !usuario) return null;
 
   /** Primer usuario activo con el rol solicitado. */
   function usuarioDe(rol: Rol) {

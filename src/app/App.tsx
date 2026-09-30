@@ -1,10 +1,12 @@
 /** Definición de rutas y proveedores globales. */
 
+import { useEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import { ProveedorUI } from '@/components/ui';
 import { DetalleBandejaPage } from '@/features/admin-inbox/DetalleBandejaPage';
 import { BandejaPage } from '@/features/admin-inbox/BandejaPage';
+import { useAuth } from '@/features/auth/authStore';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { RecuperarPage } from '@/features/auth/RecuperarPage';
 import { RequireRole } from '@/features/auth/RequireRole';
@@ -21,6 +23,12 @@ import { RaizRedirect } from './RaizRedirect';
 import { PATRONES, ROLES_BANDEJA, RUTAS } from './rutas';
 
 export function App() {
+  // Con la API real, la sesión guardada se confirma con el servidor al abrir.
+  const verificarSesion = useAuth((estado) => estado.verificarSesion);
+  useEffect(() => {
+    void verificarSesion();
+  }, [verificarSesion]);
+
   return (
     <BrowserRouter>
       <ProveedorUI>

@@ -23,6 +23,8 @@ export function ConfiguracionDialog({
   const [restableciendo, setRestableciendo] = useState(false);
   const revalidar = useRevalidar();
   const avisos = useToast();
+  // Contra la API real no hay datos de demostración que restablecer.
+  const demostracion = fuenteActiva() === 'local';
 
   async function restablecer() {
     setRestableciendo(true);
@@ -52,14 +54,18 @@ export function ConfiguracionDialog({
           <Button variante="outline" onClick={onCerrar}>
             Cancelar
           </Button>
-          <Button variante="danger" onClick={restablecer} disabled={restableciendo}>
-            <Icono nombre="rotar" />
-            {restableciendo ? 'Restableciendo…' : 'Restablecer datos de demostración'}
-          </Button>
+          {demostracion ? (
+            <Button variante="danger" onClick={restablecer} disabled={restableciendo}>
+              <Icono nombre="rotar" />
+              {restableciendo ? 'Restableciendo…' : 'Restablecer datos de demostración'}
+            </Button>
+          ) : null}
         </div>
       }
     >
-      <p className="mb-4 text-base text-ink-3">Ajustes del entorno de demostración de SERVIS.</p>
+      <p className="mb-4 text-base text-ink-3">
+        {demostracion ? 'Ajustes del entorno de demostración de SERVIS.' : 'Ajustes de SERVIS.'}
+      </p>
 
       <Descriptions
         bordered
@@ -69,24 +75,28 @@ export function ConfiguracionDialog({
           {
             key: 'fuente',
             label: 'Fuente de datos',
-            children: fuenteActiva() === 'local' ? 'Almacenamiento local' : 'API remota',
+            children: demostracion ? 'Almacenamiento local' : 'API remota',
           },
           { key: 'esquema', label: 'Versión del esquema', children: `v${SERVIS_SCHEMA_VERSION}` },
         ]}
       />
 
-      <Separator margen={16} />
+      {demostracion ? (
+        <>
+          <Separator margen={16} />
 
-      <p className="text-md font-semibold text-ink">Datos de demostración</p>
-      <p className="mb-4 mt-1 text-base text-ink-3">
-        Devuelve el sistema a su estado inicial: las 8 solicitudes de ejemplo, el catálogo completo
-        de servicios y los usuarios del equipo.
-      </p>
+          <p className="text-md font-semibold text-ink">Datos de demostración</p>
+          <p className="mb-4 mt-1 text-base text-ink-3">
+            Devuelve el sistema a su estado inicial: las 8 solicitudes de ejemplo, el catálogo
+            completo de servicios y los usuarios del equipo.
+          </p>
 
-      <InlineNotification tono="aviso">
-        Se descartarán todas las solicitudes creadas y los cambios realizados durante esta sesión.
-        La acción no se puede deshacer.
-      </InlineNotification>
+          <InlineNotification tono="aviso">
+            Se descartarán todas las solicitudes creadas y los cambios realizados durante esta
+            sesión. La acción no se puede deshacer.
+          </InlineNotification>
+        </>
+      ) : null}
     </Modal>
   );
 }

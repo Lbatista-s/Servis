@@ -4,7 +4,10 @@ import { CLAVE_ALMACEN, migrar, SERVIS_SCHEMA_VERSION } from '@/data/schema';
 import { ErrorRepositorio } from '@/data/repositories/types';
 import type { Actor } from '@/domain/types';
 
+import { registrarArchivo } from '@/data/archivos';
+
 import { almacenInicial, restablecerAlmacen } from './almacen';
+import { RepositorioAuthLocal } from './authRepository';
 import { RepositorioServiciosLocal } from './serviceRepository';
 import { RepositorioSolicitudesLocal } from './requestRepository';
 import { RepositorioUsuariosLocal } from './userRepository';
@@ -105,6 +108,22 @@ describe('versionado y migración del esquema', () => {
   it('descarta un almacén escrito por una versión futura', () => {
     const futuro = { ...almacenInicial(), version: SERVIS_SCHEMA_VERSION + 1 };
     expect(migrar(futuro)).toBeNull();
+  });
+
+  it('migra un almacén v1 añadiendo el documento de las solicitudes completadas', () => {
+    const actual = almacenInicial();
+    const v1 = {
+      ...actual,
+      version: 1,
+      solicitudes: actual.solicitudes.map(({ documento: _documento, ...resto }) => resto),
+    };
+
+    const migrado = migrar(v1);
+
+    const completada = migrado?.solicitudes.find((s) => s.id === 'SRV-1039');
+    expect(completada?.documento?.nombre).toMatch(/-SRV-1039\.pdf$/);
+    const abierta = migrado?.solicitudes.find((s) => s.id === 'SRV-1042');
+    expect(abierta?.documento).toBeNull();
   });
 
   it('descarta datos sin versión, para los que no hay migración registrada', () => {
@@ -272,5 +291,74 @@ describe('restablecer datos de demostración', () => {
     expect(restablecidas).toHaveLength(8);
     expect(restablecidas.map((s) => s.id)).toContain('SRV-1035');
     expect(restablecidas.map((s) => s.id)).not.toContain('SRV-1043');
+  });
+});
+
+describe('documento de salida', () => {
+  it('se emite al completar la solicitud y se descarga como PDF de muestra', async () => {
+    const aprobada = await solicitudes.obtener('SRV-1041');
+    expect(aprobada?.estado).toBe('aprobada');
+    expect(aprobada?.documento).toBeNull();
+
+    const completada = await solicitudes.transicionar('SRV-1041', 'completada', RICARDO);
+    expect(completada.documento?.nombre).toBe('grado-y-posgrado-SRV-1041.pdf');
+
+    const pdf = await solicitudes.descargarDocumento('SRV-1041');
+    expect(pdf.type).toBe('application/pdf');
+    expect(pdf.size).toBeGreaterThan(1000);
+  });
+
+  it('no existe mientras la solicitud no esté completada', async () => {
+    await expect(solicitudes.descargarDocumento('SRV-1042')).rejects.toMatchObject({
+      codigo: 'REGLA_DE_NEGOCIO',
+    });
+  });
+});
+
+describe('adjuntos', () => {
+  it('conserva durante la sesión el contenido de lo adjuntado', async () => {
+    const archivo = new File(['hola'], 'nota.txt', { type: 'text/plain' });
+    registrarArchivo('adj-prueba', archivo);
+    const creada = await solicitudes.crear(
+      {
+        servicioId: 'pasantia',
+        solicitanteId: LUIS.id,
+        datosFormulario: {},
+        adjuntos: [
+          { id: 'adj-prueba', nombre: 'nota.txt', tamano: 4, tipo: 'text/plain', subidoEn: '' },
+        ],
+      },
+      LUIS,
+    );
+
+    expect(await solicitudes.descargarAdjunto(creada.id, 'adj-prueba')).toBe(archivo);
+  });
+
+  it('explica que el contenido de los adjuntos de ejemplo no está disponible', async () => {
+    const [adjunto] = (await solicitudes.obtener('SRV-1042'))?.adjuntos ?? [];
+    await expect(solicitudes.descargarAdjunto('SRV-1042', adjunto?.id ?? '')).rejects.toThrow(
+      /modo de demostración/,
+    );
+  });
+});
+
+describe('autenticación local', () => {
+  const auth = new RepositorioAuthLocal();
+
+  it('entra con el correo de una cuenta activa, sin verificar la contraseña', async () => {
+    const usuario = await auth.iniciarSesion(' L.Batista@intec.edu.do ', '');
+    expect(usuario.id).toBe('usr-luis');
+  });
+
+  it('rechaza correos desconocidos y cuentas desactivadas', async () => {
+    await expect(auth.iniciarSesion('nadie@intec.edu.do', '')).rejects.toBeInstanceOf(
+      ErrorRepositorio,
+    );
+    const inactivo = (await usuarios.listar()).find((u) => !u.activo);
+    expect(inactivo).toBeDefined();
+    await expect(auth.iniciarSesion(inactivo?.correo ?? '', '')).rejects.toMatchObject({
+      codigo: 'NO_AUTENTICADO',
+      message: expect.stringMatching(/desactivada/),
+    });
   });
 });

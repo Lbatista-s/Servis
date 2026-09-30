@@ -22,13 +22,14 @@ export function Sidebar({ onNavegar }: { onNavegar?: () => void }) {
   const ubicacion = useLocation();
   const [configuracionAbierta, setConfiguracionAbierta] = useState(false);
 
-  // Contadores de los distintivos de navegación.
-  const { datos: pendientes } = useSolicitudes({
-    estados: ['enviada', 'en_revision', 'corregida'],
-  });
-  const { datos: propias } = useSolicitudes(
-    usuario?.rol === 'estudiante' ? { solicitanteId: usuario.id } : { solicitanteId: '—' },
+  // Contadores de los distintivos de navegación: la bandeja para el personal,
+  // las solicitudes propias para el estudiante. Sólo se consulta la que aplica.
+  const esEstudiante = usuario?.rol === 'estudiante';
+  const { datos: pendientes } = useSolicitudes(
+    { estados: ['enviada', 'en_revision', 'corregida'] },
+    usuario !== null && !esEstudiante,
   );
+  const { datos: propias } = useSolicitudes({ solicitanteId: usuario?.id }, esEstudiante);
 
   if (!usuario) return null;
 

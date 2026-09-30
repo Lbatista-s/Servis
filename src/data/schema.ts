@@ -6,10 +6,11 @@
  * transforma la anterior; al arrancar, `migrar` aplica en cadena las que falten.
  */
 
+import { crearDocumento } from '@/domain/documentos';
 import type { Servicio, Solicitud, Usuario } from '@/domain/types';
 
 /** Versión actual del esquema. Incrementar al cambiar la forma de los datos. */
-export const SERVIS_SCHEMA_VERSION = 1;
+export const SERVIS_SCHEMA_VERSION = 2;
 
 /** Clave única bajo la que se guarda todo el almacén. */
 export const CLAVE_ALMACEN = 'servis:datos';
@@ -37,7 +38,26 @@ type AlmacenBruto = Record<string, unknown>;
  * }),
  * ```
  */
-const MIGRACIONES: Record<number, (almacen: AlmacenBruto) => AlmacenBruto> = {};
+const MIGRACIONES: Record<number, (almacen: AlmacenBruto) => AlmacenBruto> = {
+  // v2: las solicitudes guardan su documento de salida.
+  1: (almacen) => {
+    const servicios = almacen.servicios as Servicio[];
+    return {
+      ...almacen,
+      solicitudes: (almacen.solicitudes as Omit<Solicitud, 'documento'>[]).map((s) => ({
+        ...s,
+        documento:
+          s.estado === 'completada'
+            ? crearDocumento(
+                s.id,
+                servicios.find((servicio) => servicio.id === s.servicioId)?.nombre ?? s.servicioId,
+                new Date(s.actualizadaEn),
+              )
+            : null,
+      })),
+    };
+  },
+};
 
 /** Comprueba que el valor leído tenga la forma mínima de un almacén. */
 function pareceAlmacen(valor: unknown): valor is AlmacenBruto {

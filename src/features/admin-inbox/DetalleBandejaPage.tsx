@@ -32,6 +32,7 @@ import { camposDe, formatearValorCampo } from '@/features/requests/formularios';
 import { HistorialTimeline } from '@/features/requests/HistorialTimeline';
 import { mensajeDeError } from '@/hooks/useAsync';
 import { useRevalidar, useServicio, useSolicitud, useIndiceUsuarios } from '@/hooks/useDatos';
+import { useDescarga } from '@/hooks/useDescarga';
 import { formatearFecha } from '@/lib/format';
 
 export function DetalleBandejaPage() {
@@ -40,6 +41,7 @@ export function DetalleBandejaPage() {
   const { datos: servicio } = useServicio(solicitud?.servicioId);
   const usuarios = useIndiceUsuarios();
   const actor = useActor();
+  const { descargar, pendiente } = useDescarga();
 
   if (cargando) return <Loading mensaje="Cargando la solicitud…" />;
 
@@ -120,16 +122,26 @@ export function DetalleBandejaPage() {
                 {solicitud.adjuntos.map((adjunto) => (
                   <li key={adjunto.id}>
                     <FileChip adjunto={adjunto}>
-                      <Button variante="ghost" tamano="icon" aria-label={`Ver ${adjunto.nombre}`}>
-                        <Icono nombre="ojo" />
-                      </Button>
-                      <Button
-                        variante="ghost"
-                        tamano="icon"
-                        aria-label={`Descargar ${adjunto.nombre}`}
-                      >
-                        <Icono nombre="descargar" />
-                      </Button>
+                      {(['abrir', 'descargar'] as const).map((modo) => (
+                        <Button
+                          key={modo}
+                          variante="ghost"
+                          tamano="icon"
+                          aria-label={`${modo === 'abrir' ? 'Ver' : 'Descargar'} ${adjunto.nombre}`}
+                          disabled={pendiente === adjunto.id}
+                          onClick={() =>
+                            descargar({
+                              clave: adjunto.id,
+                              nombre: adjunto.nombre,
+                              modo,
+                              obtener: () =>
+                                repositorios.solicitudes.descargarAdjunto(solicitud.id, adjunto.id),
+                            })
+                          }
+                        >
+                          <Icono nombre={modo === 'abrir' ? 'ojo' : 'descargar'} />
+                        </Button>
+                      ))}
                     </FileChip>
                   </li>
                 ))}

@@ -180,7 +180,7 @@ src/
     repositories/
       types.ts            Interfaces IRequestRepository, IUserRepository, IServiceRepository
       localStorage/       Implementación actual
-      http/               Stubs listos para la API real
+      http/               API de Django: cliente, rutas, mapeadores y repositorios
     index.ts              Factoría según VITE_DATA_SOURCE
   features/
     auth/                 Acceso, recuperación y sesión
@@ -220,16 +220,26 @@ obligue a tocar ni una pantalla:
 - Al primer arranque el almacén se siembra con los datos del prototipo: solicitudes `SRV-1035` a
   `SRV-1042`, los usuarios del equipo y el catálogo de 11 servicios.
 
-### Cómo migrar a un backend real
+### Conexión con el backend (Django)
 
-1. Completar los métodos de `src/data/repositories/http/`. Cada uno ya documenta la ruta sugerida
-   de la API (`GET /solicitudes`, `POST /solicitudes/:id/transiciones`, …) y las clases implementan
-   exactamente las mismas interfaces que las de `localStorage`.
-2. Configurar `VITE_API_BASE_URL` en `.env`.
-3. Cambiar `VITE_DATA_SOURCE=local` por `VITE_DATA_SOURCE=http`.
+La implementación HTTP (`src/data/repositories/http/`) está completa y probada contra un servidor
+simulado. Cubre:
 
-No hay ningún cuarto paso: la factoría de `src/data/index.ts` selecciona la implementación y los
-componentes no se enteran del cambio.
+- autenticación por sesión de Django con CSRF, o por JWT;
+- conversión `snake_case` ↔ `camelCase` y paginación de DRF;
+- subida de adjuntos y descarga del documento de salida (la carta de pasantía, etc.).
+
+Activarla es cambiar `VITE_DATA_SOURCE=local` por `VITE_DATA_SOURCE=http`: la factoría de
+`src/data/index.ts` elige la implementación y ninguna pantalla cambia.
+
+- [`docs/api.md`](docs/api.md): contrato de la API que espera el frontend, para el equipo del
+  backend (rutas, JSON, errores, autenticación y generación de PDF con WeasyPrint).
+- [`docs/integracion.md`](docs/integracion.md): pasos del día de la conexión. Las rutas se ajustan
+  en `http/rutas.ts` y los nombres de campos en `http/mapeadores.ts`; también cubre el proxy de
+  Vite, el rewrite de Vercel y las variables de entorno.
+
+En modo local, al completar una solicitud se genera en el navegador un **PDF de muestra** (sin
+validez oficial) con los datos de la solicitud, para poder demostrar el flujo completo.
 
 ### Restablecer los datos de demostración
 

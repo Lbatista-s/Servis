@@ -1,15 +1,20 @@
 /**
- * Repositorios HTTP — stubs preparados para la fase final.
+ * Repositorios sobre la API REST de Django.
  *
- * Cada clase implementa la misma interfaz que su equivalente en
- * `localStorage/`, de modo que activarlos no exige tocar ni un componente:
- * basta con completar los cuerpos y poner `VITE_DATA_SOURCE=http`.
+ * Implementan las mismas interfaces que los de `localStorage/`, así que
+ * activarlos (`VITE_DATA_SOURCE=http`) no exige tocar ninguna pantalla. Las
+ * rutas viven en `./rutas.ts` y la forma del JSON en `./mapeadores.ts`; el
+ * contrato completo está en `docs/api.md`.
  *
- * Las rutas comentadas junto a cada método son el contrato sugerido para la API.
+ * Las reglas de negocio se validan en el servidor. La interfaz sigue
+ * consultando el dominio antes de actuar (para no ofrecer acciones inválidas),
+ * pero la decisión final es del backend.
  */
 
+import { archivoRegistrado, olvidarArchivo } from '@/data/archivos';
 import type { OpcionesTransicion } from '@/domain/businessRules';
-import type { Actor, EstadoSolicitud, Servicio, Solicitud, Usuario } from '@/domain/types';
+import type { Actor, Adjunto, EstadoSolicitud, Servicio, Solicitud, Usuario } from '@/domain/types';
+import { ErrorRepositorio } from '@/data/repositories/types';
 import type {
   CambiosSolicitud,
   DatosNuevaSolicitud,
@@ -18,116 +23,268 @@ import type {
   FiltroServicios,
   FiltroSolicitudes,
   FiltroUsuarios,
+  IAuthRepository,
   IRequestRepository,
   IServiceRepository,
   IUserRepository,
   Repositorios,
 } from '@/data/repositories/types';
 
-import { noImplementado } from './cliente';
+import { detalleOpcional, lista, noImplementado, peticion } from './cliente';
+import { modoAutenticacion } from './config';
+import {
+  aServicio,
+  aSolicitud,
+  aUsuario,
+  desdeCredenciales,
+  sinClaves,
+  type Dto,
+} from './mapeadores';
+import { API, consultaServicios, consultaSolicitudes, consultaUsuarios } from './rutas';
+import { guardarTokens, leerCookie, type TokensJwt } from './sesion';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Autenticación
+// ─────────────────────────────────────────────────────────────────────────────
+
+export class RepositorioAuthHttp implements IAuthRepository {
+  async iniciarSesion(correo: string, contrasena: string): Promise<Usuario> {
+    const credenciales = desdeCredenciales(correo, contrasena);
+
+    if (modoAutenticacion() === 'jwt') {
+      const tokens = await peticion<TokensJwt>(API.auth.token, {
+        metodo: 'POST',
+        cuerpo: credenciales,
+        sesionRequerida: false,
+      });
+      guardarTokens(tokens);
+      return aUsuario(await peticion<Dto>(API.auth.yo));
+    }
+
+    // Django sólo acepta el POST si antes fijó la cookie `csrftoken`.
+    if (!leerCookie('csrftoken')) {
+      await peticion(API.auth.csrf, { respuesta: 'nada', sesionRequerida: false });
+    }
+    const usuario = await peticion<Dto>(API.auth.login, {
+      metodo: 'POST',
+      cuerpo: credenciales,
+      sesionRequerida: false,
+    });
+    return aUsuario(usuario);
+  }
+
+  async cerrarSesion(): Promise<void> {
+    if (modoAutenticacion() === 'jwt') {
+      guardarTokens(null);
+      return;
+    }
+    try {
+      await peticion(API.auth.logout, {
+        metodo: 'POST',
+        respuesta: 'nada',
+        sesionRequerida: false,
+      });
+    } catch {
+      // Si el servidor ya no reconoce la sesión, el resultado es el mismo.
+    }
+  }
+
+  async usuarioActual(): Promise<Usuario | null> {
+    try {
+      return aUsuario(await peticion<Dto>(API.auth.yo, { sesionRequerida: false }));
+    } catch (error) {
+      if (
+        error instanceof ErrorRepositorio &&
+        (error.codigo === 'NO_AUTENTICADO' || error.codigo === 'PROHIBIDO')
+      ) {
+        return null;
+      }
+      throw error;
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Solicitudes
+// ─────────────────────────────────────────────────────────────────────────────
 
 export class RepositorioSolicitudesHttp implements IRequestRepository {
-  /** GET /solicitudes */
-  listar(_filtro?: FiltroSolicitudes): Promise<Solicitud[]> {
-    return noImplementado('solicitudes.listar');
+  async listar(filtro?: FiltroSolicitudes): Promise<Solicitud[]> {
+    const dtos = await lista<Dto>(API.solicitudes.lista, consultaSolicitudes(filtro));
+    return dtos.map(aSolicitud);
   }
 
-  /** GET /solicitudes/:id */
-  obtener(_id: string): Promise<Solicitud | null> {
-    return noImplementado('solicitudes.obtener');
+  async obtener(id: string): Promise<Solicitud | null> {
+    const dto = await detalleOpcional<Dto>(API.solicitudes.detalle(id));
+    return dto ? aSolicitud(dto) : null;
   }
 
-  /** POST /solicitudes */
-  crear(_datos: DatosNuevaSolicitud, _actor: Actor): Promise<Solicitud> {
-    return noImplementado('solicitudes.crear');
+  /** El solicitante lo fija el servidor a partir de la sesión. */
+  async crear(datos: DatosNuevaSolicitud, _actor: Actor): Promise<Solicitud> {
+    const creada = aSolicitud(
+      await peticion<Dto>(API.solicitudes.lista, {
+        metodo: 'POST',
+        cuerpo: { servicioId: datos.servicioId, datosFormulario: datos.datosFormulario },
+      }),
+    );
+    if (!datos.adjuntos?.length) return creada;
+
+    await this.sincronizarAdjuntos(creada, datos.adjuntos);
+    return (await this.obtener(creada.id)) ?? creada;
   }
 
-  /** PATCH /solicitudes/:id */
-  guardar(_id: string, _cambios: CambiosSolicitud, _actor: Actor): Promise<Solicitud> {
-    return noImplementado('solicitudes.guardar');
+  async guardar(id: string, cambios: CambiosSolicitud, _actor: Actor): Promise<Solicitud> {
+    const { adjuntos, ...resto } = cambios;
+
+    if (adjuntos !== undefined) {
+      const actual = await this.obtener(id);
+      if (!actual) throw new ErrorRepositorio('NO_ENCONTRADO', `No existe la solicitud ${id}.`);
+      await this.sincronizarAdjuntos(actual, adjuntos);
+    }
+
+    if (Object.keys(resto).length > 0) {
+      return aSolicitud(
+        await peticion<Dto>(API.solicitudes.detalle(id), { metodo: 'PATCH', cuerpo: resto }),
+      );
+    }
+    const guardada = await this.obtener(id);
+    if (!guardada) throw new ErrorRepositorio('NO_ENCONTRADO', `No existe la solicitud ${id}.`);
+    return guardada;
   }
 
-  /** POST /solicitudes/:id/transiciones */
-  transicionar(
-    _id: string,
-    _hacia: EstadoSolicitud,
+  async transicionar(
+    id: string,
+    hacia: EstadoSolicitud,
     _actor: Actor,
-    _opciones?: OpcionesTransicion,
+    opciones: OpcionesTransicion = {},
   ): Promise<Solicitud> {
-    return noImplementado('solicitudes.transicionar');
+    return aSolicitud(
+      await peticion<Dto>(API.solicitudes.transiciones(id), {
+        metodo: 'POST',
+        cuerpo: { hacia, comentario: opciones.comentario?.trim() || null },
+      }),
+    );
   }
 
-  /** DELETE /solicitudes/:id */
-  eliminar(_id: string): Promise<void> {
-    return noImplementado('solicitudes.eliminar');
+  async eliminar(id: string): Promise<void> {
+    await peticion(API.solicitudes.detalle(id), { metodo: 'DELETE', respuesta: 'nada' });
+  }
+
+  descargarAdjunto(solicitudId: string, adjuntoId: string): Promise<Blob> {
+    return peticion<Blob>(API.solicitudes.archivoAdjunto(solicitudId, adjuntoId), {
+      respuesta: 'blob',
+    });
+  }
+
+  descargarDocumento(id: string): Promise<Blob> {
+    return peticion<Blob>(API.solicitudes.documento(id), { respuesta: 'blob' });
+  }
+
+  /**
+   * Lleva los adjuntos del servidor a la lista deseada: borra los que ya no
+   * están y sube los nuevos (los que tienen un archivo registrado pendiente).
+   */
+  private async sincronizarAdjuntos(
+    actual: Solicitud,
+    deseados: readonly Adjunto[],
+  ): Promise<void> {
+    const conservar = new Set(deseados.map((a) => a.id));
+    for (const adjunto of actual.adjuntos) {
+      if (!conservar.has(adjunto.id)) {
+        await peticion(API.solicitudes.adjunto(actual.id, adjunto.id), {
+          metodo: 'DELETE',
+          respuesta: 'nada',
+        });
+      }
+    }
+
+    for (const adjunto of deseados) {
+      const archivo = archivoRegistrado(adjunto.id);
+      if (!archivo) continue;
+      const formulario = new FormData();
+      formulario.append('archivo', archivo, adjunto.nombre);
+      await peticion(API.solicitudes.adjuntos(actual.id), { metodo: 'POST', cuerpo: formulario });
+      olvidarArchivo(adjunto.id);
+    }
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Usuarios
+// ─────────────────────────────────────────────────────────────────────────────
 
 export class RepositorioUsuariosHttp implements IUserRepository {
-  /** GET /usuarios */
-  listar(_filtro?: FiltroUsuarios): Promise<Usuario[]> {
-    return noImplementado('usuarios.listar');
+  async listar(filtro?: FiltroUsuarios): Promise<Usuario[]> {
+    return (await lista<Dto>(API.usuarios.lista, consultaUsuarios(filtro))).map(aUsuario);
   }
 
-  /** GET /usuarios/:id */
-  obtener(_id: string): Promise<Usuario | null> {
-    return noImplementado('usuarios.obtener');
+  async obtener(id: string): Promise<Usuario | null> {
+    const dto = await detalleOpcional<Dto>(API.usuarios.detalle(id));
+    return dto ? aUsuario(dto) : null;
   }
 
-  /** GET /usuarios?correo= */
-  obtenerPorCorreo(_correo: string): Promise<Usuario | null> {
-    return noImplementado('usuarios.obtenerPorCorreo');
+  async obtenerPorCorreo(correo: string): Promise<Usuario | null> {
+    const dtos = await lista<Dto>(API.usuarios.lista, { correo: correo.trim() });
+    const usuario = dtos[0];
+    return usuario ? aUsuario(usuario) : null;
   }
 
-  /** POST /usuarios */
-  crear(_datos: DatosNuevoUsuario): Promise<Usuario> {
-    return noImplementado('usuarios.crear');
+  async crear(datos: DatosNuevoUsuario): Promise<Usuario> {
+    return aUsuario(
+      await peticion<Dto>(API.usuarios.lista, {
+        metodo: 'POST',
+        cuerpo: sinClaves(datos, ['iniciales', 'colorAvatar']),
+      }),
+    );
   }
 
-  /** PATCH /usuarios/:id */
-  actualizar(_id: string, _cambios: Partial<DatosNuevoUsuario>): Promise<Usuario> {
-    return noImplementado('usuarios.actualizar');
+  async actualizar(id: string, cambios: Partial<DatosNuevoUsuario>): Promise<Usuario> {
+    return aUsuario(
+      await peticion<Dto>(API.usuarios.detalle(id), { metodo: 'PATCH', cuerpo: cambios }),
+    );
   }
 
-  /** PATCH /usuarios/:id/activacion */
-  cambiarActivacion(_id: string, _activo: boolean): Promise<Usuario> {
-    return noImplementado('usuarios.cambiarActivacion');
+  cambiarActivacion(id: string, activo: boolean): Promise<Usuario> {
+    return this.actualizar(id, { activo });
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Servicios
+// ─────────────────────────────────────────────────────────────────────────────
+
 export class RepositorioServiciosHttp implements IServiceRepository {
-  /** GET /servicios */
-  listar(_filtro?: FiltroServicios): Promise<Servicio[]> {
-    return noImplementado('servicios.listar');
+  async listar(filtro?: FiltroServicios): Promise<Servicio[]> {
+    return (await lista<Dto>(API.servicios.lista, consultaServicios(filtro))).map(aServicio);
   }
 
-  /** GET /servicios/:id */
-  obtener(_id: string): Promise<Servicio | null> {
-    return noImplementado('servicios.obtener');
+  async obtener(id: string): Promise<Servicio | null> {
+    const dto = await detalleOpcional<Dto>(API.servicios.detalle(id));
+    return dto ? aServicio(dto) : null;
   }
 
-  /** POST /servicios */
-  crear(_datos: DatosNuevoServicio): Promise<Servicio> {
-    return noImplementado('servicios.crear');
+  async crear(datos: DatosNuevoServicio): Promise<Servicio> {
+    return aServicio(await peticion<Dto>(API.servicios.lista, { metodo: 'POST', cuerpo: datos }));
   }
 
-  /** PATCH /servicios/:id */
-  actualizar(_id: string, _cambios: Partial<DatosNuevoServicio>): Promise<Servicio> {
-    return noImplementado('servicios.actualizar');
+  async actualizar(id: string, cambios: Partial<DatosNuevoServicio>): Promise<Servicio> {
+    return aServicio(
+      await peticion<Dto>(API.servicios.detalle(id), { metodo: 'PATCH', cuerpo: cambios }),
+    );
   }
 
-  /** PATCH /servicios/:id/activacion */
-  cambiarActivacion(_id: string, _activo: boolean): Promise<Servicio> {
-    return noImplementado('servicios.cambiarActivacion');
+  /** El servidor aplica la regla de no activar un servicio sin requisitos. */
+  cambiarActivacion(id: string, activo: boolean): Promise<Servicio> {
+    return this.actualizar(id, { activo });
   }
 }
 
 export function crearRepositoriosHttp(): Repositorios {
   return {
+    auth: new RepositorioAuthHttp(),
     solicitudes: new RepositorioSolicitudesHttp(),
     usuarios: new RepositorioUsuariosHttp(),
     servicios: new RepositorioServiciosHttp(),
-    /** POST /demo/restablecer */
-    restablecerDemo: () => noImplementado('restablecerDemo'),
+    restablecerDemo: () => Promise.resolve().then(() => noImplementado('restablecerDemo')),
   };
 }

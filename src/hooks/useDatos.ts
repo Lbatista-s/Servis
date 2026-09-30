@@ -35,12 +35,19 @@ export function useRevalidar(): () => void {
 // Solicitudes
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function useSolicitudes(filtro: FiltroSolicitudes = {}): EstadoAsincrono<Solicitud[]> {
+/** `habilitado = false` no consulta nada y devuelve una lista vacía. */
+export function useSolicitudes(
+  filtro: FiltroSolicitudes = {},
+  habilitado = true,
+): EstadoAsincrono<Solicitud[]> {
   const version = useRevalidacion((estado) => estado.version);
   // El filtro se serializa para comparar por valor y no por identidad de objeto,
   // que cambiaría en cada render.
   const clave = JSON.stringify(filtro);
-  return useAsync(() => repositorios.solicitudes.listar(filtro), [clave, version]);
+  return useAsync(
+    () => (habilitado ? repositorios.solicitudes.listar(filtro) : Promise.resolve([])),
+    [clave, version, habilitado],
+  );
 }
 
 export function useSolicitud(id: string | undefined): EstadoAsincrono<Solicitud | null> {
@@ -73,10 +80,21 @@ export function useServicio(id: string | undefined): EstadoAsincrono<Servicio | 
 // Usuarios
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function useUsuarios(filtro: FiltroUsuarios = {}): EstadoAsincrono<Usuario[]> {
+/**
+ * `habilitado = false` no consulta nada y devuelve una lista vacía: el selector
+ * de cuentas del acceso sólo existe en el modo de demostración, y sin sesión
+ * fallaría contra la API real.
+ */
+export function useUsuarios(
+  filtro: FiltroUsuarios = {},
+  habilitado = true,
+): EstadoAsincrono<Usuario[]> {
   const version = useRevalidacion((estado) => estado.version);
   const clave = JSON.stringify(filtro);
-  return useAsync(() => repositorios.usuarios.listar(filtro), [clave, version]);
+  return useAsync(
+    () => (habilitado ? repositorios.usuarios.listar(filtro) : Promise.resolve([])),
+    [clave, version, habilitado],
+  );
 }
 
 /**
