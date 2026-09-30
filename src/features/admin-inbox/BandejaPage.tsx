@@ -19,14 +19,33 @@ import {
   StatCard,
   StatusBadge,
 } from '@/components/ui';
-import { ETIQUETA_ESTADO, type EstadoSolicitud, type Solicitud } from '@/domain/types';
+import {
+  ESTADOS_FINALES,
+  ETIQUETA_ESTADO,
+  type EstadoSolicitud,
+  type Solicitud,
+} from '@/domain/types';
 import { useIndiceServicios, useIndiceUsuarios, useSolicitudes } from '@/hooks/useDatos';
 import { opcionesConTodos, TODOS, type ConTodos } from '@/lib/filtros';
 import { formatearFecha, formatearFechaLarga } from '@/lib/format';
 
+/** Filtro de la bandeja: cualquier estado, o todas las que aún no están cerradas. */
+const ABIERTAS = 'abiertas';
+type FiltroEstado = ConTodos<EstadoSolicitud | typeof ABIERTAS>;
+
+const OPCIONES_ESTADO = (() => {
+  const [todos, ...estados] = opcionesConTodos('Todos los estados', ETIQUETA_ESTADO);
+  return [
+    { value: ABIERTAS as FiltroEstado, label: 'Abiertas' },
+    ...(todos ? [todos] : []),
+    ...estados,
+  ];
+})();
+
 export function BandejaPage() {
   const [busqueda, setBusqueda] = useState('');
-  const [estado, setEstado] = useState<ConTodos<EstadoSolicitud>>(TODOS);
+  // La bandeja es la cola de trabajo: por defecto sólo lo que sigue abierto.
+  const [estado, setEstado] = useState<FiltroEstado>(ABIERTAS);
   const [servicioId, setServicioId] = useState<ConTodos<string>>(TODOS);
   const navegar = useNavigate();
 
@@ -35,7 +54,9 @@ export function BandejaPage() {
   const servicios = useIndiceServicios();
 
   const lista = (todas ?? []).filter((solicitud) => {
-    if (estado !== TODOS && solicitud.estado !== estado) return false;
+    if (estado === ABIERTAS) {
+      if (ESTADOS_FINALES.includes(solicitud.estado)) return false;
+    } else if (estado !== TODOS && solicitud.estado !== estado) return false;
     if (servicioId !== TODOS && solicitud.servicioId !== servicioId) return false;
     if (busqueda.trim()) {
       const termino = busqueda.trim().toLowerCase();
@@ -194,7 +215,7 @@ export function BandejaPage() {
           onCambio={setEstado}
           etiqueta="Filtrar por estado"
           className="sm:w-44"
-          opciones={opcionesConTodos('Todos los estados', ETIQUETA_ESTADO)}
+          opciones={OPCIONES_ESTADO}
         />
 
         <Badge tono="gray" sinPunto>

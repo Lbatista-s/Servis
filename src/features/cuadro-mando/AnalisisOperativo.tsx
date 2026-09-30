@@ -1,18 +1,17 @@
 /**
- * Pantalla 9 — Reportes y métricas.
+ * Análisis operativo: el seguimiento del día a día de la cola (volumen por
+ * servicio, distribución por estado, carga del personal).
  *
- * Todas las cifras se calculan sobre las solicitudes reales del almacén, de
- * modo que la pantalla refleja el estado del sistema y no valores codificados.
+ * Es la antigua pantalla de reportes. Kaplan y Norton distinguen este tablero
+ * operativo del cuadro de mando estratégico, así que vive en su propia pestaña.
+ * Las cifras se calculan sobre las solicitudes reales, no valores codificados.
  */
 
 import {
   AvatarUsuario,
   BarChart,
-  Button,
   Card,
-  Icono,
   Loading,
-  PageHeader,
   Progress,
   Separator,
   SectionHeader,
@@ -34,7 +33,7 @@ function diasDeResolucion(solicitud: Solicitud): number | null {
   return transcurrido / (1000 * 60 * 60 * 24);
 }
 
-export function ReportesPage() {
+export function AnalisisOperativo() {
   const { datos: solicitudes, cargando } = useSolicitudes();
   const servicios = useIndiceServicios();
   const usuarios = useIndiceUsuarios();
@@ -91,20 +90,6 @@ export function ReportesPage() {
 
   return (
     <>
-      <PageHeader
-        titulo="Reportes administrativos"
-        subtitulo="Área de Ingenierías · Métricas calculadas sobre las solicitudes registradas"
-      >
-        <Button variante="outline" tamano="sm">
-          <Icono nombre="calendario" />
-          Cambiar período
-        </Button>
-        <Button tamano="sm">
-          <Icono nombre="descargar" />
-          Exportar XLSX
-        </Button>
-      </PageHeader>
-
       <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard etiqueta="Total de solicitudes" valor={total} detalle="En el sistema" />
         <StatCard

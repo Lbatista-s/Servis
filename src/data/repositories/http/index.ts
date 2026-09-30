@@ -13,6 +13,7 @@
 
 import { archivoRegistrado, olvidarArchivo } from '@/data/archivos';
 import type { OpcionesTransicion } from '@/domain/businessRules';
+import { METAS_POR_DEFECTO, type Metas } from '@/domain/indicadores/definiciones';
 import type { Actor, Adjunto, EstadoSolicitud, Servicio, Solicitud, Usuario } from '@/domain/types';
 import { ErrorRepositorio } from '@/data/repositories/types';
 import type {
@@ -24,6 +25,7 @@ import type {
   FiltroSolicitudes,
   FiltroUsuarios,
   IAuthRepository,
+  IMetasRepository,
   IRequestRepository,
   IServiceRepository,
   IUserRepository,
@@ -279,12 +281,33 @@ export class RepositorioServiciosHttp implements IServiceRepository {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Metas del cuadro de mando
+// ─────────────────────────────────────────────────────────────────────────────
+
+export class RepositorioMetasHttp implements IMetasRepository {
+  /** Las metas que el servidor aún no define toman su valor por defecto. */
+  async obtener(): Promise<Metas> {
+    return { ...METAS_POR_DEFECTO, ...(await peticion<Partial<Metas>>(API.indicadores.metas)) };
+  }
+
+  /** El servidor comprueba que quien guarda sea coordinador. */
+  async guardar(metas: Metas, _actor: Actor): Promise<Metas> {
+    const guardadas = await peticion<Partial<Metas>>(API.indicadores.metas, {
+      metodo: 'PUT',
+      cuerpo: metas,
+    });
+    return { ...METAS_POR_DEFECTO, ...guardadas };
+  }
+}
+
 export function crearRepositoriosHttp(): Repositorios {
   return {
     auth: new RepositorioAuthHttp(),
     solicitudes: new RepositorioSolicitudesHttp(),
     usuarios: new RepositorioUsuariosHttp(),
     servicios: new RepositorioServiciosHttp(),
+    metas: new RepositorioMetasHttp(),
     restablecerDemo: () => Promise.resolve().then(() => noImplementado('restablecerDemo')),
   };
 }

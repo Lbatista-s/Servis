@@ -7,15 +7,22 @@
  */
 
 import { construirSolicitudesDemo, SERVICIOS_DEMO, USUARIOS_DEMO } from '@/data/seed';
+import { construirHistorialDemo } from '@/data/seedHistorial';
+import { METAS_POR_DEFECTO } from '@/domain/indicadores/definiciones';
 import { CLAVE_ALMACEN, migrar, SERVIS_SCHEMA_VERSION, type Almacen } from '@/data/schema';
 
-/** Construye un almacén nuevo con los datos de demostración del prototipo. */
-export function almacenInicial(): Almacen {
+/**
+ * Construye un almacén nuevo con los datos de demostración: las solicitudes
+ * del prototipo y un historial cerrado de los seis meses anteriores a `ahora`
+ * para el cuadro de mando.
+ */
+export function almacenInicial(ahora: Date = new Date()): Almacen {
   return {
     version: SERVIS_SCHEMA_VERSION,
-    solicitudes: construirSolicitudesDemo(),
+    solicitudes: [...construirSolicitudesDemo(), ...construirHistorialDemo(ahora)],
     usuarios: [...USUARIOS_DEMO],
     servicios: SERVICIOS_DEMO.map((s) => ({ ...s, requisitos: [...s.requisitos] })),
+    metas: { ...METAS_POR_DEFECTO },
   };
 }
 

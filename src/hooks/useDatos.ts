@@ -11,6 +11,7 @@ import { create } from 'zustand';
 
 import { repositorios } from '@/data';
 import type { FiltroServicios, FiltroSolicitudes, FiltroUsuarios } from '@/data/repositories/types';
+import type { Metas } from '@/domain/indicadores/definiciones';
 import type { Servicio, Solicitud, Usuario } from '@/domain/types';
 
 import { useAsync, type EstadoAsincrono } from './useAsync';
@@ -110,4 +111,13 @@ export function useIndiceUsuarios(): Map<string, Usuario> {
 export function useIndiceServicios(): Map<string, Servicio> {
   const { datos } = useServicios();
   return new Map((datos ?? []).map((servicio) => [servicio.id, servicio]));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Cuadro de mando
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function useMetas(): EstadoAsincrono<Metas> {
+  const version = useRevalidacion((estado) => estado.version);
+  return useAsync(() => repositorios.metas.obtener(), [version]);
 }

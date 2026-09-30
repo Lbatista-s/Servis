@@ -25,18 +25,19 @@ export const NAVEGACION_POR_ROL: Record<Rol, readonly ElementoNavegacion[]> = {
       a: RUTAS.bandeja,
       contador: 'solicitudesPendientes',
     },
-    { etiqueta: 'Reportes', icono: 'grafico', a: RUTAS.reportes },
+    { etiqueta: 'Cuadro de mando', icono: 'grafico', a: RUTAS.cuadroMando },
   ],
   coordinador: [
+    { etiqueta: 'Cuadro de mando', icono: 'grafico', a: RUTAS.cuadroMando },
     {
       etiqueta: 'Bandeja de entrada',
       icono: 'bandeja',
       a: RUTAS.bandeja,
       contador: 'solicitudesPendientes',
     },
-    { etiqueta: 'Reportes', icono: 'grafico', a: RUTAS.reportes },
   ],
   administrador: [
+    { etiqueta: 'Inicio', icono: 'inicio', a: RUTAS.inicioAdmin },
     { etiqueta: 'Gestión de usuarios', icono: 'usuarios', a: RUTAS.usuarios },
     { etiqueta: 'Catálogo de servicios', icono: 'cuadricula', a: RUTAS.servicios },
   ],
@@ -55,7 +56,11 @@ const TITULOS: Record<string, TituloPantalla> = {
     subtitulo: 'Todos los servicios disponibles',
   },
   [RUTAS.bandeja]: { titulo: 'Bandeja de entrada', subtitulo: 'Solicitudes recibidas' },
-  [RUTAS.reportes]: { titulo: 'Reportes', subtitulo: 'Área de Ingenierías' },
+  [RUTAS.cuadroMando]: {
+    titulo: 'Cuadro de mando',
+    subtitulo: 'Estrategia del Área de Ingenierías',
+  },
+  [RUTAS.inicioAdmin]: { titulo: 'Inicio', subtitulo: 'Administración del sistema' },
   [RUTAS.usuarios]: { titulo: 'Gestión de usuarios', subtitulo: 'Usuarios registrados' },
   [RUTAS.servicios]: { titulo: 'Catálogo de servicios', subtitulo: 'Plantillas y requisitos' },
 };
@@ -91,5 +96,12 @@ export function titulosDe(ruta: string): TituloPantalla {
 export function claveActiva(ruta: string, elementos: readonly ElementoNavegacion[]): string {
   if (ruta.startsWith(PREFIJOS.nuevaSolicitud)) return RUTAS.catalogo;
   if (ruta.startsWith(PREFIJOS.detalleSolicitud)) return RUTAS.inicio;
-  return elementos.find((e) => ruta === e.a || ruta.startsWith(`${e.a}/`))?.a ?? '';
+  // La coincidencia exacta manda; si no hay, el prefijo más largo (`/admin`
+  // no debe marcarse en `/admin/usuarios`).
+  const exacta = elementos.find((e) => ruta === e.a);
+  if (exacta) return exacta.a;
+  return (
+    elementos.filter((e) => ruta.startsWith(`${e.a}/`)).sort((a, b) => b.a.length - a.a.length)[0]
+      ?.a ?? ''
+  );
 }

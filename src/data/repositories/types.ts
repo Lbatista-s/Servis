@@ -8,6 +8,7 @@
  */
 
 import type { OpcionesTransicion } from '@/domain/businessRules';
+import type { Metas } from '@/domain/indicadores/definiciones';
 import type {
   Actor,
   Adjunto,
@@ -140,6 +141,16 @@ export interface IServiceRepository {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Metas del cuadro de mando
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface IMetasRepository {
+  obtener(): Promise<Metas>;
+  /** Sólo el coordinador fija las metas; el resto recibe `PROHIBIDO`. */
+  guardar(metas: Metas, actor: Actor): Promise<Metas>;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Autenticación
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -163,6 +174,7 @@ export interface Repositorios {
   solicitudes: IRequestRepository;
   usuarios: IUserRepository;
   servicios: IServiceRepository;
+  metas: IMetasRepository;
   /** Restablece el almacenamiento a los datos de demostración iniciales. */
   restablecerDemo(): Promise<void>;
 }

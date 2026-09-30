@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { claveActiva, NAVEGACION_POR_ROL, titulosDe } from '@/app/navegacion';
-import { RUTAS } from '@/app/rutas';
+import { INICIO_POR_ROL, RUTAS } from '@/app/rutas';
 import { ETIQUETA_ESTADO } from '@/domain/types';
 
 import { correoInstitucional, esCorreoInstitucional } from './esquemas';
@@ -67,5 +67,18 @@ describe('navegación', () => {
     expect(
       claveActiva(RUTAS.detalleBandeja('SRV-1042'), NAVEGACION_POR_ROL.personal_administrativo),
     ).toBe(RUTAS.bandeja);
+  });
+
+  it('el inicio del administrador no se marca en sus subsecciones', () => {
+    const administrador = NAVEGACION_POR_ROL.administrador;
+    expect(claveActiva(RUTAS.inicioAdmin, administrador)).toBe(RUTAS.inicioAdmin);
+    expect(claveActiva(RUTAS.usuarios, administrador)).toBe(RUTAS.usuarios);
+  });
+
+  it('cada rol entra en su pantalla: cuadro de mando, bandeja o página de inicio', () => {
+    expect(INICIO_POR_ROL.coordinador).toBe(RUTAS.cuadroMando);
+    expect(INICIO_POR_ROL.personal_administrativo).toBe(RUTAS.bandeja);
+    expect(INICIO_POR_ROL.estudiante).toBe(RUTAS.inicio);
+    expect(INICIO_POR_ROL.administrador).toBe(RUTAS.inicioAdmin);
   });
 });

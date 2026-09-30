@@ -2,12 +2,14 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { CLAVE_ALMACEN, migrar, SERVIS_SCHEMA_VERSION } from '@/data/schema';
 import { ErrorRepositorio } from '@/data/repositories/types';
+import { METAS_POR_DEFECTO } from '@/domain/indicadores';
 import type { Actor } from '@/domain/types';
 
 import { registrarArchivo } from '@/data/archivos';
 
 import { almacenInicial, restablecerAlmacen } from './almacen';
 import { RepositorioAuthLocal } from './authRepository';
+import { RepositorioMetasLocal } from './metasRepository';
 import { RepositorioServiciosLocal } from './serviceRepository';
 import { RepositorioSolicitudesLocal } from './requestRepository';
 import { RepositorioUsuariosLocal } from './userRepository';
@@ -23,6 +25,9 @@ const RICARDO: Actor = {
   rol: 'personal_administrativo',
 };
 
+/** Solicitudes de un almacén recién sembrado: las 8 del prototipo más el historial. */
+const totalSembrado = () => almacenInicial().solicitudes.length;
+
 beforeEach(() => {
   localStorage.clear();
   restablecerAlmacen();
@@ -31,7 +36,11 @@ beforeEach(() => {
 describe('sembrado inicial', () => {
   it('siembra las solicitudes SRV-1035 a SRV-1042 del prototipo', async () => {
     const lista = await solicitudes.listar();
-    const ids = lista.map((s) => s.id).sort();
+    // Las SRV-09xx son el historial cerrado del cuadro de mando.
+    const ids = lista
+      .map((s) => s.id)
+      .filter((id) => id.startsWith('SRV-10'))
+      .sort();
     expect(ids).toEqual([
       'SRV-1035',
       'SRV-1036',
@@ -88,7 +97,7 @@ describe('sembrado inicial', () => {
 
   it('vuelve a sembrar si el contenido guardado está corrupto', async () => {
     localStorage.setItem(CLAVE_ALMACEN, 'esto no es JSON válido {{{');
-    expect(await solicitudes.listar()).toHaveLength(8);
+    expect(await solicitudes.listar()).toHaveLength(totalSembrado());
   });
 });
 
@@ -124,6 +133,21 @@ describe('versionado y migración del esquema', () => {
     expect(completada?.documento?.nombre).toMatch(/-SRV-1039\.pdf$/);
     const abierta = migrado?.solicitudes.find((s) => s.id === 'SRV-1042');
     expect(abierta?.documento).toBeNull();
+  });
+
+  it('migra un almacén v2 añadiendo las metas y el historial del cuadro de mando', () => {
+    const { metas: _metas, ...actual } = almacenInicial();
+    const v2 = {
+      ...actual,
+      version: 2,
+      solicitudes: actual.solicitudes.filter((s) => s.id.startsWith('SRV-10')),
+    };
+
+    const migrado = migrar(v2);
+
+    expect(migrado?.metas).toEqual(METAS_POR_DEFECTO);
+    expect(migrado?.solicitudes.some((s) => s.id.startsWith('SRV-09'))).toBe(true);
+    expect(migrado?.solicitudes.filter((s) => s.id.startsWith('SRV-10'))).toHaveLength(8);
   });
 
   it('descarta datos sin versión, para los que no hay migración registrada', () => {
@@ -283,12 +307,12 @@ describe('restablecer datos de demostración', () => {
       { servicioId: 'carnet', solicitanteId: 'usr-luis', datosFormulario: {} },
       LUIS,
     );
-    expect(await solicitudes.listar()).toHaveLength(8);
+    expect(await solicitudes.listar()).toHaveLength(totalSembrado());
 
     restablecerAlmacen();
 
     const restablecidas = await solicitudes.listar();
-    expect(restablecidas).toHaveLength(8);
+    expect(restablecidas).toHaveLength(totalSembrado());
     expect(restablecidas.map((s) => s.id)).toContain('SRV-1035');
     expect(restablecidas.map((s) => s.id)).not.toContain('SRV-1043');
   });
@@ -360,5 +384,26 @@ describe('autenticación local', () => {
       codigo: 'NO_AUTENTICADO',
       message: expect.stringMatching(/desactivada/),
     });
+  });
+});
+
+describe('metas del cuadro de mando', () => {
+  const metas = new RepositorioMetasLocal();
+  const AXELL: Actor = { id: 'usr-axell', nombre: 'Axell Feliz', rol: 'coordinador' };
+
+  it('parte de las metas por defecto', async () => {
+    expect(await metas.obtener()).toEqual(METAS_POR_DEFECTO);
+  });
+
+  it('el coordinador las cambia y quedan guardadas', async () => {
+    await metas.guardar({ ...METAS_POR_DEFECTO, tiempoCiclo: 4 }, AXELL);
+    expect((await metas.obtener()).tiempoCiclo).toBe(4);
+  });
+
+  it('el personal administrativo no puede cambiarlas', async () => {
+    await expect(
+      metas.guardar({ ...METAS_POR_DEFECTO, tiempoCiclo: 20 }, RICARDO),
+    ).rejects.toMatchObject({ codigo: 'PROHIBIDO' });
+    expect((await metas.obtener()).tiempoCiclo).toBe(METAS_POR_DEFECTO.tiempoCiclo);
   });
 });

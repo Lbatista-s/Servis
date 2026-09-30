@@ -1,43 +1,74 @@
-/** Pantalla 3 — Panel del estudiante. */
+/**
+ * Pantalla 3 — Inicio del estudiante.
+ *
+ * Una página de inicio y no un cuadro de mando: el estudiante no gestiona
+ * estrategia (eso es del coordinador, según Kaplan y Norton), sólo necesita
+ * saber qué hacer ahora. Por eso ordena sus trámites por la acción que piden:
+ * primero lo que requiere su atención, después lo que está en curso, los
+ * documentos listos para descargar y, al final, el historial.
+ */
 
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { RUTAS } from '@/app/rutas';
 import {
+  Button,
   ButtonLink,
   Card,
   EmptyState,
   Icono,
   Loading,
   SectionHeader,
-  StatCard,
   StatusBadge,
 } from '@/components/ui';
-import type { Solicitud } from '@/domain/types';
+import { repositorios } from '@/data';
+import type { EstadoSolicitud, Solicitud } from '@/domain/types';
 import { useUsuarioActual } from '@/features/auth/authStore';
 import { useIndiceServicios, useSolicitudes } from '@/hooks/useDatos';
-import { formatearFecha, tiempoRelativo } from '@/lib/format';
+import { useDescarga } from '@/hooks/useDescarga';
+import { formatearFecha } from '@/lib/format';
 import { contar } from '@/lib/texto';
+
+const REQUIEREN_ATENCION: readonly EstadoSolicitud[] = ['devuelta', 'borrador'];
+const EN_CURSO: readonly EstadoSolicitud[] = ['enviada', 'en_revision', 'corregida', 'aprobada'];
+const HISTORIAL_VISIBLE = 5;
+
+/** Qué se espera del estudiante en cada estado que requiere su atención. */
+const ACCION_PENDIENTE: Partial<Record<EstadoSolicitud, string>> = {
+  devuelta: 'Corrige y vuelve a enviar',
+  borrador: 'Completa y envía',
+};
 
 export function PanelEstudiante() {
   const usuario = useUsuarioActual();
   const { datos: solicitudes, cargando } = useSolicitudes({ solicitanteId: usuario?.id });
   const servicios = useIndiceServicios();
+  const [historialCompleto, setHistorialCompleto] = useState(false);
 
   if (!usuario) return null;
   if (cargando) return <Loading mensaje="Cargando tus solicitudes…" />;
 
   const lista = solicitudes ?? [];
-  const enCurso = lista.filter((s) =>
-    ['enviada', 'en_revision', 'corregida'].includes(s.estado),
-  ).length;
-  const requierenCorreccion = lista.filter((s) => s.estado === 'devuelta').length;
-  const aprobadas = lista.filter((s) => s.estado === 'aprobada').length;
-  const completadas = lista.filter((s) => s.estado === 'completada').length;
-  const pendientesAtencion =
-    requierenCorreccion + lista.filter((s) => s.estado === 'borrador').length;
+  const pendientes = lista.filter((s) => REQUIEREN_ATENCION.includes(s.estado));
+  const enCurso = lista.filter((s) => EN_CURSO.includes(s.estado));
+  const cerradas = lista.filter(
+    (s) => !REQUIEREN_ATENCION.includes(s.estado) && !EN_CURSO.includes(s.estado),
+  );
+  const documentos = cerradas.filter((s) => s.documento).slice(0, 3);
+  const historial = historialCompleto ? cerradas : cerradas.slice(0, HISTORIAL_VISIBLE);
 
   const nombrePila = usuario.nombre.split(' ')[0] ?? usuario.nombre;
+  const fila = (solicitud: Solicitud) => (
+    <li key={solicitud.id}>
+      <FilaSolicitud
+        solicitud={solicitud}
+        icono={servicios.get(solicitud.servicioId)?.icono ?? '📄'}
+        nombreServicio={servicios.get(solicitud.servicioId)?.nombre ?? solicitud.servicioId}
+        accion={ACCION_PENDIENTE[solicitud.estado]}
+      />
+    </li>
+  );
 
   return (
     <>
@@ -45,16 +76,18 @@ export function PanelEstudiante() {
         <div>
           <h1 className="text-4xl font-bold text-ink">¡Hola, {nombrePila}! 👋</h1>
           <p className="mt-1 text-md text-ink-3">
-            {pendientesAtencion > 0 ? (
+            {pendientes.length > 0 ? (
               <>
                 Tienes{' '}
                 <strong className="text-primary-dark">
-                  {contar(pendientesAtencion, 'solicitud', 'solicitudes')}
+                  {contar(pendientes.length, 'solicitud', 'solicitudes')}
                 </strong>{' '}
-                que {pendientesAtencion === 1 ? 'requiere' : 'requieren'} tu atención.
+                que {pendientes.length === 1 ? 'requiere' : 'requieren'} tu atención.
               </>
+            ) : enCurso.length > 0 ? (
+              `Tienes ${contar(enCurso.length, 'trámite', 'trámites')} en curso. Te avisaremos cuando cambien.`
             ) : (
-              'No tienes solicitudes pendientes de atención.'
+              '¿Qué necesitas tramitar hoy?'
             )}
           </p>
         </div>
@@ -64,95 +97,119 @@ export function PanelEstudiante() {
         </ButtonLink>
       </div>
 
-      <div className="mb-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          etiqueta="En curso"
-          valor={enCurso}
-          icono="documento"
-          fondoIcono="bg-warning-light"
-          tono="warning"
-          detalle="En proceso de revisión"
-        />
-        <StatCard
-          etiqueta="Requieren corrección"
-          valor={requierenCorreccion}
-          icono="rotar"
-          fondoIcono="bg-warning-soft"
-          tono="warning"
-          detalle={requierenCorreccion > 0 ? 'Acción requerida' : 'Sin pendientes'}
-          detalleNegativo={requierenCorreccion > 0}
-        />
-        <StatCard
-          etiqueta="Aprobadas"
-          valor={aprobadas}
-          icono="verificar"
-          fondoIcono="bg-success-light"
-          tono="success"
-          detalle="Listas para completarse"
-        />
-        <StatCard
-          etiqueta="Completadas"
-          valor={completadas}
-          icono="descargar"
-          fondoIcono="bg-emerald-light"
-          detalle="Documentos disponibles"
-        />
-      </div>
+      {lista.length === 0 ? (
+        <Card>
+          <EmptyState
+            icono="📄"
+            titulo="Todavía no tienes solicitudes"
+            descripcion="Explora el catálogo y elige el servicio que necesitas tramitar."
+          >
+            <ButtonLink to={RUTAS.catalogo}>Ver catálogo de servicios</ButtonLink>
+          </EmptyState>
+        </Card>
+      ) : (
+        <div className="grid gap-5 xl:grid-cols-[1fr_340px]">
+          <div className="flex flex-col gap-6">
+            {pendientes.length > 0 ? (
+              <section aria-labelledby="titulo-atencion">
+                <SectionHeader titulo={<span id="titulo-atencion">Requiere tu atención</span>} />
+                <Card sinRelleno className="border-primary-light-2">
+                  <ul>{pendientes.map(fila)}</ul>
+                </Card>
+              </section>
+            ) : null}
 
-      <div className="grid gap-5 xl:grid-cols-[1fr_340px]">
-        <section aria-labelledby="titulo-solicitudes">
-          <SectionHeader titulo={<span id="titulo-solicitudes">Mis solicitudes</span>}>
-            <ButtonLink to={RUTAS.catalogo} variante="ghost" tamano="sm">
-              Ver catálogo →
-            </ButtonLink>
-          </SectionHeader>
+            <section aria-labelledby="titulo-en-curso">
+              <SectionHeader titulo={<span id="titulo-en-curso">En curso</span>} />
+              <Card sinRelleno>
+                {enCurso.length === 0 ? (
+                  <p className="px-4 py-5 text-base text-ink-3">No tienes trámites en curso.</p>
+                ) : (
+                  <ul>{enCurso.map(fila)}</ul>
+                )}
+              </Card>
+            </section>
 
-          <Card sinRelleno>
-            {lista.length === 0 ? (
-              <EmptyState
-                icono="📄"
-                titulo="Todavía no tienes solicitudes"
-                descripcion="Explora el catálogo y elige el servicio que necesitas tramitar."
-              >
-                <ButtonLink to={RUTAS.catalogo}>Ver catálogo de servicios</ButtonLink>
-              </EmptyState>
-            ) : (
-              <ul>
-                {lista.map((solicitud) => (
-                  <li key={solicitud.id}>
-                    <FilaSolicitud
-                      solicitud={solicitud}
-                      icono={servicios.get(solicitud.servicioId)?.icono ?? '📄'}
-                      nombreServicio={
-                        servicios.get(solicitud.servicioId)?.nombre ?? solicitud.servicioId
-                      }
-                    />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-        </section>
+            {cerradas.length > 0 ? (
+              <section aria-labelledby="titulo-historial">
+                <SectionHeader titulo={<span id="titulo-historial">Historial</span>}>
+                  {cerradas.length > HISTORIAL_VISIBLE ? (
+                    <Button
+                      variante="ghost"
+                      tamano="sm"
+                      onClick={() => setHistorialCompleto((actual) => !actual)}
+                      aria-expanded={historialCompleto}
+                    >
+                      {historialCompleto ? 'Ver menos' : `Ver todo (${cerradas.length})`}
+                    </Button>
+                  ) : null}
+                </SectionHeader>
+                <Card sinRelleno>
+                  <ul>{historial.map(fila)}</ul>
+                </Card>
+              </section>
+            ) : null}
+          </div>
 
-        <aside className="flex flex-col gap-4">
-          <Card>
-            <SectionHeader titulo="Notificaciones" />
-            <Notificaciones solicitudes={lista} />
-          </Card>
+          <aside className="flex flex-col gap-4">
+            <Card>
+              <SectionHeader titulo="Documentos listos" />
+              <DocumentosListos solicitudes={documentos} />
+            </Card>
 
-          <Card fondo="institucional">
-            <p className="text-md font-semibold text-white">¿Necesitas ayuda?</p>
-            <p className="mb-3.5 mt-1.5 text-sm text-white/90">
-              Consulta el catálogo de servicios disponibles o contacta al Área de Ingenierías.
-            </p>
-            <ButtonLink to={RUTAS.catalogo} variante="outline">
-              <Icono nombre="cuadricula" />
-              Ver catálogo
-            </ButtonLink>
-          </Card>
-        </aside>
-      </div>
+            <Card fondo="institucional">
+              <p className="text-md font-semibold text-white">¿Necesitas ayuda?</p>
+              <p className="mb-3.5 mt-1.5 text-sm text-white/90">
+                Consulta el catálogo de servicios disponibles o contacta al Área de Ingenierías.
+              </p>
+              <ButtonLink to={RUTAS.catalogo} variante="outline">
+                <Icono nombre="cuadricula" />
+                Ver catálogo
+              </ButtonLink>
+            </Card>
+          </aside>
+        </div>
+      )}
     </>
+  );
+}
+
+/** Los últimos documentos emitidos, con descarga directa. */
+function DocumentosListos({ solicitudes }: { solicitudes: readonly Solicitud[] }) {
+  const { descargar, pendiente } = useDescarga();
+
+  if (solicitudes.length === 0) {
+    return (
+      <p className="py-2 text-sm text-ink-3">
+        Aquí aparecerán los documentos de tus solicitudes completadas.
+      </p>
+    );
+  }
+
+  return (
+    <ul className="flex flex-col gap-2">
+      {solicitudes.map((solicitud) =>
+        solicitud.documento ? (
+          <li key={solicitud.id}>
+            <Button
+              variante="outline"
+              className="w-full justify-start"
+              disabled={pendiente === solicitud.id}
+              onClick={() =>
+                descargar({
+                  clave: solicitud.id,
+                  nombre: solicitud.documento?.nombre ?? `${solicitud.id}.pdf`,
+                  obtener: () => repositorios.solicitudes.descargarDocumento(solicitud.id),
+                })
+              }
+            >
+              <Icono nombre="descargar" />
+              <span className="truncate">{solicitud.documento.nombre}</span>
+            </Button>
+          </li>
+        ) : null,
+      )}
+    </ul>
   );
 }
 
@@ -160,10 +217,13 @@ function FilaSolicitud({
   solicitud,
   icono,
   nombreServicio,
+  accion,
 }: {
   solicitud: Solicitud;
   icono: string;
   nombreServicio: string;
+  /** Qué debe hacer el estudiante, si la solicitud espera algo de él. */
+  accion?: string;
 }) {
   return (
     <Link
@@ -180,77 +240,11 @@ function FilaSolicitud({
         <span className="block truncate text-md font-semibold text-ink">{nombreServicio}</span>
         <span className="block text-sm text-ink-3">
           {solicitud.id} · {formatearFecha(solicitud.creadaEn)}
+          {accion ? <span className="font-semibold text-primary-dark"> · {accion}</span> : null}
         </span>
       </span>
       <StatusBadge estado={solicitud.estado} />
       <Icono nombre="chevron" className="h-3.5 w-3.5 text-ink-4" />
     </Link>
-  );
-}
-
-/** Deriva los avisos del historial real en lugar de mostrarlos codificados. */
-function Notificaciones({ solicitudes }: { solicitudes: readonly Solicitud[] }) {
-  const eventos = solicitudes
-    .flatMap((solicitud) =>
-      solicitud.historial
-        .filter((entrada) =>
-          ['devuelta', 'aprobada', 'completada', 'rechazada'].includes(entrada.estadoNuevo),
-        )
-        .map((entrada) => ({ solicitud, entrada })),
-    )
-    .sort((a, b) => b.entrada.fecha.localeCompare(a.entrada.fecha))
-    .slice(0, 3);
-
-  if (eventos.length === 0) {
-    return <p className="py-4 text-center text-sm text-ink-3">No tienes avisos recientes.</p>;
-  }
-
-  const ESTILO: Record<string, { fondo: string; borde: string; titulo: string }> = {
-    devuelta: {
-      fondo: 'bg-primary-light',
-      borde: 'border-l-primary',
-      titulo: 'Solicitud devuelta',
-    },
-    aprobada: {
-      fondo: 'bg-success-light',
-      borde: 'border-l-success',
-      titulo: 'Solicitud aprobada',
-    },
-    completada: {
-      fondo: 'bg-emerald-light',
-      borde: 'border-l-emerald',
-      titulo: 'Documento disponible',
-    },
-    rechazada: {
-      fondo: 'bg-danger-light',
-      borde: 'border-l-danger',
-      titulo: 'Solicitud rechazada',
-    },
-  };
-
-  return (
-    <ul className="flex flex-col gap-2.5">
-      {eventos.map(({ solicitud, entrada }) => {
-        const estilo = ESTILO[entrada.estadoNuevo] ?? {
-          fondo: 'bg-canvas',
-          borde: 'border-l-line-2',
-          titulo: 'Actualización',
-        };
-        return (
-          <li key={entrada.id}>
-            <Link
-              to={RUTAS.detalleSolicitud(solicitud.id)}
-              className={`block rounded border-l-[3px] p-3 transition-opacity hover:opacity-80 ${estilo.fondo} ${estilo.borde}`}
-            >
-              <span className="block text-base font-semibold text-ink">{estilo.titulo}</span>
-              <span className="mt-0.5 block text-sm text-ink-3">
-                #{solicitud.id} — {entrada.comentario ?? 'Consulta el detalle de la solicitud.'}
-              </span>
-              <span className="mt-1 block text-xs text-ink-3">{tiempoRelativo(entrada.fecha)}</span>
-            </Link>
-          </li>
-        );
-      })}
-    </ul>
   );
 }

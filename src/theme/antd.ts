@@ -109,6 +109,16 @@ export function crearTemaAntd(modo: ModoTema): ThemeConfig {
       Modal: {
         titleFontSize: 18,
       },
+      // La pestaña activa es texto: va en el rojo legible de cada tema (como
+      // los enlaces); el Rojo INTEC queda para la barra indicadora.
+      Tabs: {
+        itemSelectedColor: p.primary.dark,
+        itemHoverColor: p.primary.dark,
+        inkBarColor: p.primary.DEFAULT,
+      },
+      Segmented: {
+        itemSelectedColor: p.ink.DEFAULT,
+      },
       Tooltip: {
         colorBgSpotlight: p.chrome.DEFAULT,
       },

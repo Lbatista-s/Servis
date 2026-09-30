@@ -271,6 +271,14 @@ export function puedeEditarEstudiante(solicitud: Solicitud, actor: Actor): boole
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * Las metas del cuadro de mando las fija la dirección: sólo el coordinador
+ * puede cambiarlas. El personal administrativo las consulta.
+ */
+export function puedeEditarMetas(actor: Actor): boolean {
+  return actor.rol === 'coordinador';
+}
+
+/**
  * Un servicio no puede activarse sin requisitos definidos. Desactivarlo
  * siempre está permitido.
  */

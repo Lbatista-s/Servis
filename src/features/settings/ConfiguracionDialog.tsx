@@ -87,8 +87,9 @@ export function ConfiguracionDialog({
 
           <p className="text-md font-semibold text-ink">Datos de demostración</p>
           <p className="mb-4 mt-1 text-base text-ink-3">
-            Devuelve el sistema a su estado inicial: las 8 solicitudes de ejemplo, el catálogo
-            completo de servicios y los usuarios del equipo.
+            Devuelve el sistema a su estado inicial: las 8 solicitudes de ejemplo, el historial de
+            seis meses del cuadro de mando y sus metas, el catálogo completo de servicios y los
+            usuarios del equipo.
           </p>
 
           <InlineNotification tono="aviso">

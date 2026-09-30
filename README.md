@@ -98,19 +98,25 @@ bloqueo de acceso de cuentas inactivas.
 
 ## Pantallas
 
-| #   | Ruta                             | Pantalla                               | Rol                                   |
-| --- | -------------------------------- | -------------------------------------- | ------------------------------------- |
-| 1   | `/login`                         | Inicio de sesión                       | Público                               |
-| 2   | `/recuperar`                     | Recuperar contraseña                   | Público                               |
-| 3   | `/inicio`                        | Panel del estudiante                   | Estudiante                            |
-| 4   | `/catalogo`                      | Catálogo de servicios                  | Estudiante                            |
-| 5   | `/solicitudes/nueva/:servicioId` | Nueva solicitud (formulario por pasos) | Estudiante                            |
-| 6   | `/solicitudes/:id`               | Detalle y seguimiento                  | Estudiante                            |
-| 7   | `/bandeja`                       | Bandeja administrativa                 | Personal administrativo · Coordinador |
-| 8   | `/bandeja/:id`                   | Detalle con acciones de revisión       | Personal administrativo · Coordinador |
-| 9   | `/reportes`                      | Reportes y métricas                    | Personal administrativo · Coordinador |
-| 10  | `/admin/usuarios`                | Gestión de usuarios                    | Administrador                         |
-| 11  | `/admin/servicios`               | Gestión del catálogo                   | Administrador                         |
+| #   | Ruta                             | Pantalla                                      | Rol                                                         |
+| --- | -------------------------------- | --------------------------------------------- | ----------------------------------------------------------- |
+| 1   | `/login`                         | Inicio de sesión                              | Público                                                     |
+| 2   | `/recuperar`                     | Recuperar contraseña                          | Público                                                     |
+| 3   | `/inicio`                        | Inicio del estudiante                         | Estudiante                                                  |
+| 4   | `/catalogo`                      | Catálogo de servicios                         | Estudiante                                                  |
+| 5   | `/solicitudes/nueva/:servicioId` | Nueva solicitud (formulario por pasos)        | Estudiante                                                  |
+| 6   | `/solicitudes/:id`               | Detalle y seguimiento                         | Estudiante                                                  |
+| 7   | `/bandeja`                       | Bandeja administrativa                        | Personal administrativo · Coordinador                       |
+| 8   | `/bandeja/:id`                   | Detalle con acciones de revisión              | Personal administrativo · Coordinador                       |
+| 9   | `/cuadro-de-mando`               | Cuadro de mando integral y análisis operativo | Coordinador (inicio, edita metas) · Personal administrativo |
+| 10  | `/admin/usuarios`                | Gestión de usuarios                           | Administrador                                               |
+| 11  | `/admin/servicios`               | Gestión del catálogo                          | Administrador                                               |
+| 12  | `/admin`                         | Inicio del administrador                      | Administrador                                               |
+
+Cada rol entra en su pantalla. El coordinador entra al cuadro de mando integral (Kaplan y Norton)
+y el personal administrativo a la bandeja. El estudiante y el administrador entran a una página de
+inicio simple. El porqué, los indicadores, sus fórmulas y sus metas están en
+[`docs/cuadro-de-mando.md`](docs/cuadro-de-mando.md).
 
 Las rutas están protegidas por el componente `<RequireRole>`. Un rol no autorizado no ve un error:
 se le redirige a la pantalla inicial que le corresponde.

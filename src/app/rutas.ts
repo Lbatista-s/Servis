@@ -11,7 +11,10 @@ export const RUTAS = {
   detalleSolicitud: (id: string) => `/solicitudes/${id}`,
   bandeja: '/bandeja',
   detalleBandeja: (id: string) => `/bandeja/${id}`,
+  cuadroMando: '/cuadro-de-mando',
+  /** Antigua ruta de reportes; redirige al cuadro de mando. */
   reportes: '/reportes',
+  inicioAdmin: '/admin',
   usuarios: '/admin/usuarios',
   servicios: '/admin/servicios',
 } as const;
@@ -36,10 +39,11 @@ export const PREFIJOS = {
  */
 export const INICIO_POR_ROL: Record<Rol, string> = {
   estudiante: RUTAS.inicio,
+  // El personal trabaja la cola del día: su inicio es la bandeja.
   personal_administrativo: RUTAS.bandeja,
-  // El coordinador trabaja sobre la misma bandeja que el personal administrativo.
-  coordinador: RUTAS.bandeja,
-  administrador: RUTAS.usuarios,
+  // El coordinador dirige: su inicio es el cuadro de mando integral.
+  coordinador: RUTAS.cuadroMando,
+  administrador: RUTAS.inicioAdmin,
 };
 
 /** Roles con acceso al área administrativa de solicitudes. */

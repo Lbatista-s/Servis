@@ -4,10 +4,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { archivoRegistrado, registrarArchivo } from '@/data/archivos';
 import { ErrorRepositorio } from '@/data/repositories/types';
+import { METAS_POR_DEFECTO } from '@/domain/indicadores';
 import type { Actor, Adjunto } from '@/domain/types';
 
 import { aCamel, aSnake, clavesACamel, clavesASnake } from './casos';
-import { RepositorioAuthHttp, RepositorioSolicitudesHttp, RepositorioUsuariosHttp } from './index';
+
+import {
+  RepositorioAuthHttp,
+  RepositorioMetasHttp,
+  RepositorioSolicitudesHttp,
+  RepositorioUsuariosHttp,
+} from './index';
 import { alCaducarSesion, guardarTokens, leerTokens } from './sesion';
 
 interface Llamada {
@@ -387,5 +394,26 @@ describe('autenticación', () => {
   it('sin sesión vigente, el usuario actual es null', async () => {
     servidor(() => json({ detail: 'No autenticado.' }, 403));
     expect(await auth.usuarioActual()).toBeNull();
+  });
+});
+
+describe('metas del cuadro de mando', () => {
+  const metas = new RepositorioMetasHttp();
+  const AXELL: Actor = { id: '9', nombre: 'Axell Feliz', rol: 'coordinador' };
+
+  it('completa con los valores por defecto las metas que el servidor no define', async () => {
+    servidor(() => json({ entrega_a_tiempo: 92 }));
+    const obtenidas = await metas.obtener();
+    expect(obtenidas.entregaATiempo).toBe(92);
+    expect(obtenidas.tiempoCiclo).toBe(METAS_POR_DEFECTO.tiempoCiclo);
+    expect(llamadas[0]?.url.pathname).toBe('/api/indicadores/metas/');
+  });
+
+  it('guarda con PUT en snake_case', async () => {
+    document.cookie = 'csrftoken=abc';
+    servidor((_ruta, { cuerpo }) => json(JSON.parse(String(cuerpo))));
+    await metas.guardar({ ...METAS_POR_DEFECTO, tiempoCiclo: 4 }, AXELL);
+    expect(llamadas[0]?.metodo).toBe('PUT');
+    expect(cuerpoJson(llamadas[0])).toMatchObject({ tiempo_ciclo: 4, entrega_a_tiempo: 85 });
   });
 });

@@ -10,8 +10,9 @@ import { useAuth } from '@/features/auth/authStore';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { RecuperarPage } from '@/features/auth/RecuperarPage';
 import { RequireRole } from '@/features/auth/RequireRole';
+import { InicioAdministrador } from '@/features/admin/InicioAdministrador';
 import { CatalogoPage } from '@/features/catalog/CatalogoPage';
-import { ReportesPage } from '@/features/reports/ReportesPage';
+import { CuadroMandoPage } from '@/features/cuadro-mando/CuadroMandoPage';
 import { DetalleSolicitudPage } from '@/features/requests/DetalleSolicitudPage';
 import { NuevaSolicitudPage } from '@/features/requests/NuevaSolicitudPage';
 import { PanelEstudiante } from '@/features/requests/PanelEstudiante';
@@ -89,10 +90,20 @@ export function App() {
               }
             />
             <Route
-              path={RUTAS.reportes}
+              path={RUTAS.cuadroMando}
               element={
                 <RequireRole roles={ROLES_BANDEJA}>
-                  <ReportesPage />
+                  <CuadroMandoPage />
+                </RequireRole>
+              }
+            />
+            <Route path={RUTAS.reportes} element={<Navigate to={RUTAS.cuadroMando} replace />} />
+
+            <Route
+              path={RUTAS.inicioAdmin}
+              element={
+                <RequireRole roles={['administrador']}>
+                  <InicioAdministrador />
                 </RequireRole>
               }
             />

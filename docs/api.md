@@ -218,6 +218,16 @@ Implementación sugerida en Django:
 
 Si una carta requiere la firma real de una autoridad, el personal puede subir el PDF firmado antes de completar la solicitud en lugar de generarlo. Para el frontend el endpoint es el mismo.
 
+### Metas del cuadro de mando
+
+| Método y ruta            | Cuerpo          | Uso                                                                                                                 |
+| ------------------------ | --------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `GET indicadores/metas/` | —               | Metas vigentes, p. ej. `{"entrega_a_tiempo": 85, "tiempo_ciclo": 5, …}`. Las que falten toman su valor por defecto. |
+| `PUT indicadores/metas/` | El mismo objeto | Guarda las metas. Solo el **coordinador**; los demás reciben `403`.                                                 |
+
+- Las claves son los identificadores de los indicadores en `snake_case`. La lista completa está en `src/domain/indicadores/definiciones.ts` y en [cuadro-de-mando.md](./cuadro-de-mando.md).
+- Hoy los indicadores se calculan en el cliente a partir de `GET solicitudes/`, `servicios/` y `usuarios/`. Si el volumen crece, conviene un endpoint agregado (`GET indicadores/?periodo=90`) que devuelva los valores ya calculados con las mismas fórmulas.
+
 ## Ajustes de Django para el despliegue
 
 ```python

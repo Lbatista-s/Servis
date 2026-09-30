@@ -42,6 +42,10 @@ export const API = {
     lista: 'usuarios/',
     detalle: (id: string) => `usuarios/${segmento(id)}/`,
   },
+  indicadores: {
+    /** GET y PUT: metas del cuadro de mando. */
+    metas: 'indicadores/metas/',
+  },
   servicios: {
     lista: 'servicios/',
     detalle: (id: string) => `servicios/${segmento(id)}/`,
