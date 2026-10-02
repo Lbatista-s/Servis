@@ -1,26 +1,29 @@
 /**
  * Selector rápido de rol heredado del prototipo.
  *
- * Sólo se monta en modo desarrollo (`import.meta.env.DEV`); en la compilación
- * de producción el componente no renderiza nada y el empaquetador lo descarta.
+ * Sólo se monta en modo desarrollo (`import.meta.env.DEV`) y con datos locales:
+ * en la compilación de producción no renderiza nada, y contra la API real no
+ * se puede cambiar de cuenta sin credenciales.
  */
 
+import { Button } from 'antd';
 import { useNavigate } from 'react-router-dom';
 
+import { fuenteActiva } from '@/data';
 import { ETIQUETA_ROL, ROLES, type Rol } from '@/domain/types';
 import { useAuth, useUsuarioActual } from '@/features/auth/authStore';
 import { useUsuarios } from '@/hooks/useDatos';
-import { cn } from '@/lib/utils';
 
 import { INICIO_POR_ROL } from './rutas';
 
 export function DevRoleSwitcher() {
   const usuario = useUsuarioActual();
   const iniciarSesionComo = useAuth((estado) => estado.iniciarSesionComo);
-  const { datos: usuarios } = useUsuarios({ activo: true });
+  const disponible = import.meta.env.DEV && fuenteActiva() === 'local';
+  const { datos: usuarios } = useUsuarios({ activo: true }, disponible);
   const navegar = useNavigate();
 
-  if (!import.meta.env.DEV || !usuario) return null;
+  if (!disponible || !usuario) return null;
 
   /** Primer usuario activo con el rol solicitado. */
   function usuarioDe(rol: Rol) {
@@ -35,7 +38,7 @@ export function DevRoleSwitcher() {
   }
 
   return (
-    <div className="flex h-11 shrink-0 items-center gap-3 border-b-2 border-primary bg-ink px-4">
+    <div className="flex h-11 shrink-0 items-center gap-3 border-b-2 border-primary bg-black px-4">
       <span className="text-sm font-bold uppercase tracking-widest text-white/90">
         ▸ Servis · desarrollo
       </span>
@@ -50,22 +53,20 @@ export function DevRoleSwitcher() {
           const disponible = usuarioDe(rol);
           const activo = usuario?.rol === rol;
           return (
-            <button
+            <Button
               key={rol}
-              type="button"
+              size="small"
+              shape="round"
+              type={activo ? 'primary' : 'default'}
+              ghost={!activo}
+              // Sobre la franja negra: texto blanco también en el tema oscuro.
+              className={activo ? undefined : '!border-white/40 !text-white'}
               disabled={!disponible}
               onClick={() => cambiarA(rol)}
               aria-pressed={activo}
-              className={cn(
-                'rounded-full border-[1.5px] px-2.5 py-1 text-xs font-medium transition-all',
-                activo
-                  ? 'border-primary bg-primary text-white'
-                  : 'border-white/25 text-white/70 hover:border-white/50 hover:text-white',
-                !disponible && 'cursor-not-allowed opacity-40',
-              )}
             >
               {ETIQUETA_ROL[rol]}
-            </button>
+            </Button>
           );
         })}
       </div>

@@ -5,6 +5,7 @@
  * requisitos no puede activarse, y el intento devuelve un error explicativo.
  */
 
+import { Popover, Switch, Table, type TableColumnsType } from 'antd';
 import { useState } from 'react';
 
 import {
@@ -14,24 +15,14 @@ import {
   Icono,
   Loading,
   PageHeader,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-  Switch,
-  Table,
-  TableWrapper,
-  Tbody,
-  Td,
-  Th,
-  Thead,
   Tooltip,
-  Tr,
   useToast,
 } from '@/components/ui';
 import { repositorios } from '@/data';
 import { ETIQUETA_CATEGORIA, type Servicio } from '@/domain/types';
 import { mensajeDeError } from '@/hooks/useAsync';
 import { useRevalidar, useServicios } from '@/hooks/useDatos';
+import { contar } from '@/lib/texto';
 
 export function ServiciosPage() {
   const { datos: servicios, cargando } = useServicios();
@@ -61,6 +52,87 @@ export function ServiciosPage() {
 
   if (cargando) return <Loading mensaje="Cargando el catálogo…" />;
 
+  const columnas: TableColumnsType<Servicio> = [
+    {
+      title: 'Servicio',
+      key: 'servicio',
+      render: (_, servicio) => (
+        <span className="flex items-center gap-2.5">
+          <span
+            aria-hidden="true"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-lg"
+            style={{ backgroundColor: servicio.color }}
+          >
+            {servicio.icono}
+          </span>
+          <span className="font-medium">{servicio.nombre}</span>
+        </span>
+      ),
+    },
+    {
+      title: 'Categoría',
+      dataIndex: 'categoria',
+      render: (categoria: Servicio['categoria']) => (
+        <span className="text-ink-3">{ETIQUETA_CATEGORIA[categoria]}</span>
+      ),
+    },
+    {
+      title: 'Requisitos',
+      key: 'requisitos',
+      render: (_, servicio) => (
+        <Badge tono={servicio.requisitos.length === 0 ? 'red' : 'gray'} sinPunto>
+          {contar(servicio.requisitos.length, 'requisito')}
+        </Badge>
+      ),
+    },
+    {
+      title: 'Plantilla',
+      dataIndex: 'plantilla',
+      render: (plantilla: string) => (
+        <span className="flex items-center gap-1.5 text-ink-2">
+          <Icono nombre="documento" className="h-3.5 w-3.5 text-primary" />
+          {plantilla}
+        </span>
+      ),
+    },
+    {
+      title: 'Activo',
+      key: 'activo',
+      render: (_, servicio) => (
+        <Switch
+          checked={servicio.activo}
+          loading={procesando === servicio.id}
+          onChange={(valor) => alternar(servicio, valor)}
+          aria-label={`${servicio.activo ? 'Desactivar' : 'Activar'} ${servicio.nombre}`}
+        />
+      ),
+    },
+    {
+      title: 'Acciones',
+      key: 'acciones',
+      render: (_, servicio) => (
+        <span className="flex gap-1.5">
+          <Tooltip contenido="Editar servicio">
+            <Button variante="outline" tamano="icon" aria-label={`Editar ${servicio.nombre}`}>
+              <Icono nombre="editar" />
+            </Button>
+          </Tooltip>
+
+          <Popover
+            trigger="click"
+            placement="bottomRight"
+            title={`Requisitos de «${servicio.nombre}»`}
+            content={<ListaRequisitos servicio={servicio} />}
+          >
+            <Button variante="ghost" tamano="sm">
+              Ver requisitos
+            </Button>
+          </Popover>
+        </span>
+      ),
+    },
+  ];
+
   return (
     <>
       <PageHeader
@@ -78,112 +150,37 @@ export function ServiciosPage() {
       </PageHeader>
 
       <Card sinRelleno>
-        <TableWrapper>
-          <Table>
-            <Thead>
-              <Tr>
-                <Th>Servicio</Th>
-                <Th>Categoría</Th>
-                <Th>Requisitos</Th>
-                <Th>Plantilla</Th>
-                <Th>Activo</Th>
-                <Th>Acciones</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {lista.map((servicio) => (
-                <Tr key={servicio.id}>
-                  <Td>
-                    <span className="flex items-center gap-2.5">
-                      <span
-                        aria-hidden="true"
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-lg"
-                        style={{ backgroundColor: servicio.color }}
-                      >
-                        {servicio.icono}
-                      </span>
-                      <span className="font-medium">{servicio.nombre}</span>
-                    </span>
-                  </Td>
-                  <Td className="text-ink-3">{ETIQUETA_CATEGORIA[servicio.categoria]}</Td>
-                  <Td>
-                    <Badge tono={servicio.requisitos.length === 0 ? 'red' : 'gray'} sinPunto>
-                      {servicio.requisitos.length} requisito
-                      {servicio.requisitos.length === 1 ? '' : 's'}
-                    </Badge>
-                  </Td>
-                  <Td>
-                    <span className="flex items-center gap-1.5 text-ink-2">
-                      <Icono nombre="documento" className="h-3.5 w-3.5 text-primary" />
-                      {servicio.plantilla}
-                    </span>
-                  </Td>
-                  <Td>
-                    <Switch
-                      checked={servicio.activo}
-                      disabled={procesando === servicio.id}
-                      onCheckedChange={(valor) => alternar(servicio, valor)}
-                      aria-label={`${servicio.activo ? 'Desactivar' : 'Activar'} ${servicio.nombre}`}
-                    />
-                  </Td>
-                  <Td>
-                    <span className="flex gap-1.5">
-                      <Tooltip contenido="Editar servicio">
-                        <Button
-                          variante="outline"
-                          tamano="icon"
-                          aria-label={`Editar ${servicio.nombre}`}
-                        >
-                          <Icono nombre="editar" />
-                        </Button>
-                      </Tooltip>
-
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variante="ghost" tamano="sm">
-                            Ver requisitos
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-80">
-                          <p className="mb-2 text-base font-semibold text-ink">
-                            Requisitos de «{servicio.nombre}»
-                          </p>
-                          {servicio.requisitos.length === 0 ? (
-                            <p className="text-base text-ink-3">
-                              Este servicio no tiene requisitos definidos, por lo que no puede
-                              activarse.
-                            </p>
-                          ) : (
-                            <ul className="flex flex-col gap-1.5">
-                              {servicio.requisitos.map((requisito) => (
-                                <li
-                                  key={requisito.id}
-                                  className="flex items-start gap-2 text-base text-ink-2"
-                                >
-                                  <Icono
-                                    nombre="verificar"
-                                    className="mt-1 h-3 w-3 shrink-0 text-primary"
-                                  />
-                                  <span>
-                                    {requisito.descripcion}
-                                    {requisito.obligatorio ? null : (
-                                      <span className="text-ink-3"> (opcional)</span>
-                                    )}
-                                  </span>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </PopoverContent>
-                      </Popover>
-                    </span>
-                  </Td>
-                </Tr>
-              ))}
-            </Tbody>
-          </Table>
-        </TableWrapper>
+        <Table<Servicio>
+          rowKey="id"
+          columns={columnas}
+          dataSource={lista}
+          pagination={false}
+          scroll={{ x: 720 }}
+        />
       </Card>
     </>
+  );
+}
+
+function ListaRequisitos({ servicio }: { servicio: Servicio }) {
+  if (servicio.requisitos.length === 0) {
+    return (
+      <p className="max-w-72 text-base text-ink-3">
+        Este servicio no tiene requisitos definidos, por lo que no puede activarse.
+      </p>
+    );
+  }
+  return (
+    <ul className="flex max-w-80 flex-col gap-1.5">
+      {servicio.requisitos.map((requisito) => (
+        <li key={requisito.id} className="flex items-start gap-2 text-base text-ink-2">
+          <Icono nombre="verificar" className="mt-1 h-3 w-3 shrink-0 text-primary" />
+          <span>
+            {requisito.descripcion}
+            {requisito.obligatorio ? null : <span className="text-ink-3"> (opcional)</span>}
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }

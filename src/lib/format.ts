@@ -1,5 +1,7 @@
 /** Utilidades de formato en español dominicano, usadas en toda la interfaz. */
 
+import { contar } from './texto';
+
 const FORMATO_FECHA = new Intl.DateTimeFormat('es-DO', {
   day: '2-digit',
   month: '2-digit',
@@ -50,15 +52,15 @@ export function tiempoRelativo(iso: string, referencia: Date = new Date()): stri
   const minutos = Math.floor(transcurrido / 60_000);
 
   if (minutos < 1) return 'Hace un momento';
-  if (minutos < 60) return `Hace ${minutos} minuto${minutos === 1 ? '' : 's'}`;
+  if (minutos < 60) return `Hace ${contar(minutos, 'minuto')}`;
 
   const horas = Math.floor(minutos / 60);
-  if (horas < 24) return `Hace ${horas} hora${horas === 1 ? '' : 's'}`;
+  if (horas < 24) return `Hace ${contar(horas, 'hora')}`;
 
   const dias = Math.floor(horas / 24);
   if (dias === 1) return 'Ayer';
   if (dias < 30) return `Hace ${dias} días`;
 
   const meses = Math.floor(dias / 30);
-  return `Hace ${meses} mes${meses === 1 ? '' : 'es'}`;
+  return `Hace ${contar(meses, 'mes', 'meses')}`;
 }

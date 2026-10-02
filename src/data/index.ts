@@ -31,4 +31,5 @@ export const repositorios: Repositorios = crearRepositorios(fuenteActiva());
 export { crearRepositorios };
 
 export * from './repositories/types';
+export { alCaducarSesion } from './repositories/http/sesion';
 export { SERVIS_SCHEMA_VERSION } from './schema';

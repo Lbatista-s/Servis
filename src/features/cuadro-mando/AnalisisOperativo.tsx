@@ -1,18 +1,18 @@
 /**
- * Pantalla 9 — Reportes y métricas.
+ * Análisis operativo: el seguimiento del día a día de la cola (volumen por
+ * servicio, distribución por estado, carga del personal).
  *
- * Todas las cifras se calculan sobre las solicitudes reales del almacén, de
- * modo que la pantalla refleja el estado del sistema y no valores codificados.
+ * Es la antigua pantalla de reportes. Kaplan y Norton distinguen este tablero
+ * operativo del cuadro de mando estratégico, así que vive en su propia pestaña.
+ * Las cifras se calculan sobre las solicitudes reales, no valores codificados.
  */
 
 import {
-  Avatar,
+  AvatarUsuario,
   BarChart,
-  Button,
   Card,
-  Icono,
   Loading,
-  PageHeader,
+  Progress,
   Separator,
   SectionHeader,
   StatCard,
@@ -33,7 +33,7 @@ function diasDeResolucion(solicitud: Solicitud): number | null {
   return transcurrido / (1000 * 60 * 60 * 24);
 }
 
-export function ReportesPage() {
+export function AnalisisOperativo() {
   const { datos: solicitudes, cargando } = useSolicitudes();
   const servicios = useIndiceServicios();
   const usuarios = useIndiceUsuarios();
@@ -90,20 +90,6 @@ export function ReportesPage() {
 
   return (
     <>
-      <PageHeader
-        titulo="Reportes administrativos"
-        subtitulo="Área de Ingenierías · Métricas calculadas sobre las solicitudes registradas"
-      >
-        <Button variante="outline" tamano="sm">
-          <Icono nombre="calendario" />
-          Cambiar período
-        </Button>
-        <Button tamano="sm">
-          <Icono nombre="descargar" />
-          Exportar XLSX
-        </Button>
-      </PageHeader>
-
       <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard etiqueta="Total de solicitudes" valor={total} detalle="En el sistema" />
         <StatCard
@@ -119,13 +105,13 @@ export function ReportesPage() {
         <StatCard
           etiqueta="Tasa de aprobación"
           valor={`${tasaAprobacion}%`}
-          colorValor="text-success"
+          tono="success"
           detalle={`${favorables} de ${resueltas.length} resueltas`}
         />
         <StatCard
           etiqueta="Pendientes de acción"
           valor={pendientes}
-          colorValor="text-warning"
+          tono="warning"
           detalle={pendientes > 0 ? 'Acción requerida' : 'Sin pendientes'}
           detalleNegativo={pendientes > 0}
         />
@@ -146,13 +132,11 @@ export function ReportesPage() {
           <ul className="flex flex-col gap-2">
             {porEstado.map(({ estado, cantidad }) => (
               <li key={estado} className="flex items-center gap-2.5 text-base">
-                <StatusBadge estado={estado as EstadoSolicitud} />
-                <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-canvas-3">
-                  <span
-                    aria-hidden="true"
-                    className="block h-full rounded-full bg-primary"
-                    style={{ width: `${Math.round((cantidad / maximoEstado) * 100)}%` }}
-                  />
+                <span className="w-28 shrink-0">
+                  <StatusBadge estado={estado as EstadoSolicitud} />
+                </span>
+                <span className="flex-1" aria-hidden="true">
+                  <Progress valor={(cantidad / maximoEstado) * 100} />
                 </span>
                 <span className="w-7 text-right font-semibold">{cantidad}</span>
               </li>
@@ -172,12 +156,7 @@ export function ReportesPage() {
                     key={usuario.id}
                     className="flex items-center gap-2.5 border-b border-line py-2 text-base last:border-b-0"
                   >
-                    <Avatar
-                      nombre={usuario.nombre}
-                      iniciales={usuario.iniciales}
-                      color={usuario.colorAvatar}
-                      tamano="md"
-                    />
+                    <AvatarUsuario usuario={usuario} tamano="md" />
                     <span>
                       <span className="block font-medium">{usuario.nombre}</span>
                       <span className="block text-xs text-ink-3">

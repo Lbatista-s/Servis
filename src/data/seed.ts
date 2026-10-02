@@ -8,6 +8,7 @@
  */
 
 import { aplicarTransicion } from '@/domain/businessRules';
+import { crearDocumento } from '@/domain/documentos';
 import type { Actor, EstadoSolicitud, Servicio, Solicitud, Usuario } from '@/domain/types';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -534,6 +535,7 @@ export function construirSolicitudesDemo(): Solicitud[] {
         plantilla.estadoFinal === 'devuelta' || plantilla.estadoFinal === 'en_revision'
           ? 'alta'
           : 'normal',
+      documento: null,
     };
 
     let paso = 0;
@@ -558,6 +560,18 @@ export function construirSolicitudesDemo(): Solicitud[] {
 
       // La solicitud queda asignada a quien la tomó en revisión.
       if (hacia === 'en_revision') solicitud = { ...solicitud, asignadaA: actor.id };
+    }
+
+    if (solicitud.estado === 'completada') {
+      const servicio = SERVICIOS_DEMO.find((s) => s.id === solicitud.servicioId);
+      solicitud = {
+        ...solicitud,
+        documento: crearDocumento(
+          solicitud.id,
+          servicio?.nombre ?? solicitud.servicioId,
+          new Date(solicitud.actualizadaEn),
+        ),
+      };
     }
 
     return solicitud;

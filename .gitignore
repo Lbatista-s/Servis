@@ -41,3 +41,6 @@ pnpm-debug.log*
 # Caché de herramientas
 .eslintcache
 .cache
+
+# Caché incremental de TypeScript
+*.tsbuildinfo

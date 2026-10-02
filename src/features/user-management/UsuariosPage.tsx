@@ -1,51 +1,45 @@
 /** Pantalla 10 — Gestión de usuarios. */
 
+import { Table, type TableColumnsType } from 'antd';
 import { useState } from 'react';
 
 import {
-  Avatar,
+  AvatarUsuario,
   Badge,
   Button,
   Card,
   EmptyState,
+  CampoBusqueda,
   Icono,
-  Input,
   Loading,
   PageHeader,
   RoleBadge,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Table,
-  TableWrapper,
-  Tbody,
-  Td,
-  Th,
-  Thead,
+  SelectorFiltro,
   Tooltip,
-  Tr,
   useToast,
 } from '@/components/ui';
 import { repositorios } from '@/data';
-import { ETIQUETA_ROL, ROLES, type Rol } from '@/domain/types';
+import { ETIQUETA_ROL, type Rol, type Usuario } from '@/domain/types';
 import { mensajeDeError } from '@/hooks/useAsync';
 import { useRevalidar, useUsuarios } from '@/hooks/useDatos';
+import { TODOS, opcionesConTodos, type ConTodos } from '@/lib/filtros';
 import { tiempoRelativo } from '@/lib/format';
+import { contar } from '@/lib/texto';
 
 import { NuevoUsuarioDialog } from './NuevoUsuarioDialog';
 
-const TODOS = 'todos';
+/** Filtro por estado de la cuenta. */
+const ETIQUETA_ACTIVIDAD = { activos: 'Activos', inactivos: 'Inactivos' } as const;
+type FiltroActivo = ConTodos<keyof typeof ETIQUETA_ACTIVIDAD>;
 
 export function UsuariosPage() {
   const [busqueda, setBusqueda] = useState('');
-  const [rol, setRol] = useState<Rol | typeof TODOS>(TODOS);
-  const [activo, setActivo] = useState<'todos' | 'activos' | 'inactivos'>(TODOS);
+  const [rol, setRol] = useState<ConTodos<Rol>>(TODOS);
+  const [activo, setActivo] = useState<FiltroActivo>(TODOS);
 
   const { datos: usuarios, cargando } = useUsuarios({
     ...(rol !== TODOS ? { rol } : {}),
-    ...(activo !== 'todos' ? { activo: activo === 'activos' } : {}),
+    ...(activo !== TODOS ? { activo: activo === 'activos' } : {}),
     ...(busqueda ? { busqueda } : {}),
   });
 
@@ -66,11 +60,69 @@ export function UsuariosPage() {
     }
   }
 
+  const columnas: TableColumnsType<Usuario> = [
+    {
+      title: 'Usuario',
+      key: 'usuario',
+      render: (_, usuario) => (
+        <span className="flex items-center gap-2.5">
+          <AvatarUsuario usuario={usuario} />
+          <span className="font-medium">{usuario.nombre}</span>
+        </span>
+      ),
+    },
+    {
+      title: 'Correo',
+      dataIndex: 'correo',
+      render: (correo: string) => <span className="text-ink-3">{correo}</span>,
+    },
+    {
+      title: 'Rol',
+      dataIndex: 'rol',
+      render: (valor: Rol) => <RoleBadge rol={valor} />,
+    },
+    {
+      title: 'Estado',
+      dataIndex: 'activo',
+      render: (esActivo: boolean) => (
+        <Badge tono={esActivo ? 'green' : 'gray'}>{esActivo ? 'Activo' : 'Inactivo'}</Badge>
+      ),
+    },
+    {
+      title: 'Último acceso',
+      dataIndex: 'ultimoAcceso',
+      render: (fecha: string) => <span className="text-ink-3">{tiempoRelativo(fecha)}</span>,
+    },
+    {
+      title: 'Acciones',
+      key: 'acciones',
+      render: (_, usuario) => (
+        <span className="flex gap-1.5">
+          <Tooltip contenido="Editar usuario">
+            <Button variante="ghost" tamano="icon" aria-label={`Editar ${usuario.nombre}`}>
+              <Icono nombre="editar" />
+            </Button>
+          </Tooltip>
+          <Tooltip contenido={usuario.activo ? 'Desactivar' : 'Activar'}>
+            <Button
+              variante="ghost"
+              tamano="icon"
+              aria-label={`${usuario.activo ? 'Desactivar' : 'Activar'} ${usuario.nombre}`}
+              onClick={() => alternarActivacion(usuario.id, usuario.nombre, !usuario.activo)}
+            >
+              <Icono nombre={usuario.activo ? 'cerrar' : 'verificar'} />
+            </Button>
+          </Tooltip>
+        </span>
+      ),
+    },
+  ];
+
   return (
     <>
       <PageHeader
         titulo="Gestión de usuarios"
-        subtitulo={`${lista.length} usuario${lista.length === 1 ? '' : 's'} · Área de Ingenierías`}
+        subtitulo={`${contar(lista.length, 'usuario')} · Área de Ingenierías`}
       >
         <Button variante="outline" tamano="sm">
           <Icono nombre="descargar" />
@@ -80,51 +132,31 @@ export function UsuariosPage() {
       </PageHeader>
 
       <div className="mb-5 flex flex-wrap items-center gap-2">
-        <div className="relative w-full sm:w-64">
-          <Icono
-            nombre="buscar"
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3"
-          />
-          <Input
-            type="search"
-            value={busqueda}
-            onChange={(evento) => setBusqueda(evento.target.value)}
-            placeholder="Buscar por nombre o correo…"
-            aria-label="Buscar usuario"
-            className="pl-[38px]"
-          />
-        </div>
+        <CampoBusqueda
+          valor={busqueda}
+          onCambio={setBusqueda}
+          placeholder="Buscar por nombre o correo…"
+          etiqueta="Buscar usuario"
+        />
 
-        <Select value={rol} onValueChange={(valor) => setRol(valor as Rol | typeof TODOS)}>
-          <SelectTrigger className="w-full sm:w-52" aria-label="Filtrar por rol">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={TODOS}>Todos los roles</SelectItem>
-            {ROLES.map((clave) => (
-              <SelectItem key={clave} value={clave}>
-                {ETIQUETA_ROL[clave]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <SelectorFiltro
+          valor={rol}
+          onCambio={setRol}
+          etiqueta="Filtrar por rol"
+          className="sm:w-52"
+          opciones={opcionesConTodos('Todos los roles', ETIQUETA_ROL)}
+        />
 
-        <Select
-          value={activo}
-          onValueChange={(valor) => setActivo(valor as 'todos' | 'activos' | 'inactivos')}
-        >
-          <SelectTrigger className="w-full sm:w-44" aria-label="Filtrar por estado">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos los estados</SelectItem>
-            <SelectItem value="activos">Activos</SelectItem>
-            <SelectItem value="inactivos">Inactivos</SelectItem>
-          </SelectContent>
-        </Select>
+        <SelectorFiltro
+          valor={activo}
+          onCambio={setActivo}
+          etiqueta="Filtrar por estado"
+          className="sm:w-44"
+          opciones={opcionesConTodos('Todos los estados', ETIQUETA_ACTIVIDAD)}
+        />
 
-        <Badge tono="gray" sinPunto className="px-2.5 py-1.5 text-sm">
-          {lista.length} registro{lista.length === 1 ? '' : 's'}
+        <Badge tono="gray" sinPunto>
+          {contar(lista.length, 'registro')}
         </Badge>
       </div>
 
@@ -140,71 +172,13 @@ export function UsuariosPage() {
         </Card>
       ) : (
         <Card sinRelleno>
-          <TableWrapper>
-            <Table>
-              <Thead>
-                <Tr>
-                  <Th>Usuario</Th>
-                  <Th>Correo</Th>
-                  <Th>Rol</Th>
-                  <Th>Estado</Th>
-                  <Th>Último acceso</Th>
-                  <Th>Acciones</Th>
-                </Tr>
-              </Thead>
-              <Tbody>
-                {lista.map((usuario) => (
-                  <Tr key={usuario.id}>
-                    <Td>
-                      <span className="flex items-center gap-2.5">
-                        <Avatar
-                          nombre={usuario.nombre}
-                          iniciales={usuario.iniciales}
-                          color={usuario.colorAvatar}
-                        />
-                        <span className="font-medium">{usuario.nombre}</span>
-                      </span>
-                    </Td>
-                    <Td className="text-ink-3">{usuario.correo}</Td>
-                    <Td>
-                      <RoleBadge rol={usuario.rol} />
-                    </Td>
-                    <Td>
-                      <Badge tono={usuario.activo ? 'green' : 'gray'}>
-                        {usuario.activo ? 'Activo' : 'Inactivo'}
-                      </Badge>
-                    </Td>
-                    <Td className="text-ink-3">{tiempoRelativo(usuario.ultimoAcceso)}</Td>
-                    <Td>
-                      <span className="flex gap-1.5">
-                        <Tooltip contenido="Editar usuario">
-                          <Button
-                            variante="ghost"
-                            tamano="icon"
-                            aria-label={`Editar ${usuario.nombre}`}
-                          >
-                            <Icono nombre="editar" />
-                          </Button>
-                        </Tooltip>
-                        <Tooltip contenido={usuario.activo ? 'Desactivar' : 'Activar'}>
-                          <Button
-                            variante="ghost"
-                            tamano="icon"
-                            aria-label={`${usuario.activo ? 'Desactivar' : 'Activar'} ${usuario.nombre}`}
-                            onClick={() =>
-                              alternarActivacion(usuario.id, usuario.nombre, !usuario.activo)
-                            }
-                          >
-                            <Icono nombre={usuario.activo ? 'cerrar' : 'verificar'} />
-                          </Button>
-                        </Tooltip>
-                      </span>
-                    </Td>
-                  </Tr>
-                ))}
-              </Tbody>
-            </Table>
-          </TableWrapper>
+          <Table<Usuario>
+            rowKey="id"
+            columns={columnas}
+            dataSource={lista}
+            pagination={false}
+            scroll={{ x: 720 }}
+          />
         </Card>
       )}
     </>

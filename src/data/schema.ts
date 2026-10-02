@@ -6,10 +6,13 @@
  * transforma la anterior; al arrancar, `migrar` aplica en cadena las que falten.
  */
 
+import { crearDocumento } from '@/domain/documentos';
+import { construirHistorialDemo } from '@/data/seedHistorial';
+import { METAS_POR_DEFECTO, type Metas } from '@/domain/indicadores/definiciones';
 import type { Servicio, Solicitud, Usuario } from '@/domain/types';
 
 /** Versión actual del esquema. Incrementar al cambiar la forma de los datos. */
-export const SERVIS_SCHEMA_VERSION = 1;
+export const SERVIS_SCHEMA_VERSION = 3;
 
 /** Clave única bajo la que se guarda todo el almacén. */
 export const CLAVE_ALMACEN = 'servis:datos';
@@ -19,6 +22,8 @@ export interface Almacen {
   solicitudes: Solicitud[];
   usuarios: Usuario[];
   servicios: Servicio[];
+  /** Metas del cuadro de mando, fijadas por el coordinador. */
+  metas: Metas;
 }
 
 /** Forma sin tipar de un almacén leído del disco, antes de migrarlo. */
@@ -37,7 +42,32 @@ type AlmacenBruto = Record<string, unknown>;
  * }),
  * ```
  */
-const MIGRACIONES: Record<number, (almacen: AlmacenBruto) => AlmacenBruto> = {};
+const MIGRACIONES: Record<number, (almacen: AlmacenBruto) => AlmacenBruto> = {
+  // v2: las solicitudes guardan su documento de salida.
+  1: (almacen) => {
+    const servicios = almacen.servicios as Servicio[];
+    return {
+      ...almacen,
+      solicitudes: (almacen.solicitudes as Omit<Solicitud, 'documento'>[]).map((s) => ({
+        ...s,
+        documento:
+          s.estado === 'completada'
+            ? crearDocumento(
+                s.id,
+                servicios.find((servicio) => servicio.id === s.servicioId)?.nombre ?? s.servicioId,
+                new Date(s.actualizadaEn),
+              )
+            : null,
+      })),
+    };
+  },
+  // v3: metas del cuadro de mando y el historial cerrado que lo alimenta.
+  2: (almacen) => ({
+    ...almacen,
+    solicitudes: [...(almacen.solicitudes as Solicitud[]), ...construirHistorialDemo(new Date())],
+    metas: { ...METAS_POR_DEFECTO },
+  }),
+};
 
 /** Comprueba que el valor leído tenga la forma mínima de un almacén. */
 function pareceAlmacen(valor: unknown): valor is AlmacenBruto {
@@ -79,5 +109,7 @@ export function migrar(bruto: unknown): Almacen | null {
     solicitudes: actual.solicitudes as Solicitud[],
     usuarios: actual.usuarios as Usuario[],
     servicios: actual.servicios as Servicio[],
+    // Se completan las metas que falten (p. ej. un indicador añadido después).
+    metas: { ...METAS_POR_DEFECTO, ...(actual.metas as Partial<Metas> | undefined) },
   };
 }

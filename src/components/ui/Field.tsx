@@ -1,15 +1,24 @@
-/** Campos de formulario: etiqueta, entrada, área de texto y textos auxiliares. */
+/**
+ * Campos de formulario: etiqueta, entrada, área de texto y textos auxiliares.
+ *
+ * Los controles son `Input` e `Input.TextArea` de Ant Design. `Field` sigue
+ * enlazando etiqueta, control, ayuda y error mediante un contexto, de modo que
+ * la accesibilidad no depende de que cada pantalla repita identificadores.
+ *
+ * Con React Hook Form los controles se usan a través de `Controller`: los de
+ * Ant Design son controlados y no admiten que el formulario escriba en el DOM.
+ */
 
-import * as LabelPrimitive from '@radix-ui/react-label';
 import {
-  createContext,
-  forwardRef,
-  useContext,
-  useId,
-  type InputHTMLAttributes,
-  type ReactNode,
-  type TextareaHTMLAttributes,
-} from 'react';
+  DatePicker,
+  Input as AntInput,
+  type GetProps,
+  type GetRef,
+  type InputProps as AntInputProps,
+  type InputRef,
+} from 'antd';
+import dayjs from 'dayjs';
+import { createContext, forwardRef, useContext, useId, type ReactNode } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -62,7 +71,7 @@ export function Field({ children, className, error }: FieldProps) {
 
 export interface FieldLabelProps {
   children: ReactNode;
-  /** Añade el asterisco rojo del prototipo y marca el control como obligatorio. */
+  /** Añade el asterisco del prototipo y lo anuncia como obligatorio. */
   requerido?: boolean;
   className?: string;
   htmlFor?: string;
@@ -71,7 +80,7 @@ export interface FieldLabelProps {
 export function FieldLabel({ children, requerido, className, htmlFor }: FieldLabelProps) {
   const campo = useCampo();
   return (
-    <LabelPrimitive.Root
+    <label
       htmlFor={htmlFor ?? campo?.idControl}
       className={cn('text-sm font-semibold text-ink-2', className)}
     >
@@ -79,13 +88,13 @@ export function FieldLabel({ children, requerido, className, htmlFor }: FieldLab
       {requerido ? (
         <>
           {' '}
-          <span className="text-primary" aria-hidden="true">
+          <span className="text-primary-dark" aria-hidden="true">
             *
           </span>
           <span className="sr-only">(obligatorio)</span>
         </>
       ) : null}
-    </LabelPrimitive.Root>
+    </label>
   );
 }
 
@@ -102,48 +111,65 @@ export function FieldHint({ children, className }: { children: ReactNode; classN
 // Controles
 // ─────────────────────────────────────────────────────────────────────────────
 
-const CLASES_CONTROL = cn(
-  'w-full rounded border-[1.5px] border-line-2 bg-surface px-3 text-base text-ink',
-  'outline-none transition-colors placeholder:text-ink-4',
-  'focus:border-primary focus:shadow-focus-primary',
-  'disabled:cursor-not-allowed disabled:bg-canvas-2 disabled:text-ink-3',
-  'aria-[invalid=true]:border-danger aria-[invalid=true]:focus:shadow-none',
+/** Atributos de accesibilidad y estado que el contexto aporta a cada control. */
+function useAtributosControl(id: string | undefined) {
+  const campo = useCampo();
+  return {
+    id: id ?? campo?.idControl,
+    status: campo?.hayError ? ('error' as const) : undefined,
+    'aria-invalid': campo?.hayError || undefined,
+    'aria-describedby': campo?.hayError ? campo.idError : campo?.idAyuda,
+  };
+}
+
+export type InputProps = AntInputProps;
+
+export const Input = forwardRef<InputRef, InputProps>(function Input({ id, ...props }, ref) {
+  return <AntInput ref={ref} {...useAtributosControl(id)} {...props} />;
+});
+
+/** Formato en que el dominio guarda las fechas (el mismo del control nativo). */
+const FORMATO_GUARDADO = 'YYYY-MM-DD';
+
+/**
+ * Selector de fecha. Recibe y entrega cadenas `AAAA-MM-DD`, de modo que el
+ * dominio no depende de la librería de fechas; al usuario le muestra DD/MM/AAAA.
+ */
+export function DateInput({
+  id,
+  value,
+  onChange,
+  onBlur,
+  placeholder = 'DD/MM/AAAA',
+}: {
+  id?: string;
+  value: string | undefined;
+  onChange: (valor: string) => void;
+  onBlur?: () => void;
+  placeholder?: string;
+}) {
+  const atributos = useAtributosControl(id);
+  // `AAAA-MM-DD` es ISO 8601: dayjs lo interpreta sin plugins de formato.
+  const fecha = value ? dayjs(value) : null;
+  return (
+    <DatePicker
+      {...atributos}
+      className="w-full"
+      format="DD/MM/YYYY"
+      placeholder={placeholder}
+      value={fecha?.isValid() ? fecha : null}
+      onChange={(nueva) => onChange(nueva ? nueva.format(FORMATO_GUARDADO) : '')}
+      onBlur={onBlur}
+    />
+  );
+}
+
+export type TextareaProps = GetProps<typeof AntInput.TextArea>;
+
+export const Textarea = forwardRef<GetRef<typeof AntInput.TextArea>, TextareaProps>(
+  function Textarea({ id, autoSize = { minRows: 3, maxRows: 10 }, ...props }, ref) {
+    return (
+      <AntInput.TextArea ref={ref} autoSize={autoSize} {...useAtributosControl(id)} {...props} />
+    );
+  },
 );
-
-export type InputProps = InputHTMLAttributes<HTMLInputElement>;
-
-export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { className, id, ...props },
-  ref,
-) {
-  const campo = useCampo();
-  return (
-    <input
-      ref={ref}
-      id={id ?? campo?.idControl}
-      aria-invalid={campo?.hayError || undefined}
-      aria-describedby={campo?.hayError ? campo.idError : campo?.idAyuda}
-      className={cn(CLASES_CONTROL, 'h-[38px]', className)}
-      {...props}
-    />
-  );
-});
-
-export type TextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement>;
-
-export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textarea(
-  { className, id, ...props },
-  ref,
-) {
-  const campo = useCampo();
-  return (
-    <textarea
-      ref={ref}
-      id={id ?? campo?.idControl}
-      aria-invalid={campo?.hayError || undefined}
-      aria-describedby={campo?.hayError ? campo.idError : campo?.idAyuda}
-      className={cn(CLASES_CONTROL, 'min-h-20 resize-y py-2.5 leading-relaxed', className)}
-      {...props}
-    />
-  );
-});

@@ -68,7 +68,9 @@ export const ESTADOS_FINALES: readonly EstadoSolicitud[] = [
 // Entidades
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type ColorAvatar = 'red' | 'blue' | 'green' | 'amber' | 'purple' | 'teal';
+export const COLORES_AVATAR = ['red', 'blue', 'green', 'amber', 'purple', 'teal'] as const;
+
+export type ColorAvatar = (typeof COLORES_AVATAR)[number];
 
 export interface Usuario {
   id: string;
@@ -125,6 +127,16 @@ export interface Adjunto {
 }
 
 /**
+ * Documento oficial que el sistema entrega al completar la solicitud (carta de
+ * pasantía, certificación…). Lo genera el servidor; en modo local se genera en
+ * el navegador un documento de muestra sin validez.
+ */
+export interface Documento {
+  nombre: string;
+  generadoEn: string;
+}
+
+/**
  * Entrada del historial. Es inmutable por contrato: se crea al ejecutar una
  * transición y nunca se edita ni se elimina.
  */
@@ -157,6 +169,8 @@ export interface Solicitud {
   comentarioInterno: string;
   asignadaA: string | null;
   prioridad: Prioridad;
+  /** Documento de salida; existe sólo cuando la solicitud está completada. */
+  documento: Documento | null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

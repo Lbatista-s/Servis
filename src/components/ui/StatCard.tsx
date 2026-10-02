@@ -1,10 +1,21 @@
-/** Tarjeta de métrica usada en los paneles y en reportes. */
+/** Tarjeta de métrica usada en los paneles y en reportes, con `Statistic` de Ant Design. */
 
+import { Card, Statistic } from 'antd';
 import type { ReactNode } from 'react';
 
 import { cn } from '@/lib/utils';
+import { cv } from '@/theme/css';
 
 import { Icono, type NombreIcono } from './Icons';
+
+/** Color del valor principal; sigue al tema y supera 4,5:1 sobre la tarjeta en ambos. */
+const COLOR_VALOR = {
+  ink: cv('ink'),
+  info: cv('info'),
+  success: cv('success'),
+  warning: cv('warning'),
+  danger: cv('danger'),
+} as const;
 
 export interface StatCardProps {
   etiqueta: string;
@@ -16,8 +27,7 @@ export interface StatCardProps {
   icono?: NombreIcono;
   /** Clase de fondo del recuadro del icono (token de Tailwind). */
   fondoIcono?: string;
-  /** Clase de color del valor principal. */
-  colorValor?: string;
+  tono?: keyof typeof COLOR_VALOR;
   className?: string;
 }
 
@@ -28,26 +38,41 @@ export function StatCard({
   detalleNegativo,
   icono,
   fondoIcono = 'bg-canvas-2',
-  colorValor = 'text-ink',
+  tono = 'ink',
   className,
 }: StatCardProps) {
   return (
-    <div
-      className={cn('flex flex-col gap-2 rounded-lg border border-line bg-surface p-5', className)}
-    >
+    <Card variant="outlined" className={className} styles={{ body: { padding: 20 } }}>
       {icono ? (
         <span
-          className={cn('mb-1 flex h-9 w-9 items-center justify-center rounded', fondoIcono)}
+          className={cn('mb-3 flex h-9 w-9 items-center justify-center rounded', fondoIcono)}
           aria-hidden="true"
         >
           <Icono nombre={icono} className="h-[18px] w-[18px] text-ink-2" />
         </span>
       ) : null}
-      <p className="text-sm font-semibold uppercase tracking-wide text-ink-3">{etiqueta}</p>
-      <p className={cn('text-6xl font-bold leading-none', colorValor)}>{valor}</p>
+      <Statistic
+        title={
+          <span className="text-sm font-semibold uppercase tracking-wide text-ink-3">
+            {etiqueta}
+          </span>
+        }
+        valueRender={() => valor}
+        styles={{
+          content: {
+            color: COLOR_VALOR[tono],
+            fontSize: 28,
+            fontWeight: 700,
+            lineHeight: 1.1,
+            fontFamily: 'Montserrat, "Open Sans", sans-serif',
+          },
+        }}
+      />
       {detalle ? (
-        <p className={cn('text-sm', detalleNegativo ? 'text-danger' : 'text-success')}>{detalle}</p>
+        <p className={cn('mt-2 text-sm', detalleNegativo ? 'text-danger' : 'text-success')}>
+          {detalle}
+        </p>
       ) : null}
-    </div>
+    </Card>
   );
 }

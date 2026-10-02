@@ -8,6 +8,7 @@
  */
 
 import type { OpcionesTransicion } from '@/domain/businessRules';
+import type { Metas } from '@/domain/indicadores/definiciones';
 import type {
   Actor,
   Adjunto,
@@ -23,7 +24,16 @@ import type {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type CodigoErrorRepositorio =
-  'NO_ENCONTRADO' | 'REGLA_DE_NEGOCIO' | 'CONFLICTO' | 'NO_IMPLEMENTADO';
+  | 'NO_ENCONTRADO'
+  | 'REGLA_DE_NEGOCIO'
+  | 'CONFLICTO'
+  | 'NO_IMPLEMENTADO'
+  /** Sin sesión o sesión caducada (HTTP 401). */
+  | 'NO_AUTENTICADO'
+  /** La sesión no tiene permiso para la operación (HTTP 403). */
+  | 'PROHIBIDO'
+  /** El servidor no respondió o falló (sin conexión, HTTP 5xx). */
+  | 'ERROR_RED';
 
 /**
  * Error uniforme de la capa de datos. La implementación HTTP traducirá los
@@ -82,6 +92,10 @@ export interface IRequestRepository {
     opciones?: OpcionesTransicion,
   ): Promise<Solicitud>;
   eliminar(id: string): Promise<void>;
+  /** Contenido de un archivo adjunto. */
+  descargarAdjunto(solicitudId: string, adjuntoId: string): Promise<Blob>;
+  /** PDF del documento de salida; falla si la solicitud no está completada. */
+  descargarDocumento(id: string): Promise<Blob>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -127,13 +141,40 @@ export interface IServiceRepository {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Metas del cuadro de mando
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface IMetasRepository {
+  obtener(): Promise<Metas>;
+  /** Sólo el coordinador fija las metas; el resto recibe `PROHIBIDO`. */
+  guardar(metas: Metas, actor: Actor): Promise<Metas>;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Autenticación
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface IAuthRepository {
+  /**
+   * Abre una sesión y devuelve el usuario. Falla con `NO_AUTENTICADO` si las
+   * credenciales no son válidas o la cuenta está desactivada.
+   */
+  iniciarSesion(correo: string, contrasena: string): Promise<Usuario>;
+  cerrarSesion(): Promise<void>;
+  /** Usuario de la sesión vigente, o `null` si no hay sesión. */
+  usuarioActual(): Promise<Usuario | null>;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Agrupación
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface Repositorios {
+  auth: IAuthRepository;
   solicitudes: IRequestRepository;
   usuarios: IUserRepository;
   servicios: IServiceRepository;
+  metas: IMetasRepository;
   /** Restablece el almacenamiento a los datos de demostración iniciales. */
   restablecerDemo(): Promise<void>;
 }
