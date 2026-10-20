@@ -5,8 +5,8 @@ import type { Adjunto } from '@/domain/types';
 
 /**
  * Adjuntos a partir de los archivos elegidos en la zona de carga. El contenido
- * queda registrado con el identificador provisional; el repositorio lo sube
- * (o lo conserva, en modo local) al guardar la solicitud.
+ * queda registrado con el identificador provisional; el repositorio lo sube al
+ * guardar la solicitud.
  */
 export function adjuntosDesde(archivos: readonly File[]): Adjunto[] {
   const ahora = new Date();

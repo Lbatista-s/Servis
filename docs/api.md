@@ -1,6 +1,6 @@
 # Contrato de la API de SERVIS
 
-Es la API REST que espera el frontend cuando se ejecuta con `VITE_DATA_SOURCE=http`. Está pensada para Django REST Framework (DRF) y se deriva de lo que la interfaz ya usa.
+Es la API REST que consume el frontend. Está pensada para Django REST Framework (DRF) y se deriva de lo que la interfaz ya usa. Mientras no exista el backend, la responde la API simulada de `src/mocks/` (`VITE_API_MOCK=true`), que sigue este mismo documento: ante una duda sobre el comportamiento esperado, `src/mocks/handlers.ts` es una referencia ejecutable.
 
 **Si el backend ya existe con otra forma**, no hace falta cambiarlo para cumplir este documento. Del lado del frontend basta con ajustar:
 

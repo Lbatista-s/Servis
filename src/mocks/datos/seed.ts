@@ -501,9 +501,7 @@ export function construirSolicitudesDemo(): Solicitud[] {
   return PLANTILLAS.map((plantilla, indice) => {
     const usuario = USUARIOS_DEMO.find((u) => u.id === plantilla.solicitanteId);
     if (!usuario) {
-      throw new Error(
-        `Solicitante desconocido en los datos de demostración: ${plantilla.solicitanteId}`,
-      );
+      throw new Error(`Solicitante desconocido en los datos simulados: ${plantilla.solicitanteId}`);
     }
     const solicitante: Actor = { id: usuario.id, nombre: usuario.nombre, rol: usuario.rol };
 

@@ -128,8 +128,8 @@ export interface Adjunto {
 
 /**
  * Documento oficial que el sistema entrega al completar la solicitud (carta de
- * pasantía, certificación…). Lo genera el servidor; en modo local se genera en
- * el navegador un documento de muestra sin validez.
+ * pasantía, certificación…). Lo genera el servidor; la API simulada entrega un
+ * documento de muestra sin validez.
  */
 export interface Documento {
   nombre: string;

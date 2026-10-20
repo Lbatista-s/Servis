@@ -1,10 +1,10 @@
 /**
  * Contratos de la capa de persistencia.
  *
- * Todos los métodos son asíncronos aunque la implementación actual resuelva de
- * inmediato desde localStorage. Cuando el sistema pase a un backend real bastará
- * con proporcionar otra implementación de estas mismas interfaces: ni la
- * interfaz de usuario ni el estado global cambian.
+ * La implementación es HTTP (`./http/`), contra Django o, mientras no exista,
+ * contra la API simulada de `src/mocks/`. Si algún día cambia el transporte,
+ * basta con otra implementación de estas interfaces: ni la interfaz de usuario
+ * ni el estado global cambian.
  */
 
 import type { OpcionesTransicion } from '@/domain/businessRules';
