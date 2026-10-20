@@ -28,8 +28,8 @@ module.exports = {
       'error',
       { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
     ],
-    // La UI nunca debe tocar el almacenamiento directamente: sólo la capa
-    // `src/data/repositories/localStorage/` tiene permiso (ver overrides).
+    // La UI nunca debe tocar el almacenamiento directamente: los datos viven
+    // en la API. Sólo el servidor simulado lo usa (ver overrides).
     'no-restricted-globals': [
       'error',
       {
@@ -40,8 +40,8 @@ module.exports = {
   },
   overrides: [
     {
-      // Única excepción: la implementación concreta del repositorio.
-      files: ['src/data/repositories/localStorage/**/*.ts', 'src/test/**/*.ts'],
+      // Excepciones: el servidor simulado persiste ahí sus datos.
+      files: ['src/mocks/**/*.ts', 'src/test/**/*.ts'],
       rules: { 'no-restricted-globals': 'off' },
     },
     {

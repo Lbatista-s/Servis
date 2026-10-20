@@ -1,16 +1,15 @@
 /**
  * Sesión activa.
  *
- * Delegada en `repositorios.auth`: en modo local la autenticación es simulada
- * (basta un correo de una cuenta activa); en modo `http` la valida Django. El
- * usuario se persiste para no pedir acceso en cada recarga, y en modo `http`
- * se vuelve a confirmar con el servidor al arrancar (`verificarSesion`).
+ * Delegada en `repositorios.auth`, que la valida contra la API. El usuario se
+ * persiste para no pedir acceso en cada recarga y se vuelve a confirmar con el
+ * servidor al arrancar (`verificarSesion`).
  */
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { alCaducarSesion, fuenteActiva, repositorios } from '@/data';
+import { alCaducarSesion, repositorios } from '@/data';
 import type { Actor, Rol, Usuario } from '@/domain/types';
 import { clienteConsultas } from '@/hooks/clienteConsultas';
 import { mensajeDeError } from '@/lib/errores';
@@ -19,9 +18,7 @@ interface EstadoAutenticacion {
   usuario: Usuario | null;
   cargando: boolean;
   error: string | null;
-  iniciarSesion: (correo: string, contrasena?: string) => Promise<boolean>;
-  /** Cambio rápido de cuenta; sólo existe en el modo de demostración. */
-  iniciarSesionComo: (usuarioId: string) => Promise<boolean>;
+  iniciarSesion: (correo: string, contrasena: string) => Promise<boolean>;
   cerrarSesion: () => void;
   /** Confirma con el servidor que la sesión persistida sigue vigente. */
   verificarSesion: () => Promise<void>;
@@ -35,7 +32,7 @@ export const useAuth = create<EstadoAutenticacion>()(
       cargando: false,
       error: null,
 
-      async iniciarSesion(correo, contrasena = '') {
+      async iniciarSesion(correo, contrasena) {
         set({ cargando: true, error: null });
         try {
           const usuario = await repositorios.auth.iniciarSesion(correo, contrasena);
@@ -49,20 +46,6 @@ export const useAuth = create<EstadoAutenticacion>()(
         }
       },
 
-      async iniciarSesionComo(usuarioId) {
-        set({ cargando: true, error: null });
-        const usuario = await repositorios.usuarios.obtener(usuarioId);
-
-        if (!usuario) {
-          set({ cargando: false, error: 'El usuario seleccionado ya no existe.' });
-          return false;
-        }
-
-        clienteConsultas.clear();
-        set({ usuario, cargando: false, error: null });
-        return true;
-      },
-
       cerrarSesion() {
         clienteConsultas.clear();
         set({ usuario: null, error: null });
@@ -70,7 +53,7 @@ export const useAuth = create<EstadoAutenticacion>()(
       },
 
       async verificarSesion() {
-        if (fuenteActiva() !== 'http' || !get().usuario) return;
+        if (!get().usuario) return;
         try {
           const usuario = await repositorios.auth.usuarioActual();
           set({ usuario });

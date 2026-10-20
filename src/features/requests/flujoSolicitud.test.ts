@@ -1,17 +1,18 @@
+// @vitest-environment node
 /**
  * Pruebas de integración del ciclo de vida completo de una solicitud.
  *
- * Recorren dominio y persistencia juntos: crear → enviar → revisar → aprobar →
- * completar, comprobando que el historial queda íntegro y que los atajos
- * inválidos se rechazan en cada punto del camino.
+ * Recorren repositorios HTTP y API simulada juntos: crear → enviar → revisar →
+ * aprobar → completar, comprobando que el historial queda íntegro y que los
+ * atajos inválidos se rechazan en cada punto del camino.
  */
 
-import { beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import { crearRepositorios } from '@/data';
-import type { Repositorios } from '@/data/repositories/types';
-import { restablecerAlmacen } from '@/data/repositories/localStorage';
-import type { Actor, EstadoSolicitud } from '@/domain/types';
+import { repositorios } from '@/data';
+import { registrarArchivo } from '@/data/archivos';
+import type { Actor, Adjunto, EstadoSolicitud } from '@/domain/types';
+import { iniciarSesionSimulada } from '@/mocks/base';
 
 const ESTUDIANTE: Actor = { id: 'usr-luis', nombre: 'Luis Batista', rol: 'estudiante' };
 const OTRO_ESTUDIANTE: Actor = { id: 'usr-adan', nombre: 'Adán León', rol: 'estudiante' };
@@ -27,7 +28,42 @@ const JUSTIFICACION =
   'La carta de aceptación no está en papel membretado de la empresa y carece de la firma ' +
   'del responsable de recursos humanos.';
 
-let repos: Repositorios;
+function esActor(valor: unknown): valor is Actor {
+  return typeof valor === 'object' && valor !== null && 'rol' in valor && 'id' in valor;
+}
+
+/**
+ * Cada llamada abre antes la sesión del actor que recibe, como si cada usuario
+ * operara desde su navegador: así el servidor simulado aplica sus permisos.
+ */
+function conSesionDelActor<T extends object>(repo: T): T {
+  return new Proxy(repo, {
+    get(objetivo, clave) {
+      const valor: unknown = Reflect.get(objetivo, clave);
+      if (typeof valor !== 'function') return valor;
+      return (...argumentos: unknown[]) => {
+        const actor = argumentos.find(esActor);
+        if (actor) iniciarSesionSimulada(actor.id);
+        return (valor as (...a: unknown[]) => unknown).apply(objetivo, argumentos);
+      };
+    },
+  });
+}
+
+const repos = { solicitudes: conSesionDelActor(repositorios.solicitudes) };
+
+/** Adjunto pendiente de subir, con su archivo registrado. */
+function adjuntoNuevo(id: string, nombre: string): Adjunto {
+  const archivo = new File(['%PDF-1.4'], nombre, { type: 'application/pdf' });
+  registrarArchivo(id, archivo);
+  return {
+    id,
+    nombre,
+    tamano: archivo.size,
+    tipo: archivo.type,
+    subidoEn: new Date().toISOString(),
+  };
+}
 
 /** Crea un borrador de carta de pasantía para el estudiante. */
 async function crearBorrador() {
@@ -36,25 +72,11 @@ async function crearBorrador() {
       servicioId: 'pasantia',
       solicitanteId: ESTUDIANTE.id,
       datosFormulario: { empresa: 'TechCorp Solutions S.R.L.', cargo: 'Pasante de desarrollo' },
-      adjuntos: [
-        {
-          id: 'adj-nuevo',
-          nombre: 'carta_aceptacion.pdf',
-          tamano: 350_208,
-          tipo: 'application/pdf',
-          subidoEn: new Date().toISOString(),
-        },
-      ],
+      adjuntos: [adjuntoNuevo('adj-nuevo', 'carta_aceptacion.pdf')],
     },
     ESTUDIANTE,
   );
 }
-
-beforeEach(() => {
-  localStorage.clear();
-  restablecerAlmacen();
-  repos = crearRepositorios('local');
-});
 
 describe('flujo crítico: crear → enviar → revisar → aprobar → completar', () => {
   it('recorre el ciclo completo y deja el historial íntegro', async () => {
@@ -186,15 +208,7 @@ describe('flujo crítico: el estudiante corrige datos y documentos tras una devo
           empresa: 'TechCorp Solutions S.R.L.',
           cargo: 'Pasante de ingeniería de datos',
         },
-        adjuntos: [
-          {
-            id: 'adj-corregido',
-            nombre: 'carta_aceptacion_membretada.pdf',
-            tamano: 412_000,
-            tipo: 'application/pdf',
-            subidoEn: new Date().toISOString(),
-          },
-        ],
+        adjuntos: [adjuntoNuevo('adj-corregido', 'carta_aceptacion_membretada.pdf')],
       },
       ESTUDIANTE,
     );
@@ -266,9 +280,10 @@ describe('autorización a lo largo del flujo', () => {
   it('impide a un estudiante ajeno operar sobre la solicitud', async () => {
     const borrador = await crearBorrador();
 
+    // Para él la solicitud ni siquiera existe.
     await expect(
       repos.solicitudes.transicionar(borrador.id, 'enviada', OTRO_ESTUDIANTE),
-    ).rejects.toMatchObject({ codigo: 'REGLA_DE_NEGOCIO' });
+    ).rejects.toMatchObject({ codigo: 'NO_ENCONTRADO' });
   });
 
   it('permite al coordinador aprobar una solicitud en revisión', async () => {

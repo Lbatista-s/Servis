@@ -2,36 +2,19 @@
  * Punto único de acceso a la persistencia.
  *
  * La aplicación importa siempre desde aquí y nunca desde una implementación
- * concreta. Cambiar de localStorage a una API real es cambiar una variable de
- * entorno; ningún componente se entera.
+ * concreta. Los repositorios hablan con la API por HTTP; mientras no exista el
+ * backend, la responde el servidor simulado de `src/mocks/` (ver
+ * `VITE_API_MOCK`) sin que ningún componente se entere.
  */
 
-import { entorno } from '@/config/entorno';
-
 import { crearRepositoriosHttp } from './repositories/http';
-import { crearRepositoriosLocales } from './repositories/localStorage';
 import type { Repositorios } from './repositories/types';
-
-export type FuenteDatos = 'local' | 'http';
-
-/** Fuente activa, leída de `VITE_DATA_SOURCE` (por defecto, `local`). */
-export function fuenteActiva(): FuenteDatos {
-  return entorno().fuenteDatos;
-}
-
-function crearRepositorios(fuente: FuenteDatos): Repositorios {
-  return fuente === 'http' ? crearRepositoriosHttp() : crearRepositoriosLocales();
-}
 
 /**
  * Instancia compartida. Se crea una sola vez porque los repositorios no
- * mantienen estado propio: la verdad vive en el almacén.
+ * mantienen estado propio: la verdad vive en el servidor.
  */
-export const repositorios: Repositorios = crearRepositorios(fuenteActiva());
-
-/** Fábrica explícita, útil en pruebas para forzar una implementación concreta. */
-export { crearRepositorios };
+export const repositorios: Repositorios = crearRepositoriosHttp();
 
 export * from './repositories/types';
 export { alCaducarSesion } from './repositories/http/sesion';
-export { SERVIS_SCHEMA_VERSION } from './schema';

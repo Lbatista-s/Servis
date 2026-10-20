@@ -7,7 +7,12 @@
  * ese recurso: `useRevalidar()('solicitudes')`.
  */
 
-import { useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+  type UseQueryResult,
+} from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 
 import { repositorios } from '@/data';
@@ -57,7 +62,10 @@ export function useRevalidar(): (...recursos: Recurso[]) => void {
 // Solicitudes
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** `habilitado = false` no consulta nada y devuelve una lista vacía. */
+/**
+ * `habilitado = false` no consulta nada y devuelve una lista vacía. Al cambiar
+ * el filtro se sigue mostrando el resultado anterior hasta que llega el nuevo.
+ */
 export function useSolicitudes(
   filtro: FiltroSolicitudes = {},
   habilitado = true,
@@ -66,6 +74,7 @@ export function useSolicitudes(
     queryKey: ['solicitudes', 'lista', filtro],
     queryFn: () => repositorios.solicitudes.listar(filtro),
     enabled: habilitado,
+    placeholderData: keepPreviousData,
   });
   return estado(consulta, habilitado ? null : []);
 }
@@ -107,21 +116,13 @@ export function useServicio(id: string | undefined): EstadoAsincrono<Servicio | 
 // Usuarios
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * `habilitado = false` no consulta nada y devuelve una lista vacía: el selector
- * de cuentas del acceso sólo existe en el modo de demostración, y sin sesión
- * fallaría contra la API real.
- */
-export function useUsuarios(
-  filtro: FiltroUsuarios = {},
-  habilitado = true,
-): EstadoAsincrono<Usuario[]> {
-  const consulta = useQuery({
-    queryKey: ['usuarios', 'lista', filtro],
-    queryFn: () => repositorios.usuarios.listar(filtro),
-    enabled: habilitado,
-  });
-  return estado(consulta, habilitado ? null : []);
+export function useUsuarios(filtro: FiltroUsuarios = {}): EstadoAsincrono<Usuario[]> {
+  return estado(
+    useQuery({
+      queryKey: ['usuarios', 'lista', filtro],
+      queryFn: () => repositorios.usuarios.listar(filtro),
+    }),
+  );
 }
 
 /**

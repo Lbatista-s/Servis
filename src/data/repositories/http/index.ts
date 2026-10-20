@@ -1,8 +1,8 @@
 /**
  * Repositorios sobre la API REST de Django.
  *
- * Implementan las mismas interfaces que los de `localStorage/`, así que
- * activarlos (`VITE_DATA_SOURCE=http`) no exige tocar ninguna pantalla. Las
+ * Son los únicos repositorios de la aplicación. Mientras no exista el backend,
+ * les responde la API simulada de `src/mocks/` con el mismo contrato. Las
  * rutas viven en `./rutas.ts` y la forma del JSON en `./mapeadores.ts`; el
  * contrato completo está en `docs/api.md`.
  *
@@ -32,7 +32,7 @@ import type {
   Repositorios,
 } from '@/data/repositories/types';
 
-import { detalleOpcional, lista, noImplementado, peticion } from './cliente';
+import { detalleOpcional, lista, peticion } from './cliente';
 import { modoAutenticacion } from './config';
 import {
   aServicio,
@@ -308,6 +308,5 @@ export function crearRepositoriosHttp(): Repositorios {
     usuarios: new RepositorioUsuariosHttp(),
     servicios: new RepositorioServiciosHttp(),
     metas: new RepositorioMetasHttp(),
-    restablecerDemo: () => Promise.resolve().then(() => noImplementado('restablecerDemo')),
   };
 }

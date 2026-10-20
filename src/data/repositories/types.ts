@@ -175,6 +175,4 @@ export interface Repositorios {
   usuarios: IUserRepository;
   servicios: IServiceRepository;
   metas: IMetasRepository;
-  /** Restablece el almacenamiento a los datos de demostración iniciales. */
-  restablecerDemo(): Promise<void>;
 }

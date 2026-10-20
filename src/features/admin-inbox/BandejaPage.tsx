@@ -1,7 +1,7 @@
 /** Pantalla 7 — Bandeja administrativa. */
 
 import { Table, type TableColumnsType } from 'antd';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { RUTAS } from '@/app/rutas';
@@ -19,18 +19,22 @@ import {
   StatCard,
   StatusBadge,
 } from '@/components/ui';
+import type { FiltroSolicitudes } from '@/data';
 import {
+  ESTADOS,
   ESTADOS_FINALES,
   ETIQUETA_ESTADO,
   type EstadoSolicitud,
   type Solicitud,
 } from '@/domain/types';
 import { useIndiceServicios, useIndiceUsuarios, useSolicitudes } from '@/hooks/useDatos';
+import { useRetardado } from '@/hooks/useRetardado';
 import { opcionesConTodos, TODOS, type ConTodos } from '@/lib/filtros';
 import { formatearFecha, formatearFechaLarga } from '@/lib/format';
 
 /** Filtro de la bandeja: cualquier estado, o todas las que aún no están cerradas. */
 const ABIERTAS = 'abiertas';
+const ESTADOS_ABIERTOS = ESTADOS.filter((e) => !ESTADOS_FINALES.includes(e));
 type FiltroEstado = ConTodos<EstadoSolicitud | typeof ABIERTAS>;
 
 const OPCIONES_ESTADO = (() => {
@@ -49,26 +53,27 @@ export function BandejaPage() {
   const [servicioId, setServicioId] = useState<ConTodos<string>>(TODOS);
   const navegar = useNavigate();
 
-  const { datos: todas, cargando } = useSolicitudes();
+  // El filtrado lo hace el servidor; la búsqueda espera a que se deje de teclear.
+  const termino = useRetardado(busqueda.trim());
+  const filtro = useMemo<FiltroSolicitudes>(
+    () => ({
+      ...(estado === ABIERTAS
+        ? { estados: ESTADOS_ABIERTOS }
+        : estado !== TODOS
+          ? { estados: [estado] }
+          : {}),
+      ...(servicioId !== TODOS ? { servicioId } : {}),
+      ...(termino ? { busqueda: termino } : {}),
+    }),
+    [estado, servicioId, termino],
+  );
+  const { datos: filtradas, cargando } = useSolicitudes(filtro);
+  // Métricas sobre el total, no sobre el resultado filtrado.
+  const { datos: todas } = useSolicitudes();
   const usuarios = useIndiceUsuarios();
   const servicios = useIndiceServicios();
 
-  const lista = (todas ?? []).filter((solicitud) => {
-    if (estado === ABIERTAS) {
-      if (ESTADOS_FINALES.includes(solicitud.estado)) return false;
-    } else if (estado !== TODOS && solicitud.estado !== estado) return false;
-    if (servicioId !== TODOS && solicitud.servicioId !== servicioId) return false;
-    if (busqueda.trim()) {
-      const termino = busqueda.trim().toLowerCase();
-      const estudiante = usuarios.get(solicitud.solicitanteId)?.nombre.toLowerCase() ?? '';
-      if (!solicitud.id.toLowerCase().includes(termino) && !estudiante.includes(termino)) {
-        return false;
-      }
-    }
-    return true;
-  });
-
-  // Métricas sobre el total, no sobre el resultado filtrado.
+  const lista = filtradas ?? [];
   const universo = todas ?? [];
   const cuenta = (estados: readonly EstadoSolicitud[]) =>
     universo.filter((s) => estados.includes(s.estado)).length;

@@ -1,16 +1,16 @@
 /**
  * Configuración del sistema.
  *
- * Contiene el botón para restablecer los datos de demostración, pensado para
- * dejar el sistema limpio antes de una presentación. Se abre desde el menú
- * lateral, que controla su visibilidad.
+ * Muestra contra qué API trabaja la aplicación. Mientras responde el servidor
+ * simulado, permite devolver sus datos al estado inicial, por ejemplo antes de
+ * una presentación.
  */
 
 import { Descriptions, Modal } from 'antd';
 import { useState } from 'react';
 
 import { Button, Icono, InlineNotification, Separator, useToast } from '@/components/ui';
-import { fuenteActiva, repositorios, SERVIS_SCHEMA_VERSION } from '@/data';
+import { entorno } from '@/config/entorno';
 import { useRevalidar } from '@/hooks/useDatos';
 
 export function ConfiguracionDialog({
@@ -23,19 +23,17 @@ export function ConfiguracionDialog({
   const [restableciendo, setRestableciendo] = useState(false);
   const revalidar = useRevalidar();
   const avisos = useToast();
-  // Contra la API real no hay datos de demostración que restablecer.
-  const demostracion = fuenteActiva() === 'local';
+  const { apiSimulada, apiBaseUrl } = entorno();
 
   async function restablecer() {
     setRestableciendo(true);
     try {
-      await repositorios.restablecerDemo();
+      // Import dinámico: con la API real, el servidor simulado no se empaqueta.
+      const { restablecerApiSimulada } = await import('@/mocks/base');
+      restablecerApiSimulada({ conservarSesion: true });
       revalidar();
       onCerrar();
-      avisos.exito(
-        'Datos restablecidos',
-        'El sistema volvió a los datos de demostración iniciales.',
-      );
+      avisos.exito('Datos restablecidos', 'El sistema volvió a los datos simulados iniciales.');
     } catch {
       avisos.error('No se pudieron restablecer los datos', 'Inténtalo de nuevo.');
     } finally {
@@ -52,49 +50,45 @@ export function ConfiguracionDialog({
       footer={
         <div className="flex justify-end gap-2">
           <Button variante="outline" onClick={onCerrar}>
-            Cancelar
+            Cerrar
           </Button>
-          {demostracion ? (
+          {apiSimulada ? (
             <Button variante="danger" onClick={restablecer} disabled={restableciendo}>
               <Icono nombre="rotar" />
-              {restableciendo ? 'Restableciendo…' : 'Restablecer datos de demostración'}
+              {restableciendo ? 'Restableciendo…' : 'Restablecer datos simulados'}
             </Button>
           ) : null}
         </div>
       }
     >
-      <p className="mb-4 text-base text-ink-3">
-        {demostracion ? 'Ajustes del entorno de demostración de SERVIS.' : 'Ajustes de SERVIS.'}
-      </p>
-
       <Descriptions
         bordered
         size="small"
-        column={2}
+        column={1}
         items={[
           {
-            key: 'fuente',
-            label: 'Fuente de datos',
-            children: demostracion ? 'Almacenamiento local' : 'API remota',
+            key: 'api',
+            label: 'Origen de los datos',
+            children: apiSimulada ? 'API simulada (en el navegador)' : `API ${apiBaseUrl}`,
           },
-          { key: 'esquema', label: 'Versión del esquema', children: `v${SERVIS_SCHEMA_VERSION}` },
         ]}
       />
 
-      {demostracion ? (
+      {apiSimulada ? (
         <>
           <Separator margen={16} />
 
-          <p className="text-md font-semibold text-ink">Datos de demostración</p>
+          <p className="text-md font-semibold text-ink">Datos simulados</p>
           <p className="mb-4 mt-1 text-base text-ink-3">
-            Devuelve el sistema a su estado inicial: las 8 solicitudes de ejemplo, el historial de
-            seis meses del cuadro de mando y sus metas, el catálogo completo de servicios y los
-            usuarios del equipo.
+            Mientras no esté conectado el backend, la API la responde un servidor simulado que
+            guarda los datos en este navegador. Restablecerlo recupera las 8 solicitudes de ejemplo,
+            el historial de seis meses del cuadro de mando y sus metas, el catálogo completo de
+            servicios y los usuarios del equipo.
           </p>
 
           <InlineNotification tono="aviso">
-            Se descartarán todas las solicitudes creadas y los cambios realizados durante esta
-            sesión. La acción no se puede deshacer.
+            Se descartarán las solicitudes creadas y los cambios hechos en este navegador. La acción
+            no se puede deshacer.
           </InlineNotification>
         </>
       ) : null}

@@ -12,7 +12,6 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { Loading } from '@/components/ui';
 import { ESTRUCTURA } from '@/theme/tokens';
 
-import { DevRoleSwitcher } from './DevRoleSwitcher';
 import { LimiteError } from './LimiteError';
 import { Sidebar } from './Sidebar';
 import { titulosDe } from './navegacion';
@@ -30,8 +29,6 @@ export function AppLayout() {
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-canvas">
-      <DevRoleSwitcher />
-
       <Layout hasSider className="min-h-0 flex-1">
         {/* Barra lateral fija en escritorio. El `!` hace falta porque el
             `display` de Ant Design (hashPriority alto) ganaría a Tailwind. */}

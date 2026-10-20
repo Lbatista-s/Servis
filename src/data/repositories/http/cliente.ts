@@ -235,11 +235,3 @@ export async function detalleOpcional<T>(ruta: string): Promise<T | null> {
     throw error;
   }
 }
-
-/** Error uniforme para lo que la API no ofrece. */
-export function noImplementado(metodo: string): never {
-  throw new ErrorRepositorio(
-    'NO_IMPLEMENTADO',
-    `La API no ofrece «${metodo}». Esta acción sólo existe en el modo de demostración.`,
-  );
-}

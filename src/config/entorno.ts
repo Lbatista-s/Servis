@@ -9,8 +9,14 @@
 import { z } from 'zod';
 
 const esquema = z.object({
-  /** Fuente de datos: `local` (navegador) o `http` (API). */
-  VITE_DATA_SOURCE: z.enum(['local', 'http']).catch('local'),
+  /**
+   * `true` mientras no exista el backend: la API la responde un servidor
+   * simulado en el navegador (MSW, `src/mocks/`). Con Django, `false`.
+   */
+  VITE_API_MOCK: z
+    .enum(['true', 'false'])
+    .catch('true')
+    .transform((valor) => valor === 'true'),
   /**
    * Raíz de la API, sin barra final. Por defecto `/api`: en desarrollo el
    * proxy de Vite y en Vercel un rewrite la reenvían al backend, así el
@@ -25,7 +31,7 @@ const esquema = z.object({
 });
 
 export interface Entorno {
-  fuenteDatos: 'local' | 'http';
+  apiSimulada: boolean;
   apiBaseUrl: string;
   apiAuth: 'sesion' | 'jwt';
 }
@@ -37,12 +43,12 @@ export interface Entorno {
 export function entorno(): Entorno {
   const variables = import.meta.env as Record<string, unknown>;
   const leido = esquema.parse({
-    VITE_DATA_SOURCE: variables.VITE_DATA_SOURCE ?? undefined,
+    VITE_API_MOCK: variables.VITE_API_MOCK ?? undefined,
     VITE_API_BASE_URL: variables.VITE_API_BASE_URL ?? '',
     VITE_API_AUTH: variables.VITE_API_AUTH ?? undefined,
   });
   return {
-    fuenteDatos: leido.VITE_DATA_SOURCE,
+    apiSimulada: leido.VITE_API_MOCK,
     apiBaseUrl: leido.VITE_API_BASE_URL,
     apiAuth: leido.VITE_API_AUTH,
   };

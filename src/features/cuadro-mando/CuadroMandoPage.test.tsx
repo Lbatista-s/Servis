@@ -1,24 +1,25 @@
 /**
- * Prueba de interfaz del cuadro de mando sobre los repositorios locales con el
- * historial de demostración.
+ * Prueba de interfaz del cuadro de mando sobre la API simulada y su historial
+ * de seis meses.
  */
 
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { ProveedorUI } from '@/components/ui';
-import { restablecerAlmacen } from '@/data/repositories/localStorage';
 import { MISION } from '@/domain/indicadores';
 import type { Usuario } from '@/domain/types';
 import { useAuth } from '@/features/auth/authStore';
-import { USUARIOS_DEMO } from '@/data/seed';
+import { iniciarSesionSimulada } from '@/mocks/base';
+import { USUARIOS_DEMO } from '@/mocks/datos/seed';
 
 import { CuadroMandoPage } from './CuadroMandoPage';
 
 function entrarComo(id: string) {
   const usuario = USUARIOS_DEMO.find((u) => u.id === id) as Usuario;
+  iniciarSesionSimulada(id);
   useAuth.setState({ usuario });
   return render(
     <MemoryRouter>
@@ -30,11 +31,6 @@ function entrarComo(id: string) {
 }
 
 const mapa = () => screen.getByRole('list', { name: 'Mapa estratégico' });
-
-beforeEach(() => {
-  localStorage.clear();
-  restablecerAlmacen();
-});
 
 describe('CuadroMandoPage', () => {
   it('presenta la misión y las cuatro perspectivas del mapa estratégico', async () => {

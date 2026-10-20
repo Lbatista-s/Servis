@@ -13,8 +13,9 @@ export default defineConfig(({ mode }) => ({
   server: {
     port: 5173,
     host: 'localhost',
-    // Con VITE_DATA_SOURCE=http, `/api` se reenvía a Django (mismo origen para
-    // el navegador: sin CORS y con las cookies de sesión).
+    // Con VITE_API_MOCK=false, `/api` se reenvía a Django (mismo origen para
+    // el navegador: sin CORS y con las cookies de sesión). Con la API simulada,
+    // el service worker responde antes de que la petición llegue al proxy.
     proxy: {
       '/api': {
         target: loadEnv(mode, process.cwd(), '').VITE_API_PROXY || 'http://localhost:8000',
@@ -44,5 +45,7 @@ export default defineConfig(({ mode }) => ({
     setupFiles: ['./src/test/setup.ts'],
     css: false,
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    // En Node, `fetch` necesita una URL absoluta; la API simulada responde en cualquier origen.
+    env: { VITE_API_BASE_URL: 'http://localhost/api', VITE_API_MOCK: 'true' },
   },
 }));
