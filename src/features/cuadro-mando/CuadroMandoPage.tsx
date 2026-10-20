@@ -13,9 +13,9 @@ import { useState } from 'react';
 import {
   Button,
   Card,
+  EsqueletoBloque,
+  EstadoError,
   Icono,
-  InlineNotification,
-  Loading,
   PageHeader,
   SectionHeader,
 } from '@/components/ui';
@@ -86,9 +86,9 @@ export function CuadroMandoPage() {
             key: 'estrategia',
             label: 'Cuadro de mando integral',
             children: cuadro.cargando ? (
-              <Loading mensaje="Calculando los indicadores…" />
+              <EsqueletoBloque mensaje="Calculando los indicadores…" filas={10} />
             ) : cuadro.error ? (
-              <InlineNotification tono="error">{cuadro.error}</InlineNotification>
+              <EstadoError mensaje={cuadro.error} onReintentar={cuadro.recargar} />
             ) : (
               <div className="flex flex-col gap-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

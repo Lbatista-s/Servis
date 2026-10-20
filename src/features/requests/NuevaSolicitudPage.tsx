@@ -16,11 +16,12 @@ import {
   Breadcrumb,
   Button,
   Card,
+  EsqueletoDetalle,
+  EstadoError,
   FileChip,
   Icono,
   InlineNotification,
   ListaDatos,
-  Loading,
   NoteBlock,
   SectionHeader,
   Sobretitulo,
@@ -44,7 +45,7 @@ const PASOS = ['Datos del servicio', 'Documentos', 'Revisión y envío'] as cons
 
 export function NuevaSolicitudPage() {
   const { servicioId } = useParams<{ servicioId: string }>();
-  const { datos: servicio, cargando } = useServicio(servicioId);
+  const { datos: servicio, cargando, error, recargar } = useServicio(servicioId);
   const actor = useActor();
   const navegar = useNavigate();
   const revalidar = useRevalidar();
@@ -62,7 +63,8 @@ export function NuevaSolicitudPage() {
     mode: 'onTouched',
   });
 
-  if (cargando) return <Loading mensaje="Cargando el servicio…" />;
+  if (cargando) return <EsqueletoDetalle mensaje="Cargando el servicio…" />;
+  if (error) return <EstadoError mensaje={error} onReintentar={recargar} />;
   if (!servicio) return <Navigate to={RUTAS.catalogo} replace />;
   if (!actor) return null;
 

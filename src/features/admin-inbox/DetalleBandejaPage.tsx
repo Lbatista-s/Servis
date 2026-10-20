@@ -11,12 +11,13 @@ import {
   ButtonLink,
   Card,
   EmptyState,
+  EsqueletoDetalle,
+  EstadoError,
   FieldHint,
   FileChip,
   Icono,
   InlineNotification,
   ListaDatos,
-  Loading,
   NoteBlock,
   SectionHeader,
   Sobretitulo,
@@ -38,14 +39,15 @@ import { formatearFecha } from '@/lib/format';
 
 export function DetalleBandejaPage() {
   const { id } = useParams<{ id: string }>();
-  const { datos: solicitud, cargando } = useSolicitud(id);
+  const { datos: solicitud, cargando, error, recargar } = useSolicitud(id);
   const { datos: servicio } = useServicio(solicitud?.servicioId);
   const usuarios = useIndiceUsuarios();
   const actor = useActor();
   const { descargar, pendiente } = useDescarga();
   const { ver, visor } = useVisorDocumento();
 
-  if (cargando) return <Loading mensaje="Cargando la solicitud…" />;
+  if (cargando) return <EsqueletoDetalle mensaje="Cargando la solicitud…" />;
+  if (error) return <EstadoError mensaje={error} onReintentar={recargar} />;
 
   if (!solicitud) {
     return (

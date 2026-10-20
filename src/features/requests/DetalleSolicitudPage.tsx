@@ -10,11 +10,13 @@ import {
   ButtonLink,
   Card,
   EmptyState,
+  EsqueletoDetalle,
+  EstadoError,
   FileChip,
   Icono,
   InlineNotification,
   ListaDatos,
-  Loading,
+  PageHeader,
   SectionHeader,
   StatusBadge,
 } from '@/components/ui';
@@ -34,14 +36,15 @@ import { HistorialTimeline } from './HistorialTimeline';
 
 export function DetalleSolicitudPage() {
   const { id } = useParams<{ id: string }>();
-  const { datos: solicitud, cargando } = useSolicitud(id);
+  const { datos: solicitud, cargando, error, recargar } = useSolicitud(id);
   const { datos: servicio } = useServicio(solicitud?.servicioId);
   const usuario = useUsuarioActual();
   const actor = useActor();
   const { descargar, pendiente } = useDescarga();
   const { ver, visor } = useVisorDocumento();
 
-  if (cargando) return <Loading mensaje="Cargando la solicitud…" />;
+  if (cargando) return <EsqueletoDetalle mensaje="Cargando la solicitud…" />;
+  if (error) return <EstadoError mensaje={error} onReintentar={recargar} />;
 
   if (!solicitud) {
     return (
@@ -85,12 +88,10 @@ export function DetalleSolicitudPage() {
         ]}
       />
 
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-ink">
-            {servicio?.nombre ?? solicitud.servicioId}
-          </h1>
-          <p className="mt-1 flex flex-wrap items-center gap-1.5 text-base text-ink-3">
+      <PageHeader
+        titulo={servicio?.nombre ?? solicitud.servicioId}
+        subtitulo={
+          <span className="flex flex-wrap items-center gap-1.5">
             #{solicitud.id} · Creada el {formatearFecha(solicitud.creadaEn)}
             {usuario ? (
               <>
@@ -99,18 +100,17 @@ export function DetalleSolicitudPage() {
                 {usuario.nombre}
               </>
             ) : null}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2.5">
-          <StatusBadge estado={solicitud.estado} />
-          {documento ? (
-            <Button variante="outline" tamano="sm" onClick={verDocumento}>
-              <Icono nombre="ojo" />
-              Ver documento
-            </Button>
-          ) : null}
-        </div>
-      </div>
+          </span>
+        }
+      >
+        <StatusBadge estado={solicitud.estado} />
+        {documento ? (
+          <Button variante="outline" tamano="sm" onClick={verDocumento}>
+            <Icono nombre="ojo" />
+            Ver documento
+          </Button>
+        ) : null}
+      </PageHeader>
 
       {/* Aviso destacado cuando la solicitud exige acción del estudiante. */}
       {solicitud.estado === 'devuelta' && ultimoComentario ? (

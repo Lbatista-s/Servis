@@ -101,6 +101,7 @@ export function useServicios(filtro: FiltroServicios = {}): EstadoAsincrono<Serv
     useQuery({
       queryKey: ['servicios', 'lista', filtro],
       queryFn: () => repositorios.servicios.listar(filtro),
+      placeholderData: keepPreviousData,
     }),
   );
 }
@@ -124,6 +125,7 @@ export function useUsuarios(filtro: FiltroUsuarios = {}): EstadoAsincrono<Usuari
     useQuery({
       queryKey: ['usuarios', 'lista', filtro],
       queryFn: () => repositorios.usuarios.listar(filtro),
+      placeholderData: keepPreviousData,
     }),
   );
 }

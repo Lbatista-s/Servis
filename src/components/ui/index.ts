@@ -20,6 +20,7 @@ export {
 } from './Button';
 export { Card, NoteBlock, PageHeader, SectionHeader, Sobretitulo } from './Card';
 export { ListaDatos, type Dato } from './Datos';
+export { EsqueletoBloque, EsqueletoDetalle, EsqueletoTabla, EsqueletoTarjetas } from './Esqueletos';
 export {
   EmptyState,
   EstadoError,

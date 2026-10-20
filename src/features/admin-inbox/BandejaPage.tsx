@@ -9,11 +9,12 @@ import {
   AvatarUsuario,
   Badge,
   Button,
+  CampoBusqueda,
   Card,
   EmptyState,
-  CampoBusqueda,
+  EsqueletoTabla,
+  EstadoError,
   Icono,
-  Loading,
   PageHeader,
   SelectorFiltro,
   StatCard,
@@ -68,7 +69,7 @@ export function BandejaPage() {
     }),
     [estado, servicioId, termino],
   );
-  const { datos: filtradas, cargando } = useSolicitudes(filtro);
+  const { datos: filtradas, cargando, error, recargar } = useSolicitudes(filtro);
   // Métricas sobre el total, no sobre el resultado filtrado.
   const { datos: todas } = useSolicitudes();
   const usuarios = useIndiceUsuarios();
@@ -188,7 +189,7 @@ export function BandejaPage() {
         </Button>
       </PageHeader>
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-5">
         <StatCard
           etiqueta="Pendientes"
           valor={cuenta(['enviada'])}
@@ -258,7 +259,9 @@ export function BandejaPage() {
       </div>
 
       {cargando ? (
-        <Loading mensaje="Cargando la bandeja…" />
+        <EsqueletoTabla mensaje="Cargando la bandeja…" conEncabezado={false} />
+      ) : error ? (
+        <EstadoError mensaje={error} onReintentar={recargar} />
       ) : lista.length === 0 ? (
         <Card>
           <EmptyState

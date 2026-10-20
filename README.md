@@ -13,7 +13,7 @@ línea; el personal administrativo las revisa, aprueba, rechaza o devuelve para 
 trazabilidad completa de cada acción.
 
 Esta aplicación es la implementación en React del prototipo de alta fidelidad
-`SERVIS_HiFi_Prototipo.html`, que se conserva en el repositorio como referencia de diseño.
+`docs/prototipo/SERVIS_HiFi_Prototipo.html`, que se conserva en el repositorio como referencia de diseño.
 
 ## Documentación
 

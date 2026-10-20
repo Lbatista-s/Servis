@@ -10,7 +10,15 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
 import { RUTAS } from '@/app/rutas';
-import { ButtonLink, Card, Icono, Loading, type NombreIcono } from '@/components/ui';
+import {
+  ButtonLink,
+  Card,
+  EsqueletoTarjetas,
+  EstadoError,
+  Icono,
+  type NombreIcono,
+  PageHeader,
+} from '@/components/ui';
 import { useUsuarioActual } from '@/features/auth/authStore';
 import { NuevoUsuarioDialog } from '@/features/user-management/NuevoUsuarioDialog';
 import { useServicios, useUsuarios } from '@/hooks/useDatos';
@@ -22,7 +30,21 @@ export function InicioAdministrador() {
   const servicios = useServicios();
 
   if (!usuario) return null;
-  if (usuarios.cargando || servicios.cargando) return <Loading mensaje="Cargando el sistema…" />;
+  if (usuarios.cargando || servicios.cargando) {
+    return <EsqueletoTarjetas mensaje="Cargando el sistema…" cantidad={3} />;
+  }
+  const fallo = usuarios.error ?? servicios.error;
+  if (fallo) {
+    return (
+      <EstadoError
+        mensaje={fallo}
+        onReintentar={() => {
+          usuarios.recargar();
+          servicios.recargar();
+        }}
+      />
+    );
+  }
 
   const cuentas = usuarios.datos ?? [];
   const catalogo = servicios.datos ?? [];
@@ -60,15 +82,12 @@ export function InicioAdministrador() {
 
   return (
     <>
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-4xl font-bold text-ink">¡Hola, {nombrePila}!</h1>
-          <p className="mt-1 text-md text-ink-3">
-            Administras las cuentas y el catálogo de servicios de SERVIS.
-          </p>
-        </div>
+      <PageHeader
+        titulo={`¡Hola, ${nombrePila}!`}
+        subtitulo="Administras las cuentas y el catálogo de servicios de SERVIS."
+      >
         <NuevoUsuarioDialog />
-      </div>
+      </PageHeader>
 
       <div className="mb-6 grid gap-4 md:grid-cols-2">
         <Acceso

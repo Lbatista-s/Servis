@@ -1,26 +1,23 @@
-/** Barra lateral: marca, navegación por rol (`Menu` de Ant Design), configuración y usuario. */
+/**
+ * Barra lateral: la marca, que lleva al inicio del rol, y la navegación
+ * (`Menu` de Ant Design). La cuenta, la configuración y el cierre de sesión
+ * viven en el menú de perfil de la barra superior.
+ */
 
 import { Badge, Menu, type MenuProps } from 'antd';
-import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
-import { AvatarUsuario, Icono, Logotipo, Tooltip } from '@/components/ui';
-import { ETIQUETA_ROL } from '@/domain/types';
+import { Icono, Logotipo } from '@/components/ui';
 import { useUsuarioActual } from '@/features/auth/authStore';
-import { ConfiguracionDialog } from '@/features/settings/ConfiguracionDialog';
 import { useSolicitudes } from '@/hooks/useDatos';
 import { COLORES_MARCA } from '@/theme/tokens';
 
 import { claveActiva, NAVEGACION_POR_ROL } from './navegacion';
-import { useCerrarSesion } from './useCerrarSesion';
-
-const CLAVE_CONFIGURACION = 'configuracion';
+import { INICIO_POR_ROL } from './rutas';
 
 export function Sidebar({ onNavegar }: { onNavegar?: () => void }) {
   const usuario = useUsuarioActual();
-  const salir = useCerrarSesion();
   const ubicacion = useLocation();
-  const [configuracionAbierta, setConfiguracionAbierta] = useState(false);
 
   // Contadores de los distintivos de navegación: la bandeja para el personal,
   // las solicitudes propias para el estudiante. Sólo se consulta la que aplica.
@@ -72,19 +69,6 @@ export function Sidebar({ onNavegar }: { onNavegar?: () => void }) {
         };
       }),
     },
-    {
-      type: 'group',
-      key: 'sistema',
-      label: 'Sistema',
-      children: [
-        {
-          key: CLAVE_CONFIGURACION,
-          icon: <Icono nombre="engranaje" />,
-          label: 'Configuración',
-          onClick: () => setConfiguracionAbierta(true),
-        },
-      ],
-    },
   ];
 
   return (
@@ -92,10 +76,19 @@ export function Sidebar({ onNavegar }: { onNavegar?: () => void }) {
       aria-label="Navegación principal"
       className="flex h-full w-sidebar shrink-0 flex-col overflow-y-auto bg-chrome"
     >
-      {/* Marca */}
-      <div className="mb-2 flex flex-col gap-1.5 border-b border-white/10 px-4 pb-4 pt-5">
-        <Logotipo formato="compacto" version="negativo" alto={50} />
-        <span className="text-2xs uppercase tracking-wider text-white/90">Área de Ingenierías</span>
+      {/* Marca: vuelve a la pantalla de inicio del rol */}
+      <div className="mb-2 border-b border-white/10 px-2 pb-3 pt-3">
+        <Link
+          to={INICIO_POR_ROL[usuario.rol]}
+          onClick={onNavegar}
+          aria-label="SERVIS — ir al inicio"
+          className="flex flex-col gap-1.5 rounded px-2 py-2 transition-colors hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+        >
+          <Logotipo formato="compacto" version="negativo" alto={50} />
+          <span className="text-2xs uppercase tracking-wider text-white/90">
+            Área de Ingenierías
+          </span>
+        </Link>
       </div>
 
       <Menu
@@ -105,32 +98,6 @@ export function Sidebar({ onNavegar }: { onNavegar?: () => void }) {
         items={items}
         style={{ borderInlineEnd: 'none' }}
       />
-
-      <ConfiguracionDialog
-        abierto={configuracionAbierta}
-        onCerrar={() => setConfiguracionAbierta(false)}
-      />
-
-      {/* Usuario activo */}
-      <div className="mt-auto border-t border-white/10 p-2 pt-3">
-        <div className="flex items-center gap-2.5 rounded px-2 py-2.5">
-          <AvatarUsuario usuario={usuario} tamano="lg" />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-base font-semibold text-white">{usuario.nombre}</p>
-            <p className="truncate text-xs text-white/90">{ETIQUETA_ROL[usuario.rol]}</p>
-          </div>
-          <Tooltip contenido="Cerrar sesión">
-            <button
-              type="button"
-              aria-label="Cerrar sesión"
-              onClick={salir}
-              className="rounded-sm p-1 text-white/90 transition-opacity hover:text-white"
-            >
-              <Icono nombre="salir" />
-            </button>
-          </Tooltip>
-        </div>
-      </div>
     </nav>
   );
 }

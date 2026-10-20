@@ -12,8 +12,9 @@ import {
   Badge,
   Button,
   Card,
+  EsqueletoTabla,
+  EstadoError,
   Icono,
-  Loading,
   PageHeader,
   Tooltip,
   useToast,
@@ -27,7 +28,7 @@ import { contar } from '@/lib/texto';
 import { NuevoServicioDialog } from './NuevoServicioDialog';
 
 export function ServiciosPage() {
-  const { datos: servicios, cargando } = useServicios();
+  const { datos: servicios, cargando, error, recargar } = useServicios();
   const revalidar = useRevalidar();
   const avisos = useToast();
   const [procesando, setProcesando] = useState<string | null>(null);
@@ -52,7 +53,8 @@ export function ServiciosPage() {
     }
   }
 
-  if (cargando) return <Loading mensaje="Cargando el catálogo…" />;
+  if (cargando) return <EsqueletoTabla mensaje="Cargando el catálogo…" />;
+  if (error) return <EstadoError mensaje={error} onReintentar={recargar} />;
 
   const columnas: TableColumnsType<Servicio> = [
     {

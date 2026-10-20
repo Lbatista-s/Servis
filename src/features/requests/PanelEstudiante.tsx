@@ -17,8 +17,10 @@ import {
   ButtonLink,
   Card,
   EmptyState,
+  EsqueletoTarjetas,
+  EstadoError,
   Icono,
-  Loading,
+  PageHeader,
   SectionHeader,
   StatusBadge,
 } from '@/components/ui';
@@ -42,12 +44,18 @@ const ACCION_PENDIENTE: Partial<Record<EstadoSolicitud, string>> = {
 
 export function PanelEstudiante() {
   const usuario = useUsuarioActual();
-  const { datos: solicitudes, cargando } = useSolicitudes({ solicitanteId: usuario?.id });
+  const {
+    datos: solicitudes,
+    cargando,
+    error,
+    recargar,
+  } = useSolicitudes({ solicitanteId: usuario?.id });
   const servicios = useIndiceServicios();
   const [historialCompleto, setHistorialCompleto] = useState(false);
 
   if (!usuario) return null;
-  if (cargando) return <Loading mensaje="Cargando tus solicitudes…" />;
+  if (cargando) return <EsqueletoTarjetas mensaje="Cargando tus solicitudes…" cantidad={3} />;
+  if (error) return <EstadoError mensaje={error} onReintentar={recargar} />;
 
   const lista = solicitudes ?? [];
   const pendientes = lista.filter((s) => REQUIEREN_ATENCION.includes(s.estado));
@@ -72,10 +80,10 @@ export function PanelEstudiante() {
 
   return (
     <>
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-4xl font-bold text-ink">¡Hola, {nombrePila}! 👋</h1>
-          <p className="mt-1 text-md text-ink-3">
+      <PageHeader
+        titulo={`¡Hola, ${nombrePila}! 👋`}
+        subtitulo={
+          <>
             {pendientes.length > 0 ? (
               <>
                 Tienes{' '}
@@ -89,13 +97,14 @@ export function PanelEstudiante() {
             ) : (
               '¿Qué necesitas tramitar hoy?'
             )}
-          </p>
-        </div>
+          </>
+        }
+      >
         <ButtonLink to={RUTAS.catalogo}>
           <Icono nombre="mas" />
           Nueva solicitud
         </ButtonLink>
-      </div>
+      </PageHeader>
 
       {lista.length === 0 ? (
         <Card>

@@ -7,11 +7,12 @@ import {
   AvatarUsuario,
   Badge,
   Button,
+  CampoBusqueda,
   Card,
   EmptyState,
-  CampoBusqueda,
+  EsqueletoTabla,
+  EstadoError,
   Icono,
-  Loading,
   PageHeader,
   RoleBadge,
   SelectorFiltro,
@@ -22,6 +23,7 @@ import { repositorios } from '@/data';
 import { ETIQUETA_ROL, type Rol, type Usuario } from '@/domain/types';
 import { mensajeDeError } from '@/lib/errores';
 import { useRevalidar, useUsuarios } from '@/hooks/useDatos';
+import { useRetardado } from '@/hooks/useRetardado';
 import { TODOS, opcionesConTodos, type ConTodos } from '@/lib/filtros';
 import { tiempoRelativo } from '@/lib/format';
 import { contar } from '@/lib/texto';
@@ -37,10 +39,16 @@ export function UsuariosPage() {
   const [rol, setRol] = useState<ConTodos<Rol>>(TODOS);
   const [activo, setActivo] = useState<FiltroActivo>(TODOS);
 
-  const { datos: usuarios, cargando } = useUsuarios({
+  const termino = useRetardado(busqueda.trim());
+  const {
+    datos: usuarios,
+    cargando,
+    error,
+    recargar,
+  } = useUsuarios({
     ...(rol !== TODOS ? { rol } : {}),
     ...(activo !== TODOS ? { activo: activo === 'activos' } : {}),
-    ...(busqueda ? { busqueda } : {}),
+    ...(termino ? { busqueda: termino } : {}),
   });
 
   const revalidar = useRevalidar();
@@ -161,7 +169,9 @@ export function UsuariosPage() {
       </div>
 
       {cargando ? (
-        <Loading mensaje="Cargando usuarios…" />
+        <EsqueletoTabla mensaje="Cargando usuarios…" conEncabezado={false} />
+      ) : error ? (
+        <EstadoError mensaje={error} onReintentar={recargar} />
       ) : lista.length === 0 ? (
         <Card>
           <EmptyState
