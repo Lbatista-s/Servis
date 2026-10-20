@@ -25,6 +25,7 @@ import {
   type Actor,
   type Adjunto,
   type EstadoSolicitud,
+  type Requisito,
   type Rol,
   type Servicio,
   type Solicitud,
@@ -568,6 +569,37 @@ const claveDe = (nombre: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
 
+/**
+ * Los requisitos de un servicio deben ser documentos del catálogo; su
+ * descripción se toma siempre del catálogo. Devuelve un error si alguno no
+ * existe.
+ */
+function normalizarRequisitos(
+  requisitos: readonly Requisito[],
+): { ok: true; requisitos: Requisito[] } | { ok: false; respuesta: Response } {
+  const { documentos } = baseSimulada();
+  const resultado: Requisito[] = [];
+  for (const requisito of requisitos) {
+    const documento = documentos.find((d) => d.id === requisito.id);
+    if (!documento) {
+      return {
+        ok: false,
+        respuesta: HttpResponse.json(
+          { requisitos: [`El documento «${requisito.id}» no está en el catálogo.`] },
+          { status: 400 },
+        ),
+      };
+    }
+    if (resultado.some((r) => r.id === documento.id)) continue;
+    resultado.push({
+      id: documento.id,
+      descripcion: documento.nombre,
+      obligatorio: Boolean(requisito.obligatorio),
+    });
+  }
+  return { ok: true, requisitos: resultado };
+}
+
 const handlersServicios = [
   // El catálogo es público: la pantalla de acceso muestra cuántos servicios hay.
   http.get(ruta('servicios/'), ({ request }) => {
@@ -606,10 +638,7 @@ const handlersServicios = [
         icono: datos.icono ?? '📄',
         color: datos.color ?? 'bg-canvas',
         categoria: datos.categoria ?? 'administrativo',
-        requisitos: (datos.requisitos ?? []).map((r, i) => ({
-          ...r,
-          id: r.id || `${claveDe(datos.nombre ?? '')}-r${i + 1}`,
-        })),
+        requisitos: [],
         plantilla: datos.plantilla ?? '',
         activo: datos.activo ?? false,
         diasEstimados: datos.diasEstimados ?? 5,
@@ -617,6 +646,9 @@ const handlersServicios = [
       if (!servicio.id) {
         return HttpResponse.json({ nombre: ['Este campo es obligatorio.'] }, { status: 400 });
       }
+      const requisitos = normalizarRequisitos(datos.requisitos ?? []);
+      if (!requisitos.ok) return requisitos.respuesta;
+      servicio.requisitos = requisitos.requisitos;
       const validacion = validarActivacionServicio(servicio, servicio.activo);
       if (!validacion.ok) return error(400, validacion.error.mensaje);
       const base = baseSimulada();
@@ -639,11 +671,16 @@ const handlersServicios = [
       const indice = base.servicios.findIndex((s) => s.id === params.id);
       const actual = base.servicios[indice];
       if (!actual) return error(404, 'No encontrado.');
-      const siguiente: Servicio = {
-        ...actual,
-        ...(await cuerpo<Servicio>(request)),
-        id: actual.id,
-      };
+      const cambios = await cuerpo<Partial<Servicio>>(request);
+      const siguiente: Servicio = { ...actual, ...cambios, id: actual.id };
+      if (cambios.requisitos) {
+        const requisitos = normalizarRequisitos(cambios.requisitos);
+        if (!requisitos.ok) return requisitos.respuesta;
+        siguiente.requisitos = requisitos.requisitos;
+      }
+      if (cambios.nombre !== undefined && !cambios.nombre.trim()) {
+        return HttpResponse.json({ nombre: ['Este campo es obligatorio.'] }, { status: 400 });
+      }
       // Quitar todos los requisitos a un servicio activo, o activarlo sin
       // ellos, viola la regla del catálogo.
       const validacion = validarActivacionServicio(siguiente, siguiente.activo);
@@ -651,6 +688,41 @@ const handlersServicios = [
       base.servicios[indice] = validacion.valor;
       guardarBase();
       return respuesta(validacion.valor);
+    }),
+  ),
+
+  http.get(
+    ruta('documentos/'),
+    protegido(({ request }) => {
+      const documentos = [...baseSimulada().documentos].sort((a, b) =>
+        a.nombre.localeCompare(b.nombre, 'es'),
+      );
+      return paginar(request, documentos);
+    }),
+  ),
+
+  http.post(
+    ruta('documentos/'),
+    protegido(async ({ request, usuario }) => {
+      if (usuario.rol !== 'administrador') {
+        return error(403, 'Sólo el administrador gestiona el catálogo.');
+      }
+      const nombre = (await cuerpo<{ nombre?: string }>(request)).nombre?.trim() ?? '';
+      if (nombre.length < 3) {
+        return HttpResponse.json(
+          { nombre: ['Escribe un nombre de al menos 3 caracteres.'] },
+          { status: 400 },
+        );
+      }
+      const base = baseSimulada();
+      const documento = { id: claveDe(nombre), nombre };
+      const repetido = base.documentos.find(
+        (d) => d.id === documento.id || d.nombre.toLowerCase() === nombre.toLowerCase(),
+      );
+      if (repetido) return error(409, `«${repetido.nombre}» ya está en el catálogo.`);
+      base.documentos.push(documento);
+      guardarBase();
+      return respuesta(documento, 201);
     }),
   ),
 ];

@@ -87,6 +87,19 @@ export interface Usuario {
   ultimoAcceso: string;
 }
 
+/**
+ * Documento que SERVIS puede pedir en una solicitud (cédula, récord de notas…).
+ * El catálogo es único y cada servicio elige cuáles pide.
+ */
+export interface TipoDocumento {
+  id: string;
+  nombre: string;
+}
+
+/**
+ * Documento que pide un servicio. `id` es el del `TipoDocumento` del catálogo y
+ * `descripcion` copia su nombre, para mostrarlo sin consultar el catálogo.
+ */
 export interface Requisito {
   id: string;
   descripcion: string;

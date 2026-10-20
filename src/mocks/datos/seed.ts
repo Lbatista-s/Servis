@@ -9,7 +9,15 @@
 
 import { aplicarTransicion } from '@/domain/businessRules';
 import { crearDocumento } from '@/domain/documentos';
-import type { Actor, EstadoSolicitud, Servicio, Solicitud, Usuario } from '@/domain/types';
+import type {
+  Actor,
+  EstadoSolicitud,
+  Requisito,
+  Servicio,
+  Solicitud,
+  TipoDocumento,
+  Usuario,
+} from '@/domain/types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Usuarios
@@ -124,6 +132,38 @@ export const USUARIOS_DEMO: readonly Usuario[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Catálogo de documentos que SERVIS puede pedir
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const DOCUMENTOS_DEMO: readonly TipoDocumento[] = [
+  { id: 'documento-identidad', nombre: 'Documento de identidad' },
+  { id: 'record-notas', nombre: 'Récord de notas' },
+  { id: 'carta-aceptacion', nombre: 'Carta de aceptación de la empresa en papel membretado' },
+  { id: 'datos-supervisor', nombre: 'Datos completos del supervisor inmediato' },
+  { id: 'carta-motivacion', nombre: 'Carta de motivación dirigida al Área' },
+  { id: 'no-deuda', nombre: 'Constancia de no deuda con Tesorería' },
+  { id: 'carta-baja', nombre: 'Carta explicativa del período de baja' },
+  { id: 'acta-nacimiento', nombre: 'Acta de nacimiento legalizada' },
+  { id: 'pago-grado', nombre: 'Comprobante de pago de derechos de grado' },
+  { id: 'fotografia', nombre: 'Fotografía tamaño 2x2 de fondo blanco' },
+  { id: 'constancia-inscripcion', nombre: 'Constancia de inscripción vigente' },
+  { id: 'comprobante-pago', nombre: 'Comprobante del pago realizado' },
+  { id: 'justificacion-reembolso', nombre: 'Justificación escrita del reembolso' },
+  { id: 'certificacion-bancaria', nombre: 'Certificación bancaria de la cuenta' },
+  { id: 'inscripcion-familiares', nombre: 'Constancia de inscripción de ambos familiares' },
+  { id: 'descripcion-objeto', nombre: 'Descripción detallada del objeto' },
+  { id: 'evaluacion', nombre: 'Copia de la evaluación cuestionada' },
+  { id: 'argumentacion', nombre: 'Argumentación escrita de la revisión' },
+];
+
+/** Requisito de un servicio a partir de un documento del catálogo. */
+function pide(documentoId: string, obligatorio = true): Requisito {
+  const documento = DOCUMENTOS_DEMO.find((d) => d.id === documentoId);
+  if (!documento) throw new Error(`Documento desconocido en el catálogo: ${documentoId}`);
+  return { id: documento.id, descripcion: documento.nombre, obligatorio };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Catálogo de servicios
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -138,18 +178,7 @@ export const SERVICIOS_DEMO: readonly Servicio[] = [
     plantilla: 'plantilla_pasantia_v1.docx',
     activo: true,
     diasEstimados: 3,
-    requisitos: [
-      {
-        id: 'pasantia-r1',
-        descripcion: 'Carta de aceptación de la empresa en papel membretado',
-        obligatorio: true,
-      },
-      {
-        id: 'pasantia-r2',
-        descripcion: 'Datos completos del supervisor inmediato',
-        obligatorio: false,
-      },
-    ],
+    requisitos: [pide('carta-aceptacion'), pide('datos-supervisor', false)],
   },
   {
     id: 'cambio',
@@ -161,11 +190,7 @@ export const SERVICIOS_DEMO: readonly Servicio[] = [
     plantilla: 'plantilla_cambio_v1.docx',
     activo: true,
     diasEstimados: 7,
-    requisitos: [
-      { id: 'cambio-r1', descripcion: 'Récord de notas actualizado', obligatorio: true },
-      { id: 'cambio-r2', descripcion: 'Carta de motivación dirigida al Área', obligatorio: true },
-      { id: 'cambio-r3', descripcion: 'Constancia de no deuda con Tesorería', obligatorio: false },
-    ],
+    requisitos: [pide('record-notas'), pide('carta-motivacion'), pide('no-deuda', false)],
   },
   {
     id: 'reingreso',
@@ -177,19 +202,7 @@ export const SERVICIOS_DEMO: readonly Servicio[] = [
     plantilla: 'plantilla_reingreso_v1.docx',
     activo: true,
     diasEstimados: 5,
-    requisitos: [
-      { id: 'reingreso-r1', descripcion: 'Copia de la cédula de identidad', obligatorio: true },
-      {
-        id: 'reingreso-r2',
-        descripcion: 'Carta explicativa del período de baja',
-        obligatorio: true,
-      },
-      {
-        id: 'reingreso-r3',
-        descripcion: 'Constancia de no deuda con Tesorería',
-        obligatorio: false,
-      },
-    ],
+    requisitos: [pide('documento-identidad'), pide('carta-baja'), pide('no-deuda', false)],
   },
   {
     id: 'grado',
@@ -202,14 +215,10 @@ export const SERVICIOS_DEMO: readonly Servicio[] = [
     activo: true,
     diasEstimados: 10,
     requisitos: [
-      { id: 'grado-r1', descripcion: 'Récord de notas completo', obligatorio: true },
-      { id: 'grado-r2', descripcion: 'Acta de nacimiento legalizada', obligatorio: true },
-      {
-        id: 'grado-r3',
-        descripcion: 'Comprobante de pago de derechos de grado',
-        obligatorio: true,
-      },
-      { id: 'grado-r4', descripcion: 'Fotografía tamaño 2x2 de fondo blanco', obligatorio: false },
+      pide('record-notas'),
+      pide('acta-nacimiento'),
+      pide('pago-grado'),
+      pide('fotografia', false),
     ],
   },
   {
@@ -222,9 +231,7 @@ export const SERVICIOS_DEMO: readonly Servicio[] = [
     plantilla: 'plantilla_talleres_v1.docx',
     activo: true,
     diasEstimados: 2,
-    requisitos: [
-      { id: 'talleres-r1', descripcion: 'Constancia de inscripción vigente', obligatorio: true },
-    ],
+    requisitos: [pide('constancia-inscripcion')],
   },
   {
     id: 'reembolso',
@@ -237,13 +244,9 @@ export const SERVICIOS_DEMO: readonly Servicio[] = [
     activo: true,
     diasEstimados: 8,
     requisitos: [
-      { id: 'reembolso-r1', descripcion: 'Comprobante del pago realizado', obligatorio: true },
-      { id: 'reembolso-r2', descripcion: 'Justificación escrita del reembolso', obligatorio: true },
-      {
-        id: 'reembolso-r3',
-        descripcion: 'Certificación bancaria de la cuenta',
-        obligatorio: false,
-      },
+      pide('comprobante-pago'),
+      pide('justificacion-reembolso'),
+      pide('certificacion-bancaria', false),
     ],
   },
   {
@@ -256,9 +259,7 @@ export const SERVICIOS_DEMO: readonly Servicio[] = [
     plantilla: 'plantilla_ingles_v1.docx',
     activo: true,
     diasEstimados: 4,
-    requisitos: [
-      { id: 'ingles-r1', descripcion: 'Documento de identidad vigente', obligatorio: true },
-    ],
+    requisitos: [pide('documento-identidad')],
   },
   {
     id: 'descuento',
@@ -270,18 +271,7 @@ export const SERVICIOS_DEMO: readonly Servicio[] = [
     plantilla: 'plantilla_descuento_v1.docx',
     activo: true,
     diasEstimados: 6,
-    requisitos: [
-      {
-        id: 'descuento-r1',
-        descripcion: 'Acta de nacimiento que acredite el vínculo',
-        obligatorio: true,
-      },
-      {
-        id: 'descuento-r2',
-        descripcion: 'Constancia de inscripción de ambos familiares',
-        obligatorio: true,
-      },
-    ],
+    requisitos: [pide('acta-nacimiento'), pide('inscripcion-familiares')],
   },
   {
     id: 'carnet',
@@ -293,10 +283,7 @@ export const SERVICIOS_DEMO: readonly Servicio[] = [
     plantilla: 'plantilla_carnet_v1.docx',
     activo: true,
     diasEstimados: 3,
-    requisitos: [
-      { id: 'carnet-r1', descripcion: 'Fotografía tamaño 2x2 de fondo blanco', obligatorio: true },
-      { id: 'carnet-r2', descripcion: 'Copia del documento de identidad', obligatorio: true },
-    ],
+    requisitos: [pide('fotografia'), pide('documento-identidad')],
   },
   {
     id: 'objetos',
@@ -308,9 +295,7 @@ export const SERVICIOS_DEMO: readonly Servicio[] = [
     plantilla: 'plantilla_objetos_v1.docx',
     activo: false,
     diasEstimados: 1,
-    requisitos: [
-      { id: 'objetos-r1', descripcion: 'Descripción detallada del objeto', obligatorio: true },
-    ],
+    requisitos: [pide('descripcion-objeto')],
   },
   {
     id: 'resultados',
@@ -322,14 +307,7 @@ export const SERVICIOS_DEMO: readonly Servicio[] = [
     plantilla: 'plantilla_resultados_v1.docx',
     activo: false,
     diasEstimados: 5,
-    requisitos: [
-      { id: 'resultados-r1', descripcion: 'Copia de la evaluación cuestionada', obligatorio: true },
-      {
-        id: 'resultados-r2',
-        descripcion: 'Argumentación escrita de la revisión',
-        obligatorio: true,
-      },
-    ],
+    requisitos: [pide('evaluacion'), pide('argumentacion')],
   },
 ];
 

@@ -18,7 +18,7 @@ import { useCallback, useMemo } from 'react';
 import { repositorios } from '@/data';
 import type { FiltroServicios, FiltroSolicitudes, FiltroUsuarios } from '@/data/repositories/types';
 import type { Metas } from '@/domain/indicadores/definiciones';
-import type { Notificacion, Servicio, Solicitud, Usuario } from '@/domain/types';
+import type { Notificacion, Servicio, Solicitud, TipoDocumento, Usuario } from '@/domain/types';
 import { mensajeDeError } from '@/lib/errores';
 
 import { RECURSOS, type Recurso } from './clienteConsultas';
@@ -102,6 +102,16 @@ export function useServicios(filtro: FiltroServicios = {}): EstadoAsincrono<Serv
       queryKey: ['servicios', 'lista', filtro],
       queryFn: () => repositorios.servicios.listar(filtro),
       placeholderData: keepPreviousData,
+    }),
+  );
+}
+
+/** Catálogo de documentos que los servicios pueden pedir. */
+export function useDocumentos(): EstadoAsincrono<TipoDocumento[]> {
+  return estado(
+    useQuery({
+      queryKey: ['documentos'],
+      queryFn: () => repositorios.documentos.listar(),
     }),
   );
 }

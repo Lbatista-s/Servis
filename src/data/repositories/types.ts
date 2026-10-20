@@ -17,6 +17,7 @@ import type {
   Rol,
   Servicio,
   Solicitud,
+  TipoDocumento,
   Usuario,
 } from '@/domain/types';
 
@@ -142,6 +143,17 @@ export interface IServiceRepository {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Catálogo de documentos
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface IDocumentosRepository {
+  /** Todos los documentos que SERVIS puede pedir, en orden alfabético. */
+  listar(): Promise<TipoDocumento[]>;
+  /** Añade un documento al catálogo. Sólo el administrador; `CONFLICTO` si ya existe. */
+  crear(nombre: string): Promise<TipoDocumento>;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Metas del cuadro de mando
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -191,6 +203,7 @@ export interface Repositorios {
   solicitudes: IRequestRepository;
   usuarios: IUserRepository;
   servicios: IServiceRepository;
+  documentos: IDocumentosRepository;
   metas: IMetasRepository;
   notificaciones: INotificacionesRepository;
 }

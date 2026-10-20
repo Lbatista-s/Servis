@@ -52,6 +52,8 @@ export const API = {
     lista: 'servicios/',
     detalle: (id: string) => `servicios/${segmento(id)}/`,
   },
+  /** GET: catálogo de documentos que se pueden pedir; POST: añade uno. */
+  documentos: 'documentos/',
   notificaciones: {
     lista: 'notificaciones/',
     /** POST: marca una notificación como leída. */

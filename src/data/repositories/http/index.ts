@@ -21,6 +21,7 @@ import type {
   Notificacion,
   Servicio,
   Solicitud,
+  TipoDocumento,
   Usuario,
 } from '@/domain/types';
 import { ErrorRepositorio } from '@/data/repositories/types';
@@ -33,6 +34,7 @@ import type {
   FiltroSolicitudes,
   FiltroUsuarios,
   IAuthRepository,
+  IDocumentosRepository,
   IMetasRepository,
   INotificacionesRepository,
   IRequestRepository,
@@ -46,6 +48,7 @@ import { modoAutenticacion } from './config';
 import {
   aNotificacion,
   aServicio,
+  aTipoDocumento,
   aSolicitud,
   aUsuario,
   desdeCredenciales,
@@ -306,6 +309,22 @@ export class RepositorioServiciosHttp implements IServiceRepository {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Catálogo de documentos
+// ─────────────────────────────────────────────────────────────────────────────
+
+export class RepositorioDocumentosHttp implements IDocumentosRepository {
+  async listar(): Promise<TipoDocumento[]> {
+    return (await lista<Dto>(API.documentos)).map(aTipoDocumento);
+  }
+
+  async crear(nombre: string): Promise<TipoDocumento> {
+    return aTipoDocumento(
+      await peticion<Dto>(API.documentos, { metodo: 'POST', cuerpo: { nombre: nombre.trim() } }),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Metas del cuadro de mando
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -349,6 +368,7 @@ export function crearRepositoriosHttp(): Repositorios {
     solicitudes: new RepositorioSolicitudesHttp(),
     usuarios: new RepositorioUsuariosHttp(),
     servicios: new RepositorioServiciosHttp(),
+    documentos: new RepositorioDocumentosHttp(),
     metas: new RepositorioMetasHttp(),
     notificaciones: new RepositorioNotificacionesHttp(),
   };

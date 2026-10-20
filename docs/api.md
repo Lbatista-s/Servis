@@ -118,7 +118,11 @@ El frontend admite dos modos, que se eligen con `VITE_API_AUTH`.
   "color": "bg-canvas",
   "categoria": "academico",
   "requisitos": [
-    { "id": 1, "descripcion": "Carta de aceptación de la empresa", "obligatorio": true }
+    {
+      "id": "carta-aceptacion",
+      "descripcion": "Carta de aceptación de la empresa en papel membretado",
+      "obligatorio": true
+    }
   ],
   "plantilla": "carta-pasantia.html",
   "activo": true,
@@ -131,15 +135,32 @@ El frontend admite dos modos, que se eligen con `VITE_API_AUTH`.
   - o conservar el `id` numérico y exponer la clave como `id` en el serializer, aceptando `servicio_id` con `SlugRelatedField(slug_field="clave")`.
 - `categoria` puede ser `academico`, `administrativo` o `identidad`.
 - `icono` y `color` son opcionales y solo afectan a la presentación.
+- **`requisitos` son documentos del catálogo** (ver abajo): `id` es la clave del documento y `descripcion` su nombre, que el servidor copia del catálogo e ignora si el cliente envía otro. Un `id` que no está en el catálogo responde `400`.
 
 | Método y ruta                                   | Uso                                                                                                   |
 | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | `GET servicios/?activo=true&categoria=&search=` | Catálogo. Conviene que sea público (`AllowAny`): la pantalla de acceso muestra cuántos servicios hay. |
 | `GET servicios/{id}/`                           | Detalle                                                                                               |
 | `POST servicios/`                               | Crear                                                                                                 |
-| `PATCH servicios/{id}/`                         | Editar; `{"activo": true}` debe fallar con 400 si el servicio no tiene requisitos                     |
+| `PATCH servicios/{id}/`                         | Editar datos y requisitos. Responde 400 si el servicio quedaría activo sin requisitos.                |
 
 > Los campos del formulario de cada servicio están definidos hoy en el frontend (`src/features/requests/formularios.ts`) y se envían en `datos_formulario` con esos mismos nombres, en `camelCase`. Para la carta de pasantía, por ejemplo: `empresa`, `rnc`, `cargo`, `departamento`, `fechaInicio`, `fechaFin`, `supervisorNombre`…
+
+### Catálogo de documentos
+
+Lista única de los documentos que SERVIS puede pedir (documento de identidad, récord de notas, carta de aceptación…). Al editar un servicio, el administrador activa o desactiva cada uno y lo marca como obligatorio u opcional.
+
+```json
+{ "id": "documento-identidad", "nombre": "Documento de identidad" }
+```
+
+| Método y ruta      | Cuerpo       | Uso                                                                                        |
+| ------------------ | ------------ | ------------------------------------------------------------------------------------------ |
+| `GET documentos/`  | —            | Todo el catálogo, en orden alfabético. Paginado.                                           |
+| `POST documentos/` | `{"nombre"}` | Añade un documento. Solo el **administrador** (`403` si no); `409` si ya existe uno igual. |
+
+- En Django encaja un modelo `TipoDocumento(clave: SlugField, nombre)` y, en `Servicio`, una relación con tabla intermedia `Requisito(servicio, tipo_documento, obligatorio)`.
+- Cambiar los requisitos de un servicio no afecta a las solicitudes ya enviadas: conservan sus adjuntos.
 
 ### Solicitud
 

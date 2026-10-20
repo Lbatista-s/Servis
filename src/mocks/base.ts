@@ -8,9 +8,20 @@
  */
 
 import { METAS_POR_DEFECTO, type Metas } from '@/domain/indicadores/definiciones';
-import { ESTADOS_FINALES, type Servicio, type Solicitud, type Usuario } from '@/domain/types';
+import {
+  ESTADOS_FINALES,
+  type Servicio,
+  type TipoDocumento,
+  type Solicitud,
+  type Usuario,
+} from '@/domain/types';
 
-import { construirSolicitudesDemo, SERVICIOS_DEMO, USUARIOS_DEMO } from './datos/seed';
+import {
+  construirSolicitudesDemo,
+  DOCUMENTOS_DEMO,
+  SERVICIOS_DEMO,
+  USUARIOS_DEMO,
+} from './datos/seed';
 import { construirHistorialDemo } from './datos/seedHistorial';
 import { marcarLeidas, notificacionesDe } from './notificaciones';
 
@@ -20,6 +31,8 @@ export interface BaseSimulada {
   version: number;
   usuarios: Usuario[];
   servicios: Servicio[];
+  /** Catálogo de documentos que los servicios pueden pedir. */
+  documentos: TipoDocumento[];
   solicitudes: Solicitud[];
   metas: Metas;
   /** Notificaciones leídas por cada usuario (ver `notificaciones.ts`). */
@@ -28,7 +41,7 @@ export interface BaseSimulada {
   sesion: string | null;
 }
 
-const VERSION = 2;
+const VERSION = 3;
 const CLAVE = 'servis:api-simulada';
 /** Clave del antiguo modo de demostración, que ya no se usa. */
 const CLAVE_ANTIGUA = 'servis:datos';
@@ -41,6 +54,7 @@ function sembrar(ahora = new Date()): BaseSimulada {
     version: VERSION,
     usuarios: USUARIOS_DEMO.map((u) => ({ ...u })),
     servicios: SERVICIOS_DEMO.map((s) => ({ ...s, requisitos: [...s.requisitos] })),
+    documentos: DOCUMENTOS_DEMO.map((d) => ({ ...d })),
     solicitudes: [...construirSolicitudesDemo(), ...construirHistorialDemo(ahora)],
     metas: { ...METAS_POR_DEFECTO },
     leidas: {},

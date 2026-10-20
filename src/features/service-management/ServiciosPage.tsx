@@ -16,7 +16,6 @@ import {
   EstadoError,
   Icono,
   PageHeader,
-  Tooltip,
   useToast,
 } from '@/components/ui';
 import { repositorios } from '@/data';
@@ -25,7 +24,7 @@ import { mensajeDeError } from '@/lib/errores';
 import { useRevalidar, useServicios } from '@/hooks/useDatos';
 import { contar } from '@/lib/texto';
 
-import { NuevoServicioDialog } from './NuevoServicioDialog';
+import { EditarServicioDialog, NuevoServicioDialog } from './ServicioDialog';
 
 export function ServiciosPage() {
   const { datos: servicios, cargando, error, recargar } = useServicios();
@@ -116,11 +115,7 @@ export function ServiciosPage() {
       key: 'acciones',
       render: (_, servicio) => (
         <span className="flex gap-1.5">
-          <Tooltip contenido="Editar servicio">
-            <Button variante="outline" tamano="icon" aria-label={`Editar ${servicio.nombre}`}>
-              <Icono nombre="editar" />
-            </Button>
-          </Tooltip>
+          <EditarServicioDialog servicio={servicio} />
 
           <Popover
             trigger="click"

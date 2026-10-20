@@ -129,7 +129,7 @@ bloqueo de acceso de cuentas inactivas.
 | 8   | `/bandeja/:id`                   | Detalle con acciones de revisión              | Personal administrativo · Coordinador                       |
 | 9   | `/cuadro-de-mando`               | Cuadro de mando integral y análisis operativo | Coordinador (inicio, edita metas) · Personal administrativo |
 | 10  | `/admin/usuarios`                | Gestión de usuarios                           | Administrador                                               |
-| 11  | `/admin/servicios`               | Gestión del catálogo                          | Administrador                                               |
+| 11  | `/admin/servicios`               | Catálogo: alta, edición y documentos pedidos  | Administrador                                               |
 | 12  | `/admin`                         | Inicio del administrador                      | Administrador                                               |
 
 Cada rol entra en su pantalla. El coordinador entra al cuadro de mando integral (Kaplan y Norton)
@@ -328,7 +328,7 @@ revisión sin tocar la principal.
 npm test
 ```
 
-Son 181 pruebas, que cubren:
+Son 190 pruebas, que cubren:
 
 - **Máquina de estados**: las 81 combinaciones de estados frente a la tabla de la especificación,
   la autorización por rol y las transiciones que exigen comentario.

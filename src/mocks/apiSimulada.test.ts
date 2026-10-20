@@ -16,7 +16,7 @@ import { baseSimulada, CONTRASENA_SIMULADA, iniciarSesionSimulada } from './base
 import { CUENTAS_SIMULADAS } from './cuentas';
 import { USUARIOS_DEMO } from './datos/seed';
 
-const { auth, solicitudes, usuarios, servicios, metas, notificaciones } = repositorios;
+const { auth, solicitudes, usuarios, servicios, documentos, metas, notificaciones } = repositorios;
 
 const LUIS: Actor = { id: 'usr-luis', nombre: 'Luis Batista', rol: 'estudiante' };
 const RICARDO: Actor = {
@@ -246,6 +246,56 @@ describe('servicios', () => {
     expect(baseSimulada().servicios.some((s) => s.id === creado.id)).toBe(true);
 
     await expect(servicios.cambiarActivacion(creado.id, true)).rejects.toMatchObject({
+      codigo: 'REGLA_DE_NEGOCIO',
+    });
+  });
+});
+
+describe('catálogo de documentos', () => {
+  it('lista los documentos en orden alfabético', async () => {
+    iniciarSesionSimulada('usr-edwin');
+    const lista = await documentos.listar();
+    expect(lista.length).toBeGreaterThan(10);
+    const nombres = lista.map((d) => d.nombre);
+    expect(nombres).toEqual([...nombres].sort((a, b) => a.localeCompare(b, 'es')));
+  });
+
+  it('sólo el administrador añade documentos, y sin repetirlos', async () => {
+    iniciarSesionSimulada(RICARDO.id);
+    await expect(documentos.crear('Certificado médico')).rejects.toMatchObject({
+      codigo: 'PROHIBIDO',
+    });
+
+    iniciarSesionSimulada('usr-edwin');
+    expect(await documentos.crear('Certificado médico')).toEqual({
+      id: 'certificado-medico',
+      nombre: 'Certificado médico',
+    });
+    await expect(documentos.crear('certificado médico')).rejects.toMatchObject({
+      codigo: 'CONFLICTO',
+    });
+  });
+
+  it('los requisitos de un servicio deben ser documentos del catálogo', async () => {
+    iniciarSesionSimulada('usr-edwin');
+    await expect(
+      servicios.actualizar('pasantia', {
+        requisitos: [{ id: 'inventado', descripcion: 'Inventado', obligatorio: true }],
+      }),
+    ).rejects.toMatchObject({ codigo: 'REGLA_DE_NEGOCIO' });
+
+    // La descripción la fija el catálogo, no quien envía el cambio.
+    const actualizado = await servicios.actualizar('pasantia', {
+      requisitos: [{ id: 'documento-identidad', descripcion: 'Otra cosa', obligatorio: false }],
+    });
+    expect(actualizado.requisitos).toEqual([
+      { id: 'documento-identidad', descripcion: 'Documento de identidad', obligatorio: false },
+    ]);
+  });
+
+  it('no deja sin requisitos un servicio publicado', async () => {
+    iniciarSesionSimulada('usr-edwin');
+    await expect(servicios.actualizar('ingles', { requisitos: [] })).rejects.toMatchObject({
       codigo: 'REGLA_DE_NEGOCIO',
     });
   });

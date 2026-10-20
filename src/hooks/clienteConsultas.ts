@@ -29,6 +29,7 @@ export const clienteConsultas = crearClienteConsultas();
 export const RECURSOS = [
   'solicitudes',
   'servicios',
+  'documentos',
   'usuarios',
   'metas',
   'notificaciones',

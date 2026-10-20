@@ -17,6 +17,7 @@ import {
   type Requisito,
   type Servicio,
   type Solicitud,
+  type TipoDocumento,
   type Usuario,
 } from '@/domain/types';
 
@@ -95,6 +96,10 @@ export function aServicio(dto: Dto): Servicio {
     activo: Boolean(dto.activo),
     diasEstimados: Number(dto.diasEstimados ?? 0),
   };
+}
+
+export function aTipoDocumento(dto: Dto): TipoDocumento {
+  return { id: texto(dto.id), nombre: texto(dto.nombre) };
 }
 
 export function aNotificacion(dto: Dto): Notificacion {
