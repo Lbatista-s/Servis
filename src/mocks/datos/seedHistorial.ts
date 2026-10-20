@@ -70,6 +70,9 @@ function datosDe(servicio: Servicio, azar: () => number, creada: Date): Record<s
       if (campo.tipo === 'fecha') return [campo.nombre, fecha];
       if (campo.tipo === 'correo') return [campo.nombre, 'contacto@empresa.com.do'];
       if (campo.tipo === 'telefono') return [campo.nombre, '+1 (809) 555-0100'];
+      // La primera opción, sin consumir el generador: así el resto del
+      // historial no cambia al añadir listas a un formulario.
+      if (campo.tipo === 'lista') return [campo.nombre, campo.opciones?.[0] ?? ''];
       if (campo.tipo === 'area')
         return [campo.nombre, `Solicitud de ${servicio.nombre.toLowerCase()}.`];
       return [campo.nombre, campo.obligatorio ? `${campo.etiqueta} registrado` : ''];

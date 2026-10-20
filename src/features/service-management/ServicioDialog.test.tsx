@@ -62,7 +62,9 @@ describe('Nuevo servicio', () => {
       'Certifica la inscripción vigente del estudiante.',
     );
     await usuario.click(
-      within(dialogo).getByRole('switch', { name: 'Pedir «Documento de identidad»' }),
+      within(dialogo).getByRole('switch', {
+        name: 'Pedir «Documento de identidad (cédula o pasaporte)»',
+      }),
     );
     await usuario.click(within(dialogo).getByRole('switch', { name: /Publicar en el catálogo/ }));
     await usuario.click(within(dialogo).getByRole('button', { name: /Crear servicio/ }));
@@ -72,16 +74,33 @@ describe('Nuevo servicio', () => {
         {
           activo: true,
           requisitos: [
-            { id: 'documento-identidad', descripcion: 'Documento de identidad', obligatorio: true },
+            {
+              id: 'documento-identidad',
+              descripcion: 'Documento de identidad (cédula o pasaporte)',
+              obligatorio: true,
+            },
           ],
         },
       ),
     );
   });
 
-  it('sin documentos no permite publicarlo', async () => {
-    const { dialogo } = await abrirNuevo();
-    expect(within(dialogo).getByRole('switch', { name: /Publicar en el catálogo/ })).toBeDisabled();
+  it('permite publicar un servicio que no pide documentos', async () => {
+    const { usuario, dialogo } = await abrirNuevo();
+    await usuario.type(within(dialogo).getByLabelText(/^Nombre(?! del)/), 'Taller de oratoria');
+    await usuario.type(
+      within(dialogo).getByLabelText(/^Descripción/),
+      'Taller grupal de oratoria en modalidad virtual.',
+    );
+    await usuario.click(within(dialogo).getByRole('switch', { name: /Publicar en el catálogo/ }));
+    await usuario.click(within(dialogo).getByRole('button', { name: /Crear servicio/ }));
+
+    await waitFor(() =>
+      expect(baseSimulada().servicios.find((s) => s.id === 'taller-de-oratoria')).toMatchObject({
+        activo: true,
+        requisitos: [],
+      }),
+    );
   });
 });
 
@@ -94,14 +113,18 @@ describe('Editar servicio', () => {
       }),
     ).toBeChecked();
     expect(
-      within(dialogo).getByRole('switch', { name: 'Pedir «Documento de identidad»' }),
+      within(dialogo).getByRole('switch', {
+        name: 'Pedir «Documento de identidad (cédula o pasaporte)»',
+      }),
     ).not.toBeChecked();
   });
 
   it('añade un documento, cambia otro a obligatorio y guarda', async () => {
     const { usuario, dialogo } = await abrirEdicion('pasantia');
     await usuario.click(
-      within(dialogo).getByRole('switch', { name: 'Pedir «Documento de identidad»' }),
+      within(dialogo).getByRole('switch', {
+        name: 'Pedir «Documento de identidad (cédula o pasaporte)»',
+      }),
     );
     const supervisor = within(dialogo).getByRole('radiogroup', {
       name: '«Datos completos del supervisor inmediato»: obligatorio u opcional',
@@ -121,20 +144,25 @@ describe('Editar servicio', () => {
           descripcion: 'Datos completos del supervisor inmediato',
           obligatorio: true,
         },
-        { id: 'documento-identidad', descripcion: 'Documento de identidad', obligatorio: true },
+        {
+          id: 'documento-identidad',
+          descripcion: 'Documento de identidad (cédula o pasaporte)',
+          obligatorio: true,
+        },
       ]),
     );
   });
 
-  it('no deja un servicio publicado sin documentos', async () => {
+  it('guarda un servicio publicado aunque deje de pedir documentos', async () => {
     const { usuario, dialogo } = await abrirEdicion('ingles');
     await usuario.click(
-      within(dialogo).getByRole('switch', { name: 'Pedir «Documento de identidad»' }),
+      within(dialogo).getByRole('switch', {
+        name: 'Pedir «Documento de identidad (cédula o pasaporte)»',
+      }),
     );
-    expect(within(dialogo).getByText(/debe pedir al menos un documento/)).toBeInTheDocument();
-    expect(within(dialogo).getByRole('button', { name: /Guardar cambios/ })).toBeDisabled();
+    await usuario.click(within(dialogo).getByRole('button', { name: /Guardar cambios/ }));
+    await waitFor(() => expect(servicio('ingles')).toMatchObject({ activo: true, requisitos: [] }));
   });
-
   it('añade un documento nuevo al catálogo y lo pide en el servicio', async () => {
     const { usuario, dialogo } = await abrirEdicion('pasantia');
     await usuario.type(

@@ -302,7 +302,6 @@ export class RepositorioServiciosHttp implements IServiceRepository {
     );
   }
 
-  /** El servidor aplica la regla de no activar un servicio sin requisitos. */
   cambiarActivacion(id: string, activo: boolean): Promise<Servicio> {
     return this.actualizar(id, { activo });
   }

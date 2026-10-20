@@ -12,12 +12,7 @@
 import { http, HttpResponse, type JsonBodyType } from 'msw';
 
 import { clavesACamel, clavesASnake } from '@/data/repositories/http/casos';
-import {
-  aplicarTransicion,
-  puedeEditarMetas,
-  validarActivacionServicio,
-  validarEdicion,
-} from '@/domain/businessRules';
+import { aplicarTransicion, puedeEditarMetas, validarEdicion } from '@/domain/businessRules';
 import { crearDocumento } from '@/domain/documentos';
 import type { Metas } from '@/domain/indicadores/definiciones';
 import {
@@ -649,15 +644,13 @@ const handlersServicios = [
       const requisitos = normalizarRequisitos(datos.requisitos ?? []);
       if (!requisitos.ok) return requisitos.respuesta;
       servicio.requisitos = requisitos.requisitos;
-      const validacion = validarActivacionServicio(servicio, servicio.activo);
-      if (!validacion.ok) return error(400, validacion.error.mensaje);
       const base = baseSimulada();
       if (base.servicios.some((s) => s.id === servicio.id)) {
         return error(409, `Ya existe un servicio con el nombre «${servicio.nombre}».`);
       }
-      base.servicios.push(validacion.valor);
+      base.servicios.push(servicio);
       guardarBase();
-      return respuesta(validacion.valor, 201);
+      return respuesta(servicio, 201);
     }),
   ),
 
@@ -681,13 +674,9 @@ const handlersServicios = [
       if (cambios.nombre !== undefined && !cambios.nombre.trim()) {
         return HttpResponse.json({ nombre: ['Este campo es obligatorio.'] }, { status: 400 });
       }
-      // Quitar todos los requisitos a un servicio activo, o activarlo sin
-      // ellos, viola la regla del catálogo.
-      const validacion = validarActivacionServicio(siguiente, siguiente.activo);
-      if (!validacion.ok) return error(400, validacion.error.mensaje);
-      base.servicios[indice] = validacion.valor;
+      base.servicios[indice] = siguiente;
       guardarBase();
-      return respuesta(validacion.valor);
+      return respuesta(siguiente);
     }),
   ),
 

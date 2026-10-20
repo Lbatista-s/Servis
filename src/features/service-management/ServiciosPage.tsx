@@ -1,8 +1,8 @@
 /**
  * Pantalla 11 — Gestión del catálogo de servicios.
  *
- * El interruptor de activación pasa por la regla de negocio: un servicio sin
- * requisitos no puede activarse, y el intento devuelve un error explicativo.
+ * Cada servicio se publica o retira con su interruptor y se edita con el
+ * lápiz: datos generales y documentos que pide, elegidos del catálogo.
  */
 
 import { Popover, Switch, Table, type TableColumnsType } from 'antd';
@@ -45,7 +45,6 @@ export function ServiciosPage() {
         `«${servicio.nombre}» ${siguiente ? 'ya aparece' : 'dejó de aparecer'} en el catálogo.`,
       );
     } catch (fallo) {
-      // Aquí se materializa la regla: activar sin requisitos es imposible.
       avisos.error('No se pudo cambiar el estado', mensajeDeError(fallo));
     } finally {
       setProcesando(null);
@@ -158,7 +157,7 @@ function ListaRequisitos({ servicio }: { servicio: Servicio }) {
   if (servicio.requisitos.length === 0) {
     return (
       <p className="max-w-72 text-base text-ink-3">
-        Este servicio no tiene requisitos definidos, por lo que no puede activarse.
+        Este servicio no pide documentos: sólo los datos de su formulario.
       </p>
     );
   }

@@ -138,7 +138,6 @@ export interface IServiceRepository {
   obtener(id: string): Promise<Servicio | null>;
   crear(datos: DatosNuevoServicio): Promise<Servicio>;
   actualizar(id: string, cambios: Partial<DatosNuevoServicio>): Promise<Servicio>;
-  /** Aplica la regla: no se puede activar un servicio sin requisitos. */
   cambiarActivacion(id: string, activo: boolean): Promise<Servicio>;
 }
 

@@ -12,7 +12,7 @@ import { ProveedorUI } from '@/components/ui';
 import { MISION } from '@/domain/indicadores';
 import type { Usuario } from '@/domain/types';
 import { useAuth } from '@/features/auth/authStore';
-import { iniciarSesionSimulada } from '@/mocks/base';
+import { baseSimulada, iniciarSesionSimulada } from '@/mocks/base';
 import { USUARIOS_DEMO } from '@/mocks/datos/seed';
 
 import { CuadroMandoPage } from './CuadroMandoPage';
@@ -58,10 +58,14 @@ describe('CuadroMandoPage', () => {
 
   it('al cambiar una meta, el estado del indicador se reevalúa', async () => {
     const usuario = userEvent.setup();
+    // Con dos servicios retirados quedan 10 de 12 activos (83 %) frente a una
+    // meta del 100 %: más de un 10 % por debajo, así que no cumple.
+    for (const servicio of baseSimulada().servicios) {
+      if (servicio.id === 'objetos' || servicio.id === 'carneton') servicio.activo = false;
+    }
     entrarComo('usr-axell');
     const ficha = () => within(mapa()).getByRole('button', { name: /^Catálogo digitalizado:/ });
 
-    // 9 de 11 servicios activos frente a una meta del 100 %.
     await waitFor(() => expect(ficha()).toHaveAccessibleName(/No cumple/));
 
     await usuario.click(screen.getByRole('button', { name: /Editar metas/ }));

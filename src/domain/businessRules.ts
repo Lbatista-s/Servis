@@ -29,7 +29,6 @@ export type CodigoError =
   | 'SOLICITUD_INMUTABLE'
   | 'EDICION_NO_PERMITIDA'
   | 'APROBACION_SIN_REVISION'
-  | 'SERVICIO_SIN_REQUISITOS'
   | 'ADJUNTOS_FALTANTES';
 
 export interface ErrorDominio {
@@ -276,23 +275,6 @@ export function puedeEditarEstudiante(solicitud: Solicitud, actor: Actor): boole
  */
 export function puedeEditarMetas(actor: Actor): boolean {
   return actor.rol === 'coordinador';
-}
-
-/**
- * Un servicio no puede activarse sin requisitos definidos. Desactivarlo
- * siempre está permitido.
- */
-export function validarActivacionServicio(
-  servicio: Servicio,
-  activar: boolean,
-): Resultado<Servicio> {
-  if (activar && servicio.requisitos.length === 0) {
-    return fallo(
-      'SERVICIO_SIN_REQUISITOS',
-      'No se puede activar un servicio sin requisitos definidos.',
-    );
-  }
-  return exito({ ...servicio, activo: activar });
 }
 
 /**

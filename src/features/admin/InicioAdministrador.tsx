@@ -50,18 +50,9 @@ export function InicioAdministrador() {
   const catalogo = servicios.datos ?? [];
   const inactivas = cuentas.filter((u) => !u.activo);
   const serviciosInactivos = catalogo.filter((s) => !s.activo);
-  const sinRequisitos = catalogo.filter((s) => s.requisitos.length === 0);
   const nombrePila = usuario.nombre.split(' ')[0] ?? usuario.nombre;
 
   const pendientes: { texto: string; a: string }[] = [
-    ...(sinRequisitos.length > 0
-      ? [
-          {
-            texto: `${contar(sinRequisitos.length, 'servicio', 'servicios')} sin requisitos: no se pueden activar hasta definirlos.`,
-            a: RUTAS.servicios,
-          },
-        ]
-      : []),
     ...(serviciosInactivos.length > 0
       ? [
           {

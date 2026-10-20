@@ -229,7 +229,7 @@ describe('servicios', () => {
     expect(activos.every((s) => s.activo)).toBe(true);
   });
 
-  it('crea un servicio y no deja activarlo sin requisitos', async () => {
+  it('crea un servicio y lo publica aunque no pida documentos', async () => {
     iniciarSesionSimulada('usr-edwin');
     const creado = await servicios.crear({
       nombre: 'Constancia de estudios',
@@ -245,9 +245,9 @@ describe('servicios', () => {
     expect(creado.id).toBe('constancia-de-estudios');
     expect(baseSimulada().servicios.some((s) => s.id === creado.id)).toBe(true);
 
-    await expect(servicios.cambiarActivacion(creado.id, true)).rejects.toMatchObject({
-      codigo: 'REGLA_DE_NEGOCIO',
-    });
+    // Un servicio puede publicarse aunque no pida documentos (como los
+    // talleres a la carta de INTEC).
+    expect((await servicios.cambiarActivacion(creado.id, true)).activo).toBe(true);
   });
 });
 
@@ -289,15 +289,18 @@ describe('catálogo de documentos', () => {
       requisitos: [{ id: 'documento-identidad', descripcion: 'Otra cosa', obligatorio: false }],
     });
     expect(actualizado.requisitos).toEqual([
-      { id: 'documento-identidad', descripcion: 'Documento de identidad', obligatorio: false },
+      {
+        id: 'documento-identidad',
+        descripcion: 'Documento de identidad (cédula o pasaporte)',
+        obligatorio: false,
+      },
     ]);
   });
 
-  it('no deja sin requisitos un servicio publicado', async () => {
+  it('un servicio publicado puede dejar de pedir documentos', async () => {
     iniciarSesionSimulada('usr-edwin');
-    await expect(servicios.actualizar('ingles', { requisitos: [] })).rejects.toMatchObject({
-      codigo: 'REGLA_DE_NEGOCIO',
-    });
+    const actualizado = await servicios.actualizar('ingles', { requisitos: [] });
+    expect(actualizado).toMatchObject({ activo: true, requisitos: [] });
   });
 });
 

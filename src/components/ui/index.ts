@@ -30,7 +30,7 @@ export {
   Separator,
   type TonoNotificacion,
 } from './Feedback';
-export { DateInput, Field, FieldHint, FieldLabel, Input, Textarea } from './Field';
+export { DateInput, Field, FieldHint, FieldLabel, Input, SelectInput, Textarea } from './Field';
 export { FileChip, UploadZone } from './Files';
 export { CampoBusqueda, SelectorFiltro } from './Filtros';
 export { Icono, type NombreIcono } from './Icons';

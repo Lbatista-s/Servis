@@ -29,14 +29,14 @@ El cuerpo sigue el formato de DRF. El frontend muestra el primer mensaje que enc
 2. `{"non_field_errors": ["…"]}`
 3. `{"<campo>": ["…"]}`
 
-| Estado | Cuándo                                                                        | Qué hace el frontend                                                                  |
-| ------ | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| 400    | Validación o regla de negocio (transición inválida, servicio sin requisitos…) | Muestra el mensaje.                                                                   |
-| 401    | Sin sesión o sesión caducada                                                  | Cierra la sesión y vuelve al acceso. Con JWT, antes intenta renovar el token una vez. |
-| 403    | Autenticado pero sin permiso                                                  | Muestra «No tienes permiso…».                                                         |
-| 404    | No existe                                                                     | En `GET` de detalle se interpreta como «no encontrado».                               |
-| 409    | Conflicto (correo duplicado…)                                                 | Muestra el mensaje.                                                                   |
-| 5xx    | Error del servidor                                                            | Mensaje genérico.                                                                     |
+| Estado | Cuándo                                                                             | Qué hace el frontend                                                                  |
+| ------ | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| 400    | Validación o regla de negocio (transición inválida, documento fuera del catálogo…) | Muestra el mensaje.                                                                   |
+| 401    | Sin sesión o sesión caducada                                                       | Cierra la sesión y vuelve al acceso. Con JWT, antes intenta renovar el token una vez. |
+| 403    | Autenticado pero sin permiso                                                       | Muestra «No tienes permiso…».                                                         |
+| 404    | No existe                                                                          | En `GET` de detalle se interpreta como «no encontrado».                               |
+| 409    | Conflicto (correo duplicado…)                                                      | Muestra el mensaje.                                                                   |
+| 5xx    | Error del servidor                                                                 | Mensaje genérico.                                                                     |
 
 > Con `SessionAuthentication`, DRF responde **403** (no 401) cuando no hay sesión. Así la sesión caducada no se detecta. Conviene que la vista de autenticación devuelva 401, o definir `authenticate_header` en una subclase.
 
@@ -130,7 +130,7 @@ El frontend admite dos modos, que se eligen con `VITE_API_AUTH`.
 }
 ```
 
-- **`id` es la clave del servicio, no un número**: `pasantia`, `cambio`, `reingreso`, `grado`, `carnet`, `objetos`… El frontend elige el formulario de cada servicio por esa clave (`CAMPOS_POR_SERVICIO` en `src/features/requests/formularios.ts`). Con un id numérico, todos mostrarían el formulario genérico. En Django hay dos opciones:
+- **`id` es la clave del servicio, no un número**: `pasantia`, `cambio`, `reingreso`, `grado`, `carneton`, `objetos`… El frontend elige el formulario de cada servicio por esa clave (`CAMPOS_POR_SERVICIO` en `src/features/requests/formularios.ts`). Con un id numérico, todos mostrarían el formulario genérico. En Django hay dos opciones:
   - `clave = models.SlugField(primary_key=True)`;
   - o conservar el `id` numérico y exponer la clave como `id` en el serializer, aceptando `servicio_id` con `SlugRelatedField(slug_field="clave")`.
 - `categoria` puede ser `academico`, `administrativo` o `identidad`.
@@ -142,9 +142,9 @@ El frontend admite dos modos, que se eligen con `VITE_API_AUTH`.
 | `GET servicios/?activo=true&categoria=&search=` | Catálogo. Conviene que sea público (`AllowAny`): la pantalla de acceso muestra cuántos servicios hay. |
 | `GET servicios/{id}/`                           | Detalle                                                                                               |
 | `POST servicios/`                               | Crear                                                                                                 |
-| `PATCH servicios/{id}/`                         | Editar datos y requisitos. Responde 400 si el servicio quedaría activo sin requisitos.                |
+| `PATCH servicios/{id}/`                         | Editar datos y requisitos. Un servicio puede no pedir documentos.                                     |
 
-> Los campos del formulario de cada servicio están definidos hoy en el frontend (`src/features/requests/formularios.ts`) y se envían en `datos_formulario` con esos mismos nombres, en `camelCase`. Para la carta de pasantía, por ejemplo: `empresa`, `rnc`, `cargo`, `departamento`, `fechaInicio`, `fechaFin`, `supervisorNombre`…
+> Los campos del formulario de cada servicio están definidos hoy en el frontend (`src/features/requests/formularios.ts`) y se envían en `datos_formulario` con esos mismos nombres, en `camelCase`. Para la carta de pasantía, por ejemplo: `empresa`, `rnc`, `cargo`, `departamento`, `fechaInicio`, `fechaFin`, `supervisorNombre`… Los campos de tipo lista envían el texto de la opción elegida. La correspondencia de cada formulario con el de INTEC está en [servicios-intec.md](./servicios-intec.md).
 
 ### Catálogo de documentos
 

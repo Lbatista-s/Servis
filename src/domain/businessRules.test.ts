@@ -6,7 +6,6 @@ import {
   puedeEditarEstudiante,
   haPasadoPorRevision,
   puedeModificarse,
-  validarActivacionServicio,
   validarEdicion,
   validarRequisitosCubiertos,
   validarTransicion,
@@ -283,27 +282,6 @@ describe('regla: cada cambio de estado genera historial inmutable', () => {
     // La fecha de envío original se conserva.
     expect(enRevision.valor.enviadaEn).toBe(ahora.toISOString());
     expect(enRevision.valor.actualizadaEn).toBe(masTarde.toISOString());
-  });
-});
-
-describe('regla: un servicio no se activa sin requisitos', () => {
-  it('impide activar un servicio sin requisitos definidos', () => {
-    const servicio = crearServicio({ requisitos: [], activo: false });
-    const resultado = validarActivacionServicio(servicio, true);
-    expect(resultado.ok).toBe(false);
-    if (!resultado.ok) expect(resultado.error.codigo).toBe('SERVICIO_SIN_REQUISITOS');
-  });
-
-  it('permite activar un servicio con al menos un requisito', () => {
-    const resultado = validarActivacionServicio(crearServicio({ activo: false }), true);
-    expect(resultado.ok).toBe(true);
-    if (resultado.ok) expect(resultado.valor.activo).toBe(true);
-  });
-
-  it('permite desactivar siempre, incluso sin requisitos', () => {
-    const resultado = validarActivacionServicio(crearServicio({ requisitos: [] }), false);
-    expect(resultado.ok).toBe(true);
-    if (resultado.ok) expect(resultado.valor.activo).toBe(false);
   });
 });
 

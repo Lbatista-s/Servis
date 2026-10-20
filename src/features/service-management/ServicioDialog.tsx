@@ -3,9 +3,8 @@
  * Hook Form.
  *
  * Los requisitos se eligen del catálogo de documentos de SERVIS
- * (`SelectorDocumentos`). Se aplica la regla del dominio antes de enviar: sin
- * requisitos un servicio no puede estar activo, así que uno nuevo se crea
- * inactivo y a uno activo no se le pueden quitar todos.
+ * (`SelectorDocumentos`). Un servicio puede no pedir ningún documento, como
+ * los talleres a la carta de INTEC, que sólo piden datos.
  */
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -101,10 +100,6 @@ function FormularioServicio({ servicio, onCerrar }: { servicio?: Servicio; onCer
     defaultValues: valoresDe(servicio),
   });
   const errores = formulario.formState.errors;
-  const requisitos = formulario.watch('requisitos');
-  const sinRequisitos = requisitos.length === 0;
-  // Un servicio publicado no puede quedarse sin requisitos (regla del dominio).
-  const bloqueado = editando && Boolean(servicio?.activo) && sinRequisitos;
 
   // Los servicios sembrados usan emojis fuera de la lista: se conserva el suyo.
   const iconos =
@@ -139,7 +134,7 @@ function FormularioServicio({ servicio, onCerrar }: { servicio?: Servicio; onCer
           ...comunes,
           // La plantilla del documento de salida la asigna el backend.
           plantilla: '',
-          activo: datos.activo && datos.requisitos.length > 0,
+          activo: datos.activo,
         });
         avisos.exito(
           'Servicio creado',
@@ -256,35 +251,19 @@ function FormularioServicio({ servicio, onCerrar }: { servicio?: Servicio; onCer
           />
         </fieldset>
 
-        {editando ? (
-          bloqueado ? (
-            <InlineNotification tono="aviso">
-              Este servicio está publicado y debe pedir al menos un documento. Para dejarlo sin
-              requisitos, desactívalo antes en el catálogo.
-            </InlineNotification>
-          ) : null
-        ) : (
+        {editando ? null : (
           <Field>
             <div className="flex items-center gap-2.5">
               <Controller
                 control={formulario.control}
                 name="activo"
                 render={({ field }) => (
-                  <Switch
-                    id="activo-servicio"
-                    checked={field.value && !sinRequisitos}
-                    disabled={sinRequisitos}
-                    onChange={field.onChange}
-                  />
+                  <Switch id="activo-servicio" checked={field.value} onChange={field.onChange} />
                 )}
               />
               <FieldLabel htmlFor="activo-servicio">Publicar en el catálogo al crearlo</FieldLabel>
             </div>
-            <FieldHint>
-              {sinRequisitos
-                ? 'Sin documentos requeridos, el servicio se crea inactivo.'
-                : 'Un servicio sin requisitos no puede activarse.'}
-            </FieldHint>
+            <FieldHint>Si no, se crea inactivo y se activa más tarde desde el catálogo.</FieldHint>
           </Field>
         )}
 
@@ -294,7 +273,7 @@ function FormularioServicio({ servicio, onCerrar }: { servicio?: Servicio; onCer
           <Button variante="outline" onClick={onCerrar}>
             Cancelar
           </Button>
-          <Button type="submit" disabled={formulario.formState.isSubmitting || bloqueado}>
+          <Button type="submit" disabled={formulario.formState.isSubmitting}>
             <Icono nombre="verificar" />
             {editando ? 'Guardar cambios' : 'Crear servicio'}
           </Button>

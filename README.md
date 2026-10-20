@@ -23,6 +23,7 @@ Esta aplicación es la implementación en React del prototipo de alta fidelidad
 | [`CONTRIBUTING.md`](CONTRIBUTING.md)                 | Convenciones del equipo: ramas, commits, comprobaciones antes de un PR y dónde va cada cosa.                             |
 | [`docs/cuadro-de-mando.md`](docs/cuadro-de-mando.md) | El cuadro de mando integral (Kaplan y Norton): fundamento, indicadores, fórmulas, metas y por qué cada rol ve lo que ve. |
 | [`docs/api.md`](docs/api.md)                         | Contrato de la API REST que espera el frontend, para el equipo del backend de Django.                                    |
+| [`docs/servicios-intec.md`](docs/servicios-intec.md) | Correspondencia de cada servicio con los formularios del Centro de Servicio de INTEC: campos, documentos y exclusiones.  |
 | [`docs/integracion.md`](docs/integracion.md)         | Pasos para conectar el backend: dónde ajustar rutas y campos, proxy de Vite, rewrite de Vercel y variables de entorno.   |
 
 ---
@@ -191,7 +192,6 @@ estados para verificarlo.
 - Todo rechazo exige una justificación de al menos **30 caracteres**.
 - Toda devolución exige indicar el motivo.
 - Una solicitud no puede aprobarse sin haber pasado por `en_revision`.
-- Un servicio no puede activarse sin requisitos definidos.
 - Cada cambio de estado genera automáticamente una entrada **inmutable** en el historial, con
   autor, fecha, estado anterior, estado nuevo y comentario.
 - Una solicitud `completada` no puede modificarse (igual que `rechazada` y `cancelada`).
@@ -265,7 +265,7 @@ un **servidor simulado**:
   los cambios sobreviven a una recarga pero no se comparten entre dispositivos.
 - Se siembra con las solicitudes del prototipo (`SRV-1035` a `SRV-1042`), un historial cerrado de
   unas 90 solicitudes de los seis meses anteriores (`SRV-09xx`) para las tendencias del cuadro de
-  mando, los usuarios del equipo, el catálogo de 11 servicios y las metas iniciales.
+  mando, los usuarios del equipo, el catálogo de 12 servicios y las metas iniciales.
 - Al completar una solicitud genera un **PDF de muestra** (marcado «MUESTRA», sin validez oficial).
 - **Configuración → Restablecer datos simulados** (en el menú de perfil) vuelve al estado inicial;
   conviene usarlo antes de una presentación.
@@ -328,7 +328,7 @@ revisión sin tocar la principal.
 npm test
 ```
 
-Son 190 pruebas, que cubren:
+Son 191 pruebas, que cubren:
 
 - **Máquina de estados**: las 81 combinaciones de estados frente a la tabla de la especificación,
   la autorización por rol y las transiciones que exigen comentario.
