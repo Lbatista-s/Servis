@@ -50,6 +50,31 @@ describe('CampanaNotificaciones', () => {
     );
   });
 
+  it('resalta las no leídas con un indicador que late y deja neutras las leídas', async () => {
+    const usuario = userEvent.setup();
+    entrarComo('usr-ricardo');
+
+    await usuario.click(
+      await screen.findByRole('button', { name: /Notificaciones, \d+ sin leer/ }),
+    );
+    const lista = await screen.findByRole('list');
+    const sinLeer = within(lista).getAllByRole('button', { name: /sin leer/ });
+    expect(sinLeer.length).toBeGreaterThan(0);
+    for (const aviso of sinLeer) {
+      expect(aviso).toHaveAttribute('data-estado', 'sin-leer');
+      expect(aviso).toHaveClass('bg-primary-light');
+      expect(aviso.querySelector('.motion-safe\\:animate-ping')).not.toBeNull();
+    }
+    const leidas = within(lista)
+      .getAllByRole('button')
+      .filter((b) => b.getAttribute('data-estado') === 'leida');
+    expect(leidas.length).toBeGreaterThan(0);
+    for (const aviso of leidas) {
+      expect(aviso).not.toHaveClass('bg-primary-light');
+      expect(aviso.querySelector('.motion-safe\\:animate-ping')).toBeNull();
+    }
+  });
+
   it('marca todas como leídas', async () => {
     const usuario = userEvent.setup();
     entrarComo('usr-ricardo');

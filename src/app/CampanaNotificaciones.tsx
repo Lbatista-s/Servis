@@ -24,7 +24,9 @@ export function CampanaNotificaciones({ className }: { className?: string }) {
   const navegar = useNavigate();
   const [abierta, setAbierta] = useState(false);
 
-  const avisos = datos ?? [];
+  // Primero lo que requiere atención; dentro de cada grupo, el orden de la API
+  // (del más reciente al más antiguo).
+  const avisos = [...(datos ?? [])].sort((a, b) => Number(a.leida) - Number(b.leida));
   const sinLeer = avisos.filter((n) => !n.leida).length;
 
   async function abrir(aviso: Notificacion) {
@@ -72,21 +74,31 @@ export function CampanaNotificaciones({ className }: { className?: string }) {
       ) : avisos.length === 0 ? (
         <p className="py-6 text-center text-sm text-ink-3">No tienes notificaciones.</p>
       ) : (
-        <ul className="-mx-2 m-0 max-h-[60vh] list-none overflow-y-auto p-0 pt-1">
+        <ul className="-mx-2 m-0 flex max-h-[60vh] list-none flex-col gap-1 overflow-y-auto p-0 pt-2">
           {avisos.map((aviso) => (
             <li key={aviso.id}>
+              {/* Las no leídas se resaltan con el tinte de marca, un filete a la
+                  izquierda y un punto que late; las leídas quedan neutras. */}
               <button
                 type="button"
+                data-estado={aviso.leida ? 'leida' : 'sin-leer'}
                 onClick={() => void abrir(aviso)}
-                className="flex w-full gap-2.5 rounded px-2 py-2 text-left hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                className={cn(
+                  'flex w-full gap-2.5 rounded border-l-[3px] px-2 py-2 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary',
+                  aviso.leida
+                    ? 'border-transparent hover:bg-surface-2'
+                    : 'border-primary bg-primary-light hover:bg-primary-light-2',
+                )}
               >
-                <span
-                  aria-hidden="true"
-                  className={cn(
-                    'mt-1.5 h-2 w-2 shrink-0 rounded-full',
-                    aviso.leida ? 'bg-transparent' : 'bg-primary',
+                <span aria-hidden="true" className="relative mt-1.5 flex h-2.5 w-2.5 shrink-0">
+                  {aviso.leida ? null : (
+                    <>
+                      {/* Sólo se anima si el usuario no pidió reducir el movimiento. */}
+                      <span className="absolute inline-flex h-full w-full rounded-full bg-primary opacity-75 motion-safe:animate-ping" />
+                      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary" />
+                    </>
                   )}
-                />
+                </span>
                 <span className="min-w-0">
                   <span
                     className={cn(
