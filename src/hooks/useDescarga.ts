@@ -1,13 +1,13 @@
 /**
  * Descarga de archivos desde los repositorios (adjuntos y documentos), con
- * estado de carga por archivo y aviso si falla.
+ * estado de carga por archivo y aviso si falla. Para verlos sin descargarlos,
+ * `useVisorDocumento`.
  */
 
 import { useCallback, useState } from 'react';
 
 import { useToast } from '@/components/ui';
-import { abrirBlob, descargarBlob } from '@/lib/descargas';
-
+import { descargarBlob } from '@/lib/descargas';
 import { mensajeDeError } from '@/lib/errores';
 
 interface Descarga {
@@ -15,8 +15,6 @@ interface Descarga {
   clave: string;
   nombre: string;
   obtener: () => Promise<Blob>;
-  /** `abrir` lo muestra en una pestaña nueva en lugar de guardarlo. */
-  modo?: 'descargar' | 'abrir';
 }
 
 export function useDescarga() {
@@ -24,12 +22,11 @@ export function useDescarga() {
   const [pendiente, setPendiente] = useState<string | null>(null);
 
   const descargar = useCallback(
-    async ({ clave, nombre, obtener, modo = 'descargar' }: Descarga) => {
+    async ({ clave, nombre, obtener }: Descarga) => {
       setPendiente(clave);
       try {
         const blob = await obtener();
-        if (modo === 'abrir') abrirBlob(blob);
-        else descargarBlob(blob, nombre);
+        descargarBlob(blob, nombre);
       } catch (fallo) {
         avisos.error(`No se pudo obtener «${nombre}»`, mensajeDeError(fallo));
       } finally {

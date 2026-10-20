@@ -218,6 +218,16 @@ Implementación sugerida en Django:
 
 Si una carta requiere la firma real de una autoridad, el personal puede subir el PDF firmado antes de completar la solicitud en lugar de generarlo. Para el frontend el endpoint es el mismo.
 
+#### Quién genera y quién muestra los PDF
+
+| Tarea                         | Dónde                    | Por qué                                                                                                                                                                                              |
+| ----------------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Generar el documento oficial  | **Backend** (WeasyPrint) | Es un documento institucional: su contenido, membrete y fecha no pueden depender del navegador ni poder alterarse desde él. El servidor lo guarda y puede volver a servirlo, verificarlo o anularlo. |
+| Firmar o sellar (si se exige) | **Backend** o personal   | Un PDF firmado se sube como archivo; el frontend no maneja certificados.                                                                                                                             |
+| Mostrar, descargar e imprimir | **Frontend**             | El visor integrado (`src/components/visor/`, con pdf.js vía `react-pdf`) muestra el PDF que devuelve el endpoint, sin abrir otra pestaña. Sirve igual para los adjuntos PDF e imágenes.              |
+
+Mientras no exista el backend, la API simulada (`src/mocks/`) genera un PDF **de muestra** con jsPDF, marcado como «MUESTRA», para que el flujo completo se pueda probar. jsPDF sólo se descarga con la API simulada activa.
+
 ### Metas del cuadro de mando
 
 | Método y ruta            | Cuerpo          | Uso                                                                                                                 |

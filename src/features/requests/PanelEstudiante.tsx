@@ -26,7 +26,7 @@ import { repositorios } from '@/data';
 import type { EstadoSolicitud, Solicitud } from '@/domain/types';
 import { useUsuarioActual } from '@/features/auth/authStore';
 import { useIndiceServicios, useSolicitudes } from '@/hooks/useDatos';
-import { useDescarga } from '@/hooks/useDescarga';
+import { useVisorDocumento } from '@/hooks/useVisorDocumento';
 import { formatearFecha } from '@/lib/format';
 import { contar } from '@/lib/texto';
 
@@ -174,9 +174,9 @@ export function PanelEstudiante() {
   );
 }
 
-/** Los últimos documentos emitidos, con descarga directa. */
+/** Los últimos documentos emitidos; se abren en el visor, que permite descargarlos. */
 function DocumentosListos({ solicitudes }: { solicitudes: readonly Solicitud[] }) {
-  const { descargar, pendiente } = useDescarga();
+  const { ver, visor } = useVisorDocumento();
 
   if (solicitudes.length === 0) {
     return (
@@ -187,29 +187,30 @@ function DocumentosListos({ solicitudes }: { solicitudes: readonly Solicitud[] }
   }
 
   return (
-    <ul className="flex flex-col gap-2">
-      {solicitudes.map((solicitud) =>
-        solicitud.documento ? (
-          <li key={solicitud.id}>
-            <Button
-              variante="outline"
-              className="w-full justify-start"
-              disabled={pendiente === solicitud.id}
-              onClick={() =>
-                descargar({
-                  clave: solicitud.id,
-                  nombre: solicitud.documento?.nombre ?? `${solicitud.id}.pdf`,
-                  obtener: () => repositorios.solicitudes.descargarDocumento(solicitud.id),
-                })
-              }
-            >
-              <Icono nombre="descargar" />
-              <span className="truncate">{solicitud.documento.nombre}</span>
-            </Button>
-          </li>
-        ) : null,
-      )}
-    </ul>
+    <>
+      <ul className="flex flex-col gap-2">
+        {solicitudes.map((solicitud) =>
+          solicitud.documento ? (
+            <li key={solicitud.id}>
+              <Button
+                variante="outline"
+                className="w-full justify-start"
+                onClick={() =>
+                  ver({
+                    nombre: solicitud.documento?.nombre ?? `${solicitud.id}.pdf`,
+                    obtener: () => repositorios.solicitudes.descargarDocumento(solicitud.id),
+                  })
+                }
+              >
+                <Icono nombre="ojo" />
+                <span className="truncate">{solicitud.documento.nombre}</span>
+              </Button>
+            </li>
+          ) : null,
+        )}
+      </ul>
+      {visor}
+    </>
   );
 }
 

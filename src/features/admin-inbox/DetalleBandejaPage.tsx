@@ -33,6 +33,7 @@ import { HistorialTimeline } from '@/features/requests/HistorialTimeline';
 import { mensajeDeError } from '@/lib/errores';
 import { useRevalidar, useServicio, useSolicitud, useIndiceUsuarios } from '@/hooks/useDatos';
 import { useDescarga } from '@/hooks/useDescarga';
+import { useVisorDocumento } from '@/hooks/useVisorDocumento';
 import { formatearFecha } from '@/lib/format';
 
 export function DetalleBandejaPage() {
@@ -42,6 +43,7 @@ export function DetalleBandejaPage() {
   const usuarios = useIndiceUsuarios();
   const actor = useActor();
   const { descargar, pendiente } = useDescarga();
+  const { ver, visor } = useVisorDocumento();
 
   if (cargando) return <Loading mensaje="Cargando la solicitud…" />;
 
@@ -122,26 +124,36 @@ export function DetalleBandejaPage() {
                 {solicitud.adjuntos.map((adjunto) => (
                   <li key={adjunto.id}>
                     <FileChip adjunto={adjunto}>
-                      {(['abrir', 'descargar'] as const).map((modo) => (
-                        <Button
-                          key={modo}
-                          variante="ghost"
-                          tamano="icon"
-                          aria-label={`${modo === 'abrir' ? 'Ver' : 'Descargar'} ${adjunto.nombre}`}
-                          disabled={pendiente === adjunto.id}
-                          onClick={() =>
-                            descargar({
-                              clave: adjunto.id,
-                              nombre: adjunto.nombre,
-                              modo,
-                              obtener: () =>
-                                repositorios.solicitudes.descargarAdjunto(solicitud.id, adjunto.id),
-                            })
-                          }
-                        >
-                          <Icono nombre={modo === 'abrir' ? 'ojo' : 'descargar'} />
-                        </Button>
-                      ))}
+                      <Button
+                        variante="ghost"
+                        tamano="icon"
+                        aria-label={`Ver ${adjunto.nombre}`}
+                        onClick={() =>
+                          ver({
+                            nombre: adjunto.nombre,
+                            obtener: () =>
+                              repositorios.solicitudes.descargarAdjunto(solicitud.id, adjunto.id),
+                          })
+                        }
+                      >
+                        <Icono nombre="ojo" />
+                      </Button>
+                      <Button
+                        variante="ghost"
+                        tamano="icon"
+                        aria-label={`Descargar ${adjunto.nombre}`}
+                        disabled={pendiente === adjunto.id}
+                        onClick={() =>
+                          descargar({
+                            clave: adjunto.id,
+                            nombre: adjunto.nombre,
+                            obtener: () =>
+                              repositorios.solicitudes.descargarAdjunto(solicitud.id, adjunto.id),
+                          })
+                        }
+                      >
+                        <Icono nombre="descargar" />
+                      </Button>
                     </FileChip>
                   </li>
                 ))}
@@ -190,6 +202,7 @@ export function DetalleBandejaPage() {
           ) : null}
         </aside>
       </div>
+      {visor}
     </>
   );
 }

@@ -138,7 +138,7 @@ export async function generarDocumentoMuestra({
   pdf.text('DOCUMENTO DE MUESTRA — SIN VALIDEZ OFICIAL', MARGEN + 12, alto - 92);
   pdf.setFont('helvetica', 'normal');
   pdf.text(
-    `Generado por SERVIS en modo demostración. Referencia ${solicitud.id}.`,
+    `Documento de muestra generado por la API simulada de SERVIS. Referencia ${solicitud.id}.`,
     MARGEN + 12,
     alto - 78,
   );
