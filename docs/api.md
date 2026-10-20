@@ -67,6 +67,15 @@ El frontend admite dos modos, que se eligen con `VITE_API_AUTH`.
 - Las peticiones llevan `Authorization: Bearer <access>`.
 - Los nombres de las credenciales están en `desdeCredenciales()` de `mapeadores.ts`. simplejwt usa por defecto `username`/`password`: cámbialos ahí si hace falta.
 
+### Recuperación de contraseña (ambos modos)
+
+| Método y ruta          | Cuerpo       | Respuesta                                                   |
+| ---------------------- | ------------ | ----------------------------------------------------------- |
+| `POST auth/recuperar/` | `{"correo"}` | `204` **siempre**, exista o no la cuenta; `400` sin correo. |
+
+- La respuesta no debe revelar si el correo está registrado.
+- En Django encaja con `PasswordResetForm` (o `django-rest-passwordreset`): envía un enlace con un token de un solo uso que caduca en 30 minutos, como anuncia la pantalla. La página que abre el enlace puede ser la de Django (`PasswordResetConfirmView`) hasta que el frontend tenga una propia.
+
 ## Recursos
 
 ### Usuario
@@ -227,6 +236,35 @@ Si una carta requiere la firma real de una autoridad, el personal puede subir el
 | Mostrar, descargar e imprimir | **Frontend**             | El visor integrado (`src/components/visor/`, con pdf.js vía `react-pdf`) muestra el PDF que devuelve el endpoint, sin abrir otra pestaña. Sirve igual para los adjuntos PDF e imágenes.              |
 
 Mientras no exista el backend, la API simulada (`src/mocks/`) genera un PDF **de muestra** con jsPDF, marcado como «MUESTRA», para que el flujo completo se pueda probar. jsPDF sólo se descarga con la API simulada activa.
+
+### Notificaciones
+
+| Método y ruta                        | Uso                                                                         |
+| ------------------------------------ | --------------------------------------------------------------------------- |
+| `GET notificaciones/`                | Avisos del usuario de la sesión, del más reciente al más antiguo. Paginado. |
+| `GET notificaciones/?no_leidas=true` | Sólo los no leídos.                                                         |
+| `POST notificaciones/{id}/leida/`    | Marca uno como leído. `204`.                                                |
+| `POST notificaciones/leer-todas/`    | Marca todos como leídos. `204`.                                             |
+
+```json
+{
+  "id": "h-1042-3",
+  "solicitud_id": "SRV-1042",
+  "titulo": "SRV-1042 fue devuelta para corrección",
+  "detalle": "Carta de pasantía · Ricardo Almanzar (Personal administrativo)",
+  "fecha": "2026-10-20T14:05:00Z",
+  "leida": false
+}
+```
+
+Quién recibe qué (lo mismo que hace la API simulada en `src/mocks/notificaciones.ts`):
+
+- **Estudiante:** cuando su solicitud pasa a `devuelta`, `aprobada`, `rechazada` o `completada`.
+- **Personal administrativo y coordinador:** cuando llega una solicitud `enviada` o `corregida`.
+- **Administrador:** ninguna; no interviene en el flujo.
+- Nadie recibe aviso de un cambio que hizo él mismo.
+
+En Django basta un modelo `Notificacion(usuario, solicitud, titulo, detalle, fecha, leida)` que se crea en la misma transacción que la entrada del historial. Si más adelante se envían también por correo, el contrato no cambia.
 
 ### Metas del cuadro de mando
 

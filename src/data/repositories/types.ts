@@ -13,6 +13,7 @@ import type {
   Actor,
   Adjunto,
   EstadoSolicitud,
+  Notificacion,
   Rol,
   Servicio,
   Solicitud,
@@ -151,6 +152,17 @@ export interface IMetasRepository {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Notificaciones
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface INotificacionesRepository {
+  /** Avisos del usuario de la sesión, del más reciente al más antiguo. */
+  listar(): Promise<Notificacion[]>;
+  marcarLeida(id: string): Promise<void>;
+  marcarTodasLeidas(): Promise<void>;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Autenticación
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -163,6 +175,11 @@ export interface IAuthRepository {
   cerrarSesion(): Promise<void>;
   /** Usuario de la sesión vigente, o `null` si no hay sesión. */
   usuarioActual(): Promise<Usuario | null>;
+  /**
+   * Pide el correo de recuperación de contraseña. Resuelve igual exista o no
+   * la cuenta, para no revelar qué correos están registrados.
+   */
+  solicitarRecuperacion(correo: string): Promise<void>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -175,4 +192,5 @@ export interface Repositorios {
   usuarios: IUserRepository;
   servicios: IServiceRepository;
   metas: IMetasRepository;
+  notificaciones: INotificacionesRepository;
 }

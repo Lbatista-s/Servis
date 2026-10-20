@@ -26,6 +26,8 @@ export const API = {
     /** POST: par de tokens JWT (modo `jwt`). */
     token: 'auth/token/',
     renovar: 'auth/token/refresh/',
+    /** POST: envía el correo para restablecer la contraseña. */
+    recuperar: 'auth/recuperar/',
   },
   solicitudes: {
     lista: 'solicitudes/',
@@ -49,6 +51,13 @@ export const API = {
   servicios: {
     lista: 'servicios/',
     detalle: (id: string) => `servicios/${segmento(id)}/`,
+  },
+  notificaciones: {
+    lista: 'notificaciones/',
+    /** POST: marca una notificación como leída. */
+    leida: (id: string) => `notificaciones/${segmento(id)}/leida/`,
+    /** POST: marca todas como leídas. */
+    leerTodas: 'notificaciones/leer-todas/',
   },
 } as const;
 

@@ -1,11 +1,12 @@
 /** Barra superior: título de la pantalla, búsqueda, avisos y menú de usuario. */
 
-import { Badge, Button, Dropdown, Input, Layout } from 'antd';
+import { Button, Dropdown, Input, Layout } from 'antd';
 import { AvatarUsuario, Icono, SelectorTema } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import { ETIQUETA_ROL } from '@/domain/types';
 import { useUsuarioActual } from '@/features/auth/authStore';
 
+import { CampanaNotificaciones } from './CampanaNotificaciones';
 import { useCerrarSesion } from './useCerrarSesion';
 
 /**
@@ -65,13 +66,10 @@ export function Topbar({
 
       <SelectorTema />
 
-      <Badge dot offset={[-6, 6]} className="!hidden sm:!inline-block">
-        <Button
-          className={BOTON_MARCO}
-          aria-label="Notificaciones"
-          icon={<Icono nombre="campana" />}
-        />
-      </Badge>
+      {/* El administrador no participa en el flujo de solicitudes: no recibe avisos. */}
+      {usuario && usuario.rol !== 'administrador' ? (
+        <CampanaNotificaciones className={BOTON_MARCO} />
+      ) : null}
 
       {usuario ? (
         <Dropdown

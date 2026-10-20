@@ -18,7 +18,7 @@ import { useCallback, useMemo } from 'react';
 import { repositorios } from '@/data';
 import type { FiltroServicios, FiltroSolicitudes, FiltroUsuarios } from '@/data/repositories/types';
 import type { Metas } from '@/domain/indicadores/definiciones';
-import type { Servicio, Solicitud, Usuario } from '@/domain/types';
+import type { Notificacion, Servicio, Solicitud, Usuario } from '@/domain/types';
 import { mensajeDeError } from '@/lib/errores';
 
 import { RECURSOS, type Recurso } from './clienteConsultas';
@@ -50,7 +50,10 @@ export function useRevalidar(): (...recursos: Recurso[]) => void {
   const cliente = useQueryClient();
   return useCallback(
     (...recursos: Recurso[]) => {
-      for (const recurso of recursos.length > 0 ? recursos : RECURSOS) {
+      const afectados = new Set(recursos.length > 0 ? recursos : RECURSOS);
+      // Las notificaciones salen del historial: cambian con las solicitudes.
+      if (afectados.has('solicitudes')) afectados.add('notificaciones');
+      for (const recurso of afectados) {
         void cliente.invalidateQueries({ queryKey: [recurso] });
       }
     },
@@ -146,4 +149,19 @@ export function useIndiceServicios(): Map<string, Servicio> {
 
 export function useMetas(): EstadoAsincrono<Metas> {
   return estado(useQuery({ queryKey: ['metas'], queryFn: () => repositorios.metas.obtener() }));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Notificaciones
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Se consultan de nuevo cada minuto mientras la aplicación está abierta. */
+export function useNotificaciones(): EstadoAsincrono<Notificacion[]> {
+  return estado(
+    useQuery({
+      queryKey: ['notificaciones'],
+      queryFn: () => repositorios.notificaciones.listar(),
+      refetchInterval: 60_000,
+    }),
+  );
 }

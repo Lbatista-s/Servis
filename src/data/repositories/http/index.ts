@@ -14,7 +14,15 @@
 import { archivoRegistrado, olvidarArchivo } from '@/data/archivos';
 import type { OpcionesTransicion } from '@/domain/businessRules';
 import { METAS_POR_DEFECTO, type Metas } from '@/domain/indicadores/definiciones';
-import type { Actor, Adjunto, EstadoSolicitud, Servicio, Solicitud, Usuario } from '@/domain/types';
+import type {
+  Actor,
+  Adjunto,
+  EstadoSolicitud,
+  Notificacion,
+  Servicio,
+  Solicitud,
+  Usuario,
+} from '@/domain/types';
 import { ErrorRepositorio } from '@/data/repositories/types';
 import type {
   CambiosSolicitud,
@@ -26,6 +34,7 @@ import type {
   FiltroUsuarios,
   IAuthRepository,
   IMetasRepository,
+  INotificacionesRepository,
   IRequestRepository,
   IServiceRepository,
   IUserRepository,
@@ -35,6 +44,7 @@ import type {
 import { detalleOpcional, lista, peticion } from './cliente';
 import { modoAutenticacion } from './config';
 import {
+  aNotificacion,
   aServicio,
   aSolicitud,
   aUsuario,
@@ -48,6 +58,13 @@ import { guardarTokens, leerCookie, type TokensJwt } from './sesion';
 // ─────────────────────────────────────────────────────────────────────────────
 // Autenticación
 // ─────────────────────────────────────────────────────────────────────────────
+
+/** Django sólo acepta un POST anónimo si antes fijó la cookie `csrftoken`. */
+async function asegurarCsrf(): Promise<void> {
+  if (!leerCookie('csrftoken')) {
+    await peticion(API.auth.csrf, { respuesta: 'nada', sesionRequerida: false });
+  }
+}
 
 export class RepositorioAuthHttp implements IAuthRepository {
   async iniciarSesion(correo: string, contrasena: string): Promise<Usuario> {
@@ -63,16 +80,23 @@ export class RepositorioAuthHttp implements IAuthRepository {
       return aUsuario(await peticion<Dto>(API.auth.yo));
     }
 
-    // Django sólo acepta el POST si antes fijó la cookie `csrftoken`.
-    if (!leerCookie('csrftoken')) {
-      await peticion(API.auth.csrf, { respuesta: 'nada', sesionRequerida: false });
-    }
+    await asegurarCsrf();
     const usuario = await peticion<Dto>(API.auth.login, {
       metodo: 'POST',
       cuerpo: credenciales,
       sesionRequerida: false,
     });
     return aUsuario(usuario);
+  }
+
+  async solicitarRecuperacion(correo: string): Promise<void> {
+    if (modoAutenticacion() === 'sesion') await asegurarCsrf();
+    await peticion(API.auth.recuperar, {
+      metodo: 'POST',
+      cuerpo: { correo: correo.trim().toLowerCase() },
+      respuesta: 'nada',
+      sesionRequerida: false,
+    });
   }
 
   async cerrarSesion(): Promise<void> {
@@ -301,6 +325,24 @@ export class RepositorioMetasHttp implements IMetasRepository {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Notificaciones
+// ─────────────────────────────────────────────────────────────────────────────
+
+export class RepositorioNotificacionesHttp implements INotificacionesRepository {
+  async listar(): Promise<Notificacion[]> {
+    return (await lista<Dto>(API.notificaciones.lista)).map(aNotificacion);
+  }
+
+  async marcarLeida(id: string): Promise<void> {
+    await peticion(API.notificaciones.leida(id), { metodo: 'POST', respuesta: 'nada' });
+  }
+
+  async marcarTodasLeidas(): Promise<void> {
+    await peticion(API.notificaciones.leerTodas, { metodo: 'POST', respuesta: 'nada' });
+  }
+}
+
 export function crearRepositoriosHttp(): Repositorios {
   return {
     auth: new RepositorioAuthHttp(),
@@ -308,5 +350,6 @@ export function crearRepositoriosHttp(): Repositorios {
     usuarios: new RepositorioUsuariosHttp(),
     servicios: new RepositorioServiciosHttp(),
     metas: new RepositorioMetasHttp(),
+    notificaciones: new RepositorioNotificacionesHttp(),
   };
 }

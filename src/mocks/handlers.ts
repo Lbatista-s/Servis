@@ -38,6 +38,7 @@ import {
   guardarBase,
   leerArchivo,
 } from './base';
+import { marcarLeidas, notificacionesDe } from './notificaciones';
 
 /** Cualquier origen: el navegador usa `/api`, las pruebas una URL absoluta. */
 const ruta = (camino: string) => `*/api/${camino}`;
@@ -181,6 +182,47 @@ function siguienteId(): string {
 
 const nuevoId = (prefijo: string) =>
   `${prefijo}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+
+const handlersNotificaciones = [
+  http.get(
+    ruta('notificaciones/'),
+    protegido(({ request, usuario }) => {
+      const soloNoLeidas = new URL(request.url).searchParams.get('no_leidas') === 'true';
+      const avisos = notificacionesDe(baseSimulada(), usuario).filter(
+        (n) => !soloNoLeidas || !n.leida,
+      );
+      return paginar(request, avisos);
+    }),
+  ),
+
+  http.post(
+    ruta('notificaciones/leer-todas/'),
+    protegido(({ usuario }) => {
+      const base = baseSimulada();
+      marcarLeidas(
+        base,
+        usuario.id,
+        notificacionesDe(base, usuario).map((n) => n.id),
+      );
+      guardarBase();
+      return sinContenido();
+    }),
+  ),
+
+  http.post(
+    ruta('notificaciones/:id/leida/'),
+    protegido(({ params, usuario }) => {
+      const base = baseSimulada();
+      const id = String(params.id);
+      if (!notificacionesDe(base, usuario).some((n) => n.id === id)) {
+        return error(404, 'No encontrado.');
+      }
+      marcarLeidas(base, usuario.id, [id]);
+      guardarBase();
+      return sinContenido();
+    }),
+  ),
+];
 
 const handlersSolicitudes = [
   http.get(
@@ -634,6 +676,16 @@ const handlersAuth = [
     return sinContenido();
   }),
 
+  // Sin servidor de correo: responde lo mismo que el real, exista o no la
+  // cuenta, y no envía nada.
+  http.post(ruta('auth/recuperar/'), async ({ request }) => {
+    const { correo } = await cuerpo<{ correo?: string }>(request);
+    if (!correo?.trim()) {
+      return HttpResponse.json({ correo: ['Este campo es obligatorio.'] }, { status: 400 });
+    }
+    return sinContenido();
+  }),
+
   http.get(
     ruta('auth/yo/'),
     protegido(({ usuario }) => respuesta(usuario)),
@@ -682,4 +734,5 @@ export const handlers = [
   ...handlersUsuarios,
   ...handlersServicios,
   ...handlersMetas,
+  ...handlersNotificaciones,
 ];

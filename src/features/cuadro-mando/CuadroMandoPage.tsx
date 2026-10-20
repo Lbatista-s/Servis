@@ -30,7 +30,7 @@ import {
   type ResultadoIndicador,
 } from '@/domain/indicadores';
 import { useActor } from '@/features/auth/authStore';
-import { descargarBlob } from '@/lib/descargas';
+import { descargarCsv } from '@/lib/csv';
 
 import { AnalisisOperativo } from './AnalisisOperativo';
 import { DetalleIndicador } from './DetalleIndicador';
@@ -166,9 +166,8 @@ function Resumen({ resultados }: { resultados: readonly ResultadoIndicador[] }) 
   );
 }
 
-/** Descarga el scorecard del período como CSV (UTF-8 con BOM, para Excel). */
+/** Descarga el scorecard del período como CSV. */
 function exportarCsv(resultados: readonly ResultadoIndicador[], periodo: string) {
-  const celda = (texto: string) => `"${texto.replace(/"/g, '""')}"`;
   const encabezado = [
     'Perspectiva',
     'Objetivo',
@@ -190,18 +189,14 @@ function exportarCsv(resultados: readonly ResultadoIndicador[], periodo: string)
       d.tipo === 'resultado' ? 'Resultado' : 'Inductor',
       formatearMeta(r.meta, d),
       formatearValor(r.medicion.valor, d.unidad),
-      String(r.medicion.muestra),
+      r.medicion.muestra,
       ETIQUETA_ESTADO_INDICADOR[r.estado],
       describirTendencia(r.tendencia, d.unidad),
       d.iniciativa,
     ];
   });
-  const csv = [[`Cuadro de mando integral · ${periodo}`], encabezado, ...filas]
-    .map((fila) => fila.map(celda).join(','))
-    .join('\r\n');
-  const fecha = new Date().toISOString().slice(0, 10);
-  descargarBlob(
-    new Blob(['﻿', csv], { type: 'text/csv;charset=utf-8' }),
-    `cuadro-de-mando-${fecha}.csv`,
+  descargarCsv(
+    [[`Cuadro de mando integral · ${periodo}`], encabezado, ...filas],
+    'cuadro-de-mando',
   );
 }

@@ -16,7 +16,7 @@ import { baseSimulada, CONTRASENA_SIMULADA, iniciarSesionSimulada } from './base
 import { CUENTAS_SIMULADAS } from './cuentas';
 import { USUARIOS_DEMO } from './datos/seed';
 
-const { auth, solicitudes, usuarios, servicios, metas } = repositorios;
+const { auth, solicitudes, usuarios, servicios, metas, notificaciones } = repositorios;
 
 const LUIS: Actor = { id: 'usr-luis', nombre: 'Luis Batista', rol: 'estudiante' };
 const RICARDO: Actor = {
@@ -67,6 +67,11 @@ describe('autenticación', () => {
     await auth.iniciarSesion('l.batista@intec.edu.do', CONTRASENA_SIMULADA);
     await auth.cerrarSesion();
     expect(await auth.usuarioActual()).toBeNull();
+  });
+
+  it('acepta la petición de recuperación exista o no la cuenta', async () => {
+    await expect(auth.solicitarRecuperacion('l.batista@intec.edu.do')).resolves.toBeUndefined();
+    await expect(auth.solicitarRecuperacion('nadie@intec.edu.do')).resolves.toBeUndefined();
   });
 
   it('las cuentas que sugiere el acceso existen, están activas y tienen su rol', () => {
@@ -256,5 +261,47 @@ describe('metas del cuadro de mando', () => {
     iniciarSesionSimulada(AXELL.id);
     expect((await metas.guardar(nuevas, AXELL)).productividad).toBe(90);
     expect((await metas.obtener()).productividad).toBe(90);
+  });
+});
+
+describe('notificaciones', () => {
+  it('avisan al personal de una solicitud nueva y al estudiante de su resolución', async () => {
+    const { id } = await nuevoBorrador();
+    await solicitudes.transicionar(id, 'enviada', LUIS);
+    // El estudiante no recibe aviso de lo que hizo él mismo.
+    expect((await notificaciones.listar()).some((n) => n.solicitudId === id)).toBe(false);
+
+    iniciarSesionSimulada(RICARDO.id);
+    const [nueva] = await notificaciones.listar();
+    expect(nueva).toMatchObject({ solicitudId: id, leida: false });
+    expect(nueva?.titulo).toContain('Nueva solicitud');
+
+    await solicitudes.transicionar(id, 'en_revision', RICARDO);
+    await solicitudes.transicionar(id, 'devuelta', RICARDO, { comentario: 'Falta la firma.' });
+
+    iniciarSesionSimulada(LUIS.id);
+    const [devuelta] = await notificaciones.listar();
+    expect(devuelta?.solicitudId).toBe(id);
+    expect(devuelta?.titulo).toContain('devuelta');
+  });
+
+  it('marca una o todas como leídas, sólo para quien las lee', async () => {
+    iniciarSesionSimulada(RICARDO.id);
+    const [primera] = await notificaciones.listar();
+    if (!primera) throw new Error('El personal debería tener avisos sembrados.');
+    await notificaciones.marcarLeida(primera.id);
+    expect((await notificaciones.listar())[0]?.leida).toBe(true);
+
+    await notificaciones.marcarTodasLeidas();
+    expect((await notificaciones.listar()).every((n) => n.leida)).toBe(true);
+
+    // Otra persona del personal conserva las suyas sin leer.
+    iniciarSesionSimulada('usr-carmen');
+    expect((await notificaciones.listar()).some((n) => !n.leida)).toBe(true);
+  });
+
+  it('el administrador no recibe avisos del flujo', async () => {
+    iniciarSesionSimulada('usr-edwin');
+    expect(await notificaciones.listar()).toEqual([]);
   });
 });

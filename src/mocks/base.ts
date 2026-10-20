@@ -8,10 +8,11 @@
  */
 
 import { METAS_POR_DEFECTO, type Metas } from '@/domain/indicadores/definiciones';
-import type { Servicio, Solicitud, Usuario } from '@/domain/types';
+import { ESTADOS_FINALES, type Servicio, type Solicitud, type Usuario } from '@/domain/types';
 
 import { construirSolicitudesDemo, SERVICIOS_DEMO, USUARIOS_DEMO } from './datos/seed';
 import { construirHistorialDemo } from './datos/seedHistorial';
+import { marcarLeidas, notificacionesDe } from './notificaciones';
 
 export { CONTRASENA_SIMULADA } from './cuentas';
 
@@ -21,11 +22,13 @@ export interface BaseSimulada {
   servicios: Servicio[];
   solicitudes: Solicitud[];
   metas: Metas;
+  /** Notificaciones leídas por cada usuario (ver `notificaciones.ts`). */
+  leidas: Record<string, string[]>;
   /** Usuario con la sesión abierta (la «cookie de sesión» del servidor simulado). */
   sesion: string | null;
 }
 
-const VERSION = 1;
+const VERSION = 2;
 const CLAVE = 'servis:api-simulada';
 /** Clave del antiguo modo de demostración, que ya no se usa. */
 const CLAVE_ANTIGUA = 'servis:datos';
@@ -34,14 +37,30 @@ let base: BaseSimulada | null = null;
 const archivos = new Map<string, Blob>();
 
 function sembrar(ahora = new Date()): BaseSimulada {
-  return {
+  const sembrada: BaseSimulada = {
     version: VERSION,
     usuarios: USUARIOS_DEMO.map((u) => ({ ...u })),
     servicios: SERVICIOS_DEMO.map((s) => ({ ...s, requisitos: [...s.requisitos] })),
     solicitudes: [...construirSolicitudesDemo(), ...construirHistorialDemo(ahora)],
     metas: { ...METAS_POR_DEFECTO },
+    leidas: {},
     sesion: null,
   };
+  // Los avisos de solicitudes ya cerradas se dan por leídos: sólo queda
+  // pendiente lo que sigue abierto (por ejemplo, SRV-1038 para el personal).
+  const cerradas = new Set(
+    sembrada.solicitudes.filter((s) => ESTADOS_FINALES.includes(s.estado)).map((s) => s.id),
+  );
+  for (const usuario of sembrada.usuarios) {
+    marcarLeidas(
+      sembrada,
+      usuario.id,
+      notificacionesDe(sembrada, usuario)
+        .filter((n) => cerradas.has(n.solicitudId))
+        .map((n) => n.id),
+    );
+  }
+  return sembrada;
 }
 
 function leerGuardada(): BaseSimulada | null {

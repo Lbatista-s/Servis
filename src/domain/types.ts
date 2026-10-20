@@ -151,6 +151,19 @@ export interface EntradaHistorial {
   readonly comentario: string | null;
 }
 
+/**
+ * Aviso para un usuario sobre una solicitud: al estudiante, cuando cambia el
+ * estado de la suya; al personal, cuando llega una nueva o corregida.
+ */
+export interface Notificacion {
+  readonly id: string;
+  readonly solicitudId: string;
+  readonly titulo: string;
+  readonly detalle: string;
+  readonly fecha: string;
+  readonly leida: boolean;
+}
+
 export type Prioridad = 'normal' | 'alta';
 
 export interface Solicitud {

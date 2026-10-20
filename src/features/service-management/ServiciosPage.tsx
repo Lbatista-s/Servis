@@ -24,6 +24,8 @@ import { mensajeDeError } from '@/lib/errores';
 import { useRevalidar, useServicios } from '@/hooks/useDatos';
 import { contar } from '@/lib/texto';
 
+import { NuevoServicioDialog } from './NuevoServicioDialog';
+
 export function ServiciosPage() {
   const { datos: servicios, cargando } = useServicios();
   const revalidar = useRevalidar();
@@ -91,7 +93,7 @@ export function ServiciosPage() {
       render: (plantilla: string) => (
         <span className="flex items-center gap-1.5 text-ink-2">
           <Icono nombre="documento" className="h-3.5 w-3.5 text-primary" />
-          {plantilla}
+          {plantilla || 'Pendiente'}
         </span>
       ),
     },
@@ -139,14 +141,7 @@ export function ServiciosPage() {
         titulo="Gestión del catálogo"
         subtitulo={`${lista.length} servicios configurados · ${activos} activos · Plantillas y requisitos`}
       >
-        <Tooltip contenido="El alta de servicios se habilitará en la fase de integración">
-          <span>
-            <Button tamano="sm" disabled>
-              <Icono nombre="mas" />
-              Nuevo servicio
-            </Button>
-          </span>
-        </Tooltip>
+        <NuevoServicioDialog />
       </PageHeader>
 
       <Card sinRelleno>

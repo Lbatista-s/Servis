@@ -26,5 +26,11 @@ export function crearClienteConsultas(): QueryClient {
 export const clienteConsultas = crearClienteConsultas();
 
 /** Raíz de las claves de cada recurso: invalidar una refresca todo lo suyo. */
-export const RECURSOS = ['solicitudes', 'servicios', 'usuarios', 'metas'] as const;
+export const RECURSOS = [
+  'solicitudes',
+  'servicios',
+  'usuarios',
+  'metas',
+  'notificaciones',
+] as const;
 export type Recurso = (typeof RECURSOS)[number];

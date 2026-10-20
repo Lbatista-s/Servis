@@ -1,8 +1,9 @@
 /**
  * Pantalla 2 — Recuperar contraseña.
  *
- * No envía nada todavía: confirma en pantalla, sin revelar si el correo existe
- * en el sistema (buena práctica y coherente con el texto del prototipo).
+ * Pide a la API el correo de recuperación. La respuesta es la misma exista o no
+ * la cuenta, así que la confirmación tampoco revela si el correo está
+ * registrado.
  */
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,6 +22,8 @@ import {
   Input,
 } from '@/components/ui';
 
+import { repositorios } from '@/data';
+import { mensajeDeError } from '@/lib/errores';
 import { correoInstitucional, EJEMPLO_CORREO } from '@/lib/esquemas';
 
 import { AuthLayout } from './AuthLayout';
@@ -33,11 +36,24 @@ type DatosRecuperacion = z.infer<typeof esquemaRecuperacion>;
 
 export function RecuperarPage() {
   const [enviado, setEnviado] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const formulario = useForm<DatosRecuperacion>({
     resolver: zodResolver(esquemaRecuperacion),
     defaultValues: { correo: '' },
   });
+
+  async function enviar({ correo }: DatosRecuperacion) {
+    setError(null);
+    try {
+      await repositorios.auth.solicitarRecuperacion(correo);
+      setEnviado(true);
+    } catch (fallo) {
+      setError(mensajeDeError(fallo));
+    }
+  }
+
+  const enviando = formulario.formState.isSubmitting;
 
   return (
     <AuthLayout
@@ -58,7 +74,7 @@ export function RecuperarPage() {
         Introduce tu correo institucional y te enviaremos las instrucciones.
       </p>
 
-      <form onSubmit={formulario.handleSubmit(() => setEnviado(true))} noValidate>
+      <form onSubmit={formulario.handleSubmit(enviar)} noValidate>
         <Field error={formulario.formState.errors.correo?.message} className="mb-5">
           <FieldLabel requerido>Correo institucional</FieldLabel>
           <Controller
@@ -76,16 +92,22 @@ export function RecuperarPage() {
           />
         </Field>
 
-        <InlineNotification tono={enviado ? 'exito' : 'info'} className="mb-5">
-          <strong className="block font-semibold">
-            {enviado ? 'Instrucciones enviadas' : 'Revisa tu bandeja'}
-          </strong>
-          Si el correo existe en el sistema, recibirás el enlace en los próximos minutos. No olvides
-          verificar la carpeta de spam.
-        </InlineNotification>
+        {enviado ? (
+          <InlineNotification tono="exito" className="!mb-5">
+            <strong className="block font-semibold">Instrucciones enviadas</strong>
+            Si el correo existe en el sistema, recibirás el enlace en los próximos minutos. No
+            olvides verificar la carpeta de spam.
+          </InlineNotification>
+        ) : null}
 
-        <Button type="submit" tamano="lg" block>
-          Enviar instrucciones
+        {error ? (
+          <InlineNotification tono="error" className="!mb-5">
+            {error}
+          </InlineNotification>
+        ) : null}
+
+        <Button type="submit" tamano="lg" block disabled={enviando}>
+          {enviando ? 'Enviando…' : enviado ? 'Enviar de nuevo' : 'Enviar instrucciones'}
         </Button>
       </form>
     </AuthLayout>

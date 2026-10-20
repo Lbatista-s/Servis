@@ -29,6 +29,7 @@ import {
 } from '@/domain/types';
 import { useIndiceServicios, useIndiceUsuarios, useSolicitudes } from '@/hooks/useDatos';
 import { useRetardado } from '@/hooks/useRetardado';
+import { descargarCsv } from '@/lib/csv';
 import { opcionesConTodos, TODOS, type ConTodos } from '@/lib/filtros';
 import { formatearFecha, formatearFechaLarga } from '@/lib/format';
 
@@ -147,15 +148,43 @@ export function BandejaPage() {
     },
   ];
 
+  /** Exporta lo que muestra la tabla, con los filtros aplicados. */
+  function exportar() {
+    const encabezado = [
+      'ID',
+      'Estudiante',
+      'Matrícula',
+      'Carrera',
+      'Servicio',
+      'Estado',
+      'Recibida',
+      'Asignada a',
+    ];
+    const filas = lista.map((solicitud) => {
+      const estudiante = usuarios.get(solicitud.solicitanteId);
+      return [
+        solicitud.id,
+        estudiante?.nombre ?? solicitud.solicitanteId,
+        estudiante?.matricula,
+        estudiante?.carrera,
+        servicios.get(solicitud.servicioId)?.nombre ?? solicitud.servicioId,
+        ETIQUETA_ESTADO[solicitud.estado],
+        formatearFecha(solicitud.enviadaEn ?? solicitud.creadaEn),
+        solicitud.asignadaA ? (usuarios.get(solicitud.asignadaA)?.nombre ?? '') : '',
+      ];
+    });
+    descargarCsv([encabezado, ...filas], 'bandeja');
+  }
+
   return (
     <>
       <PageHeader
         titulo="Bandeja de entrada"
         subtitulo={`${formatearFechaLarga(new Date().toISOString())} — Área de Ingenierías`}
       >
-        <Button variante="outline" tamano="sm">
+        <Button variante="outline" tamano="sm" disabled={lista.length === 0} onClick={exportar}>
           <Icono nombre="descargar" />
-          Exportar
+          Exportar CSV
         </Button>
       </PageHeader>
 

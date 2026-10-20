@@ -13,6 +13,7 @@ import {
   type ColorAvatar,
   type Documento,
   type EntradaHistorial,
+  type Notificacion,
   type Requisito,
   type Servicio,
   type Solicitud,
@@ -93,6 +94,17 @@ export function aServicio(dto: Dto): Servicio {
     plantilla: texto(dto.plantilla),
     activo: Boolean(dto.activo),
     diasEstimados: Number(dto.diasEstimados ?? 0),
+  };
+}
+
+export function aNotificacion(dto: Dto): Notificacion {
+  return {
+    id: texto(dto.id),
+    solicitudId: texto(dto.solicitudId),
+    titulo: texto(dto.titulo),
+    detalle: texto(dto.detalle),
+    fecha: texto(dto.fecha),
+    leida: Boolean(dto.leida),
   };
 }
 
