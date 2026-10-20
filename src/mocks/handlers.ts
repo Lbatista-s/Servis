@@ -228,6 +228,7 @@ const handlersSolicitudes = [
       const estados = consulta.getAll('estado') as EstadoSolicitud[];
       const solicitante = consulta.get('solicitante');
       const servicio = consulta.get('servicio');
+      const asignada = consulta.get('asignada_a');
       const termino = consulta.get('search')?.trim().toLowerCase() ?? '';
       const { usuarios } = baseSimulada();
 
@@ -235,6 +236,7 @@ const handlersSolicitudes = [
         .filter((s) => !solicitante || s.solicitanteId === solicitante)
         .filter((s) => estados.length === 0 || estados.includes(s.estado))
         .filter((s) => !servicio || s.servicioId === servicio)
+        .filter((s) => !asignada || s.asignadaA === asignada)
         .filter((s) => {
           if (!termino) return true;
           const nombre = usuarios.find((u) => u.id === s.solicitanteId)?.nombre ?? '';

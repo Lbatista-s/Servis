@@ -22,6 +22,14 @@ const PanelEstudiante = pagina(
   () => import('@/features/requests/PanelEstudiante'),
   'PanelEstudiante',
 );
+const MisSolicitudesPage = pagina(
+  () => import('@/features/requests/MisSolicitudesPage'),
+  'MisSolicitudesPage',
+);
+const MisDocumentosPage = pagina(
+  () => import('@/features/requests/MisDocumentosPage'),
+  'MisDocumentosPage',
+);
 const CatalogoPage = pagina(() => import('@/features/catalog/CatalogoPage'), 'CatalogoPage');
 const NuevaSolicitudPage = pagina(
   () => import('@/features/requests/NuevaSolicitudPage'),
@@ -100,6 +108,22 @@ function Rutas() {
               element={
                 <RequireRole roles={['estudiante']}>
                   <CatalogoPage />
+                </RequireRole>
+              }
+            />
+            <Route
+              path={RUTAS.misSolicitudes}
+              element={
+                <RequireRole roles={['estudiante']}>
+                  <MisSolicitudesPage />
+                </RequireRole>
+              }
+            />
+            <Route
+              path={RUTAS.misDocumentos}
+              element={
+                <RequireRole roles={['estudiante']}>
+                  <MisDocumentosPage />
                 </RequireRole>
               }
             />

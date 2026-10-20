@@ -61,6 +61,8 @@ export interface FiltroSolicitudes {
   solicitanteId?: string;
   estados?: readonly EstadoSolicitud[];
   servicioId?: string;
+  /** Sólo las asignadas a esta persona del personal. */
+  asignadaA?: string;
   /** Búsqueda libre por identificador de solicitud. */
   busqueda?: string;
 }

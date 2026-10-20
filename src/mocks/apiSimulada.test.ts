@@ -114,6 +114,13 @@ describe('solicitudes', () => {
     expect(porNombre.every((s) => s.solicitanteId === LUIS.id)).toBe(true);
   });
 
+  it('filtra por la persona asignada', async () => {
+    iniciarSesionSimulada(RICARDO.id);
+    const asignadas = await solicitudes.listar({ asignadaA: RICARDO.id });
+    expect(asignadas.length).toBeGreaterThan(0);
+    expect(asignadas.every((s) => s.asignadaA === RICARDO.id)).toBe(true);
+  });
+
   it('crea un borrador con identificador correlativo', async () => {
     const borrador = await nuevoBorrador();
     expect(borrador.id).toBe('SRV-1043');

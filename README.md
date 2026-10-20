@@ -118,20 +118,22 @@ bloqueo de acceso de cuentas inactivas.
 
 ## Pantallas
 
-| #   | Ruta                             | Pantalla                                      | Rol                                                         |
-| --- | -------------------------------- | --------------------------------------------- | ----------------------------------------------------------- |
-| 1   | `/login`                         | Inicio de sesión                              | Público                                                     |
-| 2   | `/recuperar`                     | Recuperar contraseña (`POST auth/recuperar/`) | Público                                                     |
-| 3   | `/inicio`                        | Inicio del estudiante                         | Estudiante                                                  |
-| 4   | `/catalogo`                      | Catálogo de servicios                         | Estudiante                                                  |
-| 5   | `/solicitudes/nueva/:servicioId` | Nueva solicitud (formulario por pasos)        | Estudiante                                                  |
-| 6   | `/solicitudes/:id`               | Detalle y seguimiento                         | Estudiante                                                  |
-| 7   | `/bandeja`                       | Bandeja administrativa                        | Personal administrativo · Coordinador                       |
-| 8   | `/bandeja/:id`                   | Detalle con acciones de revisión              | Personal administrativo · Coordinador                       |
-| 9   | `/cuadro-de-mando`               | Cuadro de mando integral y análisis operativo | Coordinador (inicio, edita metas) · Personal administrativo |
-| 10  | `/admin/usuarios`                | Gestión de usuarios                           | Administrador                                               |
-| 11  | `/admin/servicios`               | Catálogo: alta, edición y documentos pedidos  | Administrador                                               |
-| 12  | `/admin`                         | Inicio del administrador                      | Administrador                                               |
+| #   | Ruta                             | Pantalla                                                      | Rol                                                         |
+| --- | -------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------- |
+| 1   | `/login`                         | Inicio de sesión                                              | Público                                                     |
+| 2   | `/recuperar`                     | Recuperar contraseña (`POST auth/recuperar/`)                 | Público                                                     |
+| 3   | `/inicio`                        | Inicio del estudiante                                         | Estudiante                                                  |
+| 4   | `/catalogo`                      | Catálogo de servicios                                         | Estudiante                                                  |
+| 5   | `/solicitudes/nueva/:servicioId` | Nueva solicitud (formulario por pasos)                        | Estudiante                                                  |
+| 6   | `/solicitudes/:id`               | Detalle y seguimiento                                         | Estudiante                                                  |
+| 6b  | `/solicitudes`                   | Mis solicitudes (búsqueda y filtro)                           | Estudiante                                                  |
+| 6c  | `/documentos`                    | Mis documentos (visor y descarga)                             | Estudiante                                                  |
+| 7   | `/bandeja`                       | Bandeja; vistas `?vista=pendientes`, `asignadas`, `devueltas` | Personal administrativo · Coordinador                       |
+| 8   | `/bandeja/:id`                   | Detalle con acciones de revisión                              | Personal administrativo · Coordinador                       |
+| 9   | `/cuadro-de-mando`               | Cuadro de mando integral y análisis operativo                 | Coordinador (inicio, edita metas) · Personal administrativo |
+| 10  | `/admin/usuarios`                | Gestión de usuarios                                           | Administrador                                               |
+| 11  | `/admin/servicios`               | Catálogo: alta, edición y documentos pedidos                  | Administrador                                               |
+| 12  | `/admin`                         | Inicio del administrador                                      | Administrador                                               |
 
 Cada rol entra en su pantalla. El coordinador entra al cuadro de mando integral (Kaplan y Norton)
 y el personal administrativo a la bandeja. El estudiante y el administrador entran a una página de
@@ -149,7 +151,9 @@ En todas las pantallas:
 - **Barra superior:** tema claro u oscuro, **notificaciones** (contador de no leídas y enlace a la
   solicitud) y el **menú de perfil**, único control de la cuenta: nombre, rol, correo,
   Configuración y Cerrar sesión.
-- **Barra lateral:** la navegación del rol. El logotipo lleva a la pantalla de inicio.
+- **Barra lateral:** la navegación del rol por grupos (el personal tiene accesos directos con
+  contador a las solicitudes pendientes, asignadas a él y devueltas). El logotipo lleva a la
+  pantalla de inicio y al pie está el contacto del Área de Ingenierías.
 - **Documentos:** los adjuntos y los documentos emitidos se abren en un **visor integrado** con
   paginación, zoom, descarga e impresión.
 - **Exportar CSV** en la bandeja (lo que se ve, con los filtros aplicados) y en el cuadro de mando.
@@ -328,7 +332,7 @@ revisión sin tocar la principal.
 npm test
 ```
 
-Son 191 pruebas, que cubren:
+Son 202 pruebas, que cubren:
 
 - **Máquina de estados**: las 81 combinaciones de estados frente a la tabla de la especificación,
   la autorización por rol y las transiciones que exigen comentario.

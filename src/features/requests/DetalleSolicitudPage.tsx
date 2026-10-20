@@ -83,7 +83,7 @@ export function DetalleSolicitudPage() {
       <Breadcrumb
         migas={[
           { etiqueta: 'Inicio', a: RUTAS.inicio },
-          { etiqueta: 'Mis solicitudes', a: RUTAS.inicio },
+          { etiqueta: 'Mis solicitudes', a: RUTAS.misSolicitudes },
           { etiqueta: `#${solicitud.id}` },
         ]}
       />

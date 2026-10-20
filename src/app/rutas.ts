@@ -7,6 +7,8 @@ export const RUTAS = {
   recuperar: '/recuperar',
   inicio: '/inicio',
   catalogo: '/catalogo',
+  misSolicitudes: '/solicitudes',
+  misDocumentos: '/documentos',
   nuevaSolicitud: (servicioId: string) => `/solicitudes/nueva/${servicioId}`,
   detalleSolicitud: (id: string) => `/solicitudes/${id}`,
   bandeja: '/bandeja',

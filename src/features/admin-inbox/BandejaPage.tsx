@@ -2,7 +2,7 @@
 
 import { Table, type TableColumnsType } from 'antd';
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { RUTAS } from '@/app/rutas';
 import {
@@ -29,6 +29,7 @@ import {
   type Solicitud,
 } from '@/domain/types';
 import { useIndiceServicios, useIndiceUsuarios, useSolicitudes } from '@/hooks/useDatos';
+import { useUsuarioActual } from '@/features/auth/authStore';
 import { useRetardado } from '@/hooks/useRetardado';
 import { descargarCsv } from '@/lib/csv';
 import { opcionesConTodos, TODOS, type ConTodos } from '@/lib/filtros';
@@ -48,7 +49,24 @@ const OPCIONES_ESTADO = (() => {
   ];
 })();
 
+/** Vistas rápidas de la barra lateral (`?vista=`): fijan el estado de partida. */
+type Vista = 'pendientes' | 'asignadas' | 'devueltas';
+const VISTAS: Record<Vista, { titulo: string; estados: readonly EstadoSolicitud[] }> = {
+  pendientes: {
+    titulo: 'Pendientes de revisar',
+    estados: ['enviada', 'en_revision', 'corregida'],
+  },
+  asignadas: { titulo: 'Asignadas a mí', estados: ESTADOS_ABIERTOS },
+  devueltas: { titulo: 'Devueltas al estudiante', estados: ['devuelta'] },
+};
+
+const esVista = (valor: string | null): valor is Vista => valor !== null && valor in VISTAS;
+
 export function BandejaPage() {
+  const [parametros] = useSearchParams();
+  const clave = parametros.get('vista');
+  const vista = esVista(clave) ? clave : null;
+  const usuario = useUsuarioActual();
   const [busqueda, setBusqueda] = useState('');
   // La bandeja es la cola de trabajo: por defecto sólo lo que sigue abierto.
   const [estado, setEstado] = useState<FiltroEstado>(ABIERTAS);
@@ -59,15 +77,19 @@ export function BandejaPage() {
   const termino = useRetardado(busqueda.trim());
   const filtro = useMemo<FiltroSolicitudes>(
     () => ({
-      ...(estado === ABIERTAS
-        ? { estados: ESTADOS_ABIERTOS }
-        : estado !== TODOS
-          ? { estados: [estado] }
-          : {}),
+      // Con una vista activa, el estado lo decide la vista.
+      ...(vista
+        ? { estados: VISTAS[vista].estados }
+        : estado === ABIERTAS
+          ? { estados: ESTADOS_ABIERTOS }
+          : estado !== TODOS
+            ? { estados: [estado] }
+            : {}),
+      ...(vista === 'asignadas' && usuario ? { asignadaA: usuario.id } : {}),
       ...(servicioId !== TODOS ? { servicioId } : {}),
       ...(termino ? { busqueda: termino } : {}),
     }),
-    [estado, servicioId, termino],
+    [vista, usuario, estado, servicioId, termino],
   );
   const { datos: filtradas, cargando, error, recargar } = useSolicitudes(filtro);
   // Métricas sobre el total, no sobre el resultado filtrado.
@@ -180,7 +202,7 @@ export function BandejaPage() {
   return (
     <>
       <PageHeader
-        titulo="Bandeja de entrada"
+        titulo={vista ? VISTAS[vista].titulo : 'Bandeja de entrada'}
         subtitulo={`${formatearFechaLarga(new Date().toISOString())} — Área de Ingenierías`}
       >
         <Button variante="outline" tamano="sm" disabled={lista.length === 0} onClick={exportar}>
@@ -245,13 +267,24 @@ export function BandejaPage() {
           )}
         />
 
-        <SelectorFiltro
-          valor={estado}
-          onCambio={setEstado}
-          etiqueta="Filtrar por estado"
-          className="sm:w-44"
-          opciones={OPCIONES_ESTADO}
-        />
+        {vista ? (
+          <Link
+            to={RUTAS.bandeja}
+            className="inline-flex h-8 items-center gap-1.5 rounded-full border border-primary-light-2 bg-primary-light px-3 text-sm font-medium text-primary-dark hover:border-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+          >
+            Vista: {VISTAS[vista].titulo}
+            <Icono nombre="cerrar" className="h-3 w-3" />
+            <span className="sr-only">(quitar y ver todas)</span>
+          </Link>
+        ) : (
+          <SelectorFiltro
+            valor={estado}
+            onCambio={setEstado}
+            etiqueta="Filtrar por estado"
+            className="sm:w-44"
+            opciones={OPCIONES_ESTADO}
+          />
+        )}
 
         <Badge tono="gray" sinPunto>
           {lista.length} de {universo.length}

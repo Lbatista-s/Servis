@@ -72,6 +72,7 @@ export function consultaSolicitudes(filtro: FiltroSolicitudes = {}): Consulta {
     solicitante: filtro.solicitanteId,
     estado: filtro.estados,
     servicio: filtro.servicioId,
+    asignada_a: filtro.asignadaA,
     search: filtro.busqueda?.trim(),
   };
 }

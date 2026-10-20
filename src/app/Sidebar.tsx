@@ -1,75 +1,84 @@
 /**
- * Barra lateral: la marca, que lleva al inicio del rol, y la navegación
- * (`Menu` de Ant Design). La cuenta, la configuración y el cierre de sesión
- * viven en el menú de perfil de la barra superior.
+ * Barra lateral: la marca, que lleva al inicio del rol; la navegación por
+ * grupos (`Menu` de Ant Design), y al pie el contacto del Área. La cuenta, la
+ * configuración y el cierre de sesión viven en el menú de perfil de la barra
+ * superior.
  */
 
 import { Badge, Menu, type MenuProps } from 'antd';
 import { Link, useLocation } from 'react-router-dom';
 
-import { Icono, Logotipo } from '@/components/ui';
+import { Icono, Logotipo, Tooltip } from '@/components/ui';
+import { entorno } from '@/config/entorno';
+import { ESTADOS_FINALES } from '@/domain/types';
 import { useUsuarioActual } from '@/features/auth/authStore';
 import { useSolicitudes } from '@/hooks/useDatos';
 import { COLORES_MARCA } from '@/theme/tokens';
 
-import { claveActiva, NAVEGACION_POR_ROL } from './navegacion';
+import { CONTACTO_AREA } from './contacto';
+import { claveActiva, elementosDe, NAVEGACION_POR_ROL, type ClaveContador } from './navegacion';
 import { INICIO_POR_ROL } from './rutas';
 
 export function Sidebar({ onNavegar }: { onNavegar?: () => void }) {
   const usuario = useUsuarioActual();
   const ubicacion = useLocation();
 
-  // Contadores de los distintivos de navegación: la bandeja para el personal,
-  // las solicitudes propias para el estudiante. Sólo se consulta la que aplica.
+  // Contadores de los distintivos. El personal comparte la consulta sin
+  // filtros de la bandeja (la misma caché); el estudiante, la de las suyas.
   const esEstudiante = usuario?.rol === 'estudiante';
-  const { datos: pendientes } = useSolicitudes(
-    { estados: ['enviada', 'en_revision', 'corregida'] },
-    usuario !== null && !esEstudiante,
-  );
+  const veBandeja = usuario?.rol === 'personal_administrativo' || usuario?.rol === 'coordinador';
+  const { datos: todas } = useSolicitudes({}, veBandeja);
   const { datos: propias } = useSolicitudes({ solicitanteId: usuario?.id }, esEstudiante);
 
   if (!usuario) return null;
 
-  const contadores = {
-    solicitudesPendientes: pendientes?.length ?? 0,
+  const bandeja = todas ?? [];
+  const contadores: Record<ClaveContador, number> = {
     // Sólo lo que exige acción del estudiante, para que el distintivo coincida
     // con el mensaje del panel.
     misSolicitudesActivas: (propias ?? []).filter(
       (s) => s.estado === 'devuelta' || s.estado === 'borrador',
     ).length,
+    solicitudesPendientes: bandeja.filter((s) =>
+      (['enviada', 'en_revision', 'corregida'] as const).includes(
+        s.estado as 'enviada' | 'en_revision' | 'corregida',
+      ),
+    ).length,
+    asignadasAMi: bandeja.filter(
+      (s) => s.asignadaA === usuario.id && !ESTADOS_FINALES.includes(s.estado),
+    ).length,
+    devueltas: bandeja.filter((s) => s.estado === 'devuelta').length,
   };
 
-  const elementos = NAVEGACION_POR_ROL[usuario.rol];
+  const grupos = NAVEGACION_POR_ROL[usuario.rol];
 
-  const items: MenuProps['items'] = [
-    {
-      type: 'group',
-      key: 'principal',
-      label: 'Principal',
-      children: elementos.map((elemento) => {
-        const contador = elemento.contador ? contadores[elemento.contador] : 0;
-        return {
-          key: elemento.a,
-          icon: <Icono nombre={elemento.icono} />,
-          label: (
-            <Link to={elemento.a} onClick={onNavegar}>
-              {elemento.etiqueta}
-            </Link>
-          ),
-          extra:
-            contador > 0 ? (
-              <Badge
-                count={contador}
-                size="small"
-                color="#FFFFFF"
-                // Distintivo blanco con cifra en Vino: se lee igual en ambos temas.
-                style={{ color: COLORES_MARCA.vino, fontWeight: 700, boxShadow: 'none' }}
-              />
-            ) : undefined,
-        };
-      }),
-    },
-  ];
+  const items: MenuProps['items'] = grupos.map((grupo) => ({
+    type: 'group' as const,
+    key: grupo.titulo,
+    label: grupo.titulo,
+    children: grupo.elementos.map((elemento) => {
+      const contador = elemento.contador ? contadores[elemento.contador] : 0;
+      return {
+        key: elemento.a,
+        icon: <Icono nombre={elemento.icono} />,
+        label: (
+          <Link to={elemento.a} onClick={onNavegar}>
+            {elemento.etiqueta}
+          </Link>
+        ),
+        extra:
+          contador > 0 ? (
+            <Badge
+              count={contador}
+              size="small"
+              color="#FFFFFF"
+              // Distintivo blanco con cifra en Vino: se lee igual en ambos temas.
+              style={{ color: COLORES_MARCA.vino, fontWeight: 700, boxShadow: 'none' }}
+            />
+          ) : undefined,
+      };
+    }),
+  }));
 
   return (
     <nav
@@ -94,10 +103,52 @@ export function Sidebar({ onNavegar }: { onNavegar?: () => void }) {
       <Menu
         theme="dark"
         mode="inline"
-        selectedKeys={[claveActiva(ubicacion.pathname, elementos)]}
+        selectedKeys={[claveActiva(ubicacion.pathname, ubicacion.search, elementosDe(grupos))]}
         items={items}
         style={{ borderInlineEnd: 'none' }}
       />
+
+      <BloqueAyuda />
     </nav>
+  );
+}
+
+/** Contacto del Área al pie de la barra y, con la API simulada, su aviso. */
+function BloqueAyuda() {
+  return (
+    <aside
+      aria-label="Ayuda"
+      className="mt-auto border-t border-white/10 px-4 pb-4 pt-3 text-xs text-white/90"
+    >
+      <p className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-white">
+        <Icono nombre="ayuda" className="h-3.5 w-3.5" />
+        ¿Necesitas ayuda?
+      </p>
+      <a
+        href={`mailto:${CONTACTO_AREA.correo}`}
+        className="block break-all rounded-xs !text-white underline decoration-white/40 underline-offset-2 hover:decoration-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+      >
+        {CONTACTO_AREA.correo}
+      </a>
+      <dl className="m-0 mt-1.5">
+        {CONTACTO_AREA.horario.map(({ dias, horas }) => (
+          <div key={dias} className="flex gap-1.5 whitespace-nowrap">
+            <dt className="w-16 shrink-0 text-white/80">{dias}</dt>
+            <dd className="m-0 tabular-nums">{horas}</dd>
+          </div>
+        ))}
+      </dl>
+      {entorno().apiSimulada ? (
+        <Tooltip contenido="Mientras no esté conectado el backend, los datos son de ejemplo y se guardan en este navegador.">
+          <span
+            tabIndex={0}
+            className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-white/30 px-2 py-0.5 text-2xs font-semibold uppercase tracking-wider text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+          >
+            <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-warning" />
+            Datos simulados
+          </span>
+        </Tooltip>
+      ) : null}
+    </aside>
   );
 }
