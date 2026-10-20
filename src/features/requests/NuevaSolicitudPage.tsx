@@ -31,7 +31,7 @@ import {
 import { repositorios } from '@/data';
 import type { Adjunto } from '@/domain/types';
 import { useActor } from '@/features/auth/authStore';
-import { mensajeDeError } from '@/hooks/useAsync';
+import { mensajeDeError } from '@/lib/errores';
 import { useRevalidar, useServicio } from '@/hooks/useDatos';
 import { cn } from '@/lib/utils';
 import { contar } from '@/lib/texto';
@@ -109,7 +109,7 @@ export function NuevaSolicitudPage() {
         );
       }
 
-      revalidar();
+      revalidar('solicitudes');
       navegar(RUTAS.detalleSolicitud(creada.id));
     } catch (fallo) {
       setErrorEnvio(mensajeDeError(fallo));

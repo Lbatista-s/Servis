@@ -2,6 +2,8 @@ import '@testing-library/jest-dom/vitest';
 import { afterEach } from 'vitest';
 import { cleanup } from '@testing-library/react';
 
+import { clienteConsultas } from '@/hooks/clienteConsultas';
+
 // Ant Design consulta `matchMedia` para sus puntos de ruptura; jsdom no lo implementa.
 if (!window.matchMedia) {
   Object.defineProperty(window, 'matchMedia', {
@@ -43,5 +45,7 @@ window.getComputedStyle = (elemento: Element) => getComputedStyleOriginal(elemen
 
 afterEach(() => {
   cleanup();
+  // Cada prueba parte de una caché vacía.
+  clienteConsultas.clear();
   localStorage.clear();
 });

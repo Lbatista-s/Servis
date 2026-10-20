@@ -24,7 +24,7 @@ import {
 } from '@/components/ui';
 import { repositorios } from '@/data';
 import type { Actor, Adjunto, Servicio, Solicitud } from '@/domain/types';
-import { mensajeDeError } from '@/hooks/useAsync';
+import { mensajeDeError } from '@/lib/errores';
 import { useRevalidar } from '@/hooks/useDatos';
 import { contar } from '@/lib/texto';
 
@@ -74,7 +74,7 @@ export function EdicionSolicitud({
         { datosFormulario: valores, adjuntos },
         actor,
       );
-      revalidar();
+      revalidar('solicitudes');
       avisos.exito(
         'Cambios guardados',
         solicitud.estado === 'devuelta'

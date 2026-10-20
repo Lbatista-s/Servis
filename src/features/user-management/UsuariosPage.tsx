@@ -20,7 +20,7 @@ import {
 } from '@/components/ui';
 import { repositorios } from '@/data';
 import { ETIQUETA_ROL, type Rol, type Usuario } from '@/domain/types';
-import { mensajeDeError } from '@/hooks/useAsync';
+import { mensajeDeError } from '@/lib/errores';
 import { useRevalidar, useUsuarios } from '@/hooks/useDatos';
 import { TODOS, opcionesConTodos, type ConTodos } from '@/lib/filtros';
 import { tiempoRelativo } from '@/lib/format';
@@ -50,7 +50,7 @@ export function UsuariosPage() {
   async function alternarActivacion(usuarioId: string, nombre: string, siguiente: boolean) {
     try {
       await repositorios.usuarios.cambiarActivacion(usuarioId, siguiente);
-      revalidar();
+      revalidar('usuarios');
       avisos.exito(
         siguiente ? 'Usuario activado' : 'Usuario desactivado',
         `${nombre} ${siguiente ? 'puede volver a acceder' : 'ya no puede acceder'} al sistema.`,

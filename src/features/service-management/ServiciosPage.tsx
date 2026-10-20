@@ -20,7 +20,7 @@ import {
 } from '@/components/ui';
 import { repositorios } from '@/data';
 import { ETIQUETA_CATEGORIA, type Servicio } from '@/domain/types';
-import { mensajeDeError } from '@/hooks/useAsync';
+import { mensajeDeError } from '@/lib/errores';
 import { useRevalidar, useServicios } from '@/hooks/useDatos';
 import { contar } from '@/lib/texto';
 
@@ -37,7 +37,7 @@ export function ServiciosPage() {
     setProcesando(servicio.id);
     try {
       await repositorios.servicios.cambiarActivacion(servicio.id, siguiente);
-      revalidar();
+      revalidar('servicios');
       avisos.exito(
         siguiente ? 'Servicio activado' : 'Servicio desactivado',
         `«${servicio.nombre}» ${siguiente ? 'ya aparece' : 'dejó de aparecer'} en el catálogo.`,

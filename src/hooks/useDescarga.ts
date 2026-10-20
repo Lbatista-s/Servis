@@ -8,7 +8,7 @@ import { useCallback, useState } from 'react';
 import { useToast } from '@/components/ui';
 import { abrirBlob, descargarBlob } from '@/lib/descargas';
 
-import { mensajeDeError } from './useAsync';
+import { mensajeDeError } from '@/lib/errores';
 
 interface Descarga {
   /** Identificador del elemento, para mostrar su estado de carga. */

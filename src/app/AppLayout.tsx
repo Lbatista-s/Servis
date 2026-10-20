@@ -6,12 +6,14 @@
  */
 
 import { Drawer, Layout } from 'antd';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 
+import { Loading } from '@/components/ui';
 import { ESTRUCTURA } from '@/theme/tokens';
 
 import { DevRoleSwitcher } from './DevRoleSwitcher';
+import { LimiteError } from './LimiteError';
 import { Sidebar } from './Sidebar';
 import { titulosDe } from './navegacion';
 import { Topbar } from './Topbar';
@@ -53,7 +55,12 @@ export function AppLayout() {
         <Layout className="min-w-0">
           <Topbar titulo={titulo} subtitulo={subtitulo} onAbrirMenu={() => setMenuAbierto(true)} />
           <Layout.Content className="overflow-y-auto p-4 lg:p-7">
-            <Outlet />
+            {/* El armazón se queda mientras carga o falla la pantalla. */}
+            <LimiteError claveReinicio={ubicacion.pathname}>
+              <Suspense fallback={<Loading />}>
+                <Outlet />
+              </Suspense>
+            </LimiteError>
           </Layout.Content>
         </Layout>
       </Layout>

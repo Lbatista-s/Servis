@@ -17,7 +17,7 @@ import {
   type Metas,
 } from '@/domain/indicadores';
 import type { Actor } from '@/domain/types';
-import { mensajeDeError } from '@/hooks/useAsync';
+import { mensajeDeError } from '@/lib/errores';
 import { useRevalidar } from '@/hooks/useDatos';
 
 export function EditarMetasDialog({
@@ -53,7 +53,7 @@ export function EditarMetasDialog({
     setError(null);
     try {
       await repositorios.metas.guardar(borrador, actor);
-      revalidar();
+      revalidar('metas');
       onCerrar();
       avisos.exito('Metas actualizadas', 'El cuadro de mando se evalúa ya con las nuevas metas.');
     } catch (fallo) {

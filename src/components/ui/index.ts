@@ -22,6 +22,7 @@ export { Card, NoteBlock, PageHeader, SectionHeader, Sobretitulo } from './Card'
 export { ListaDatos, type Dato } from './Datos';
 export {
   EmptyState,
+  EstadoError,
   InlineNotification,
   Loading,
   Progress,

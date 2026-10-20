@@ -1,25 +1,61 @@
 /** Definición de rutas y proveedores globales. */
 
-import { useEffect } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { lazy, Suspense, useEffect } from 'react';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
-import { ProveedorUI } from '@/components/ui';
-import { DetalleBandejaPage } from '@/features/admin-inbox/DetalleBandejaPage';
-import { BandejaPage } from '@/features/admin-inbox/BandejaPage';
+import { Loading, ProveedorUI } from '@/components/ui';
 import { useAuth } from '@/features/auth/authStore';
-import { LoginPage } from '@/features/auth/LoginPage';
-import { RecuperarPage } from '@/features/auth/RecuperarPage';
 import { RequireRole } from '@/features/auth/RequireRole';
-import { InicioAdministrador } from '@/features/admin/InicioAdministrador';
-import { CatalogoPage } from '@/features/catalog/CatalogoPage';
-import { CuadroMandoPage } from '@/features/cuadro-mando/CuadroMandoPage';
-import { DetalleSolicitudPage } from '@/features/requests/DetalleSolicitudPage';
-import { NuevaSolicitudPage } from '@/features/requests/NuevaSolicitudPage';
-import { PanelEstudiante } from '@/features/requests/PanelEstudiante';
-import { ServiciosPage } from '@/features/service-management/ServiciosPage';
-import { UsuariosPage } from '@/features/user-management/UsuariosPage';
+
+/**
+ * Cada pantalla se descarga al visitarla por primera vez: el paquete inicial
+ * sólo lleva el armazón, el acceso y lo que comparten todas.
+ */
+const pagina = <K extends string>(
+  cargar: () => Promise<Record<K, React.ComponentType>>,
+  nombre: K,
+) => lazy(() => cargar().then((modulo) => ({ default: modulo[nombre] })));
+
+const LoginPage = pagina(() => import('@/features/auth/LoginPage'), 'LoginPage');
+const RecuperarPage = pagina(() => import('@/features/auth/RecuperarPage'), 'RecuperarPage');
+const PanelEstudiante = pagina(
+  () => import('@/features/requests/PanelEstudiante'),
+  'PanelEstudiante',
+);
+const CatalogoPage = pagina(() => import('@/features/catalog/CatalogoPage'), 'CatalogoPage');
+const NuevaSolicitudPage = pagina(
+  () => import('@/features/requests/NuevaSolicitudPage'),
+  'NuevaSolicitudPage',
+);
+const DetalleSolicitudPage = pagina(
+  () => import('@/features/requests/DetalleSolicitudPage'),
+  'DetalleSolicitudPage',
+);
+const BandejaPage = pagina(() => import('@/features/admin-inbox/BandejaPage'), 'BandejaPage');
+const DetalleBandejaPage = pagina(
+  () => import('@/features/admin-inbox/DetalleBandejaPage'),
+  'DetalleBandejaPage',
+);
+const CuadroMandoPage = pagina(
+  () => import('@/features/cuadro-mando/CuadroMandoPage'),
+  'CuadroMandoPage',
+);
+const InicioAdministrador = pagina(
+  () => import('@/features/admin/InicioAdministrador'),
+  'InicioAdministrador',
+);
+const UsuariosPage = pagina(
+  () => import('@/features/user-management/UsuariosPage'),
+  'UsuariosPage',
+);
+const ServiciosPage = pagina(
+  () => import('@/features/service-management/ServiciosPage'),
+  'ServiciosPage',
+);
 
 import { AppLayout } from './AppLayout';
+import { LimiteError } from './LimiteError';
+import { PaginaNoEncontrada } from './PaginaNoEncontrada';
 import { RaizRedirect } from './RaizRedirect';
 import { PATRONES, ROLES_BANDEJA, RUTAS } from './rutas';
 
@@ -33,6 +69,17 @@ export function App() {
   return (
     <BrowserRouter>
       <ProveedorUI>
+        <Rutas />
+      </ProveedorUI>
+    </BrowserRouter>
+  );
+}
+
+function Rutas() {
+  const ubicacion = useLocation();
+  return (
+    <LimiteError claveReinicio={ubicacion.pathname}>
+      <Suspense fallback={<Loading mensaje="Cargando…" />}>
         <Routes>
           {/* Públicas */}
           <Route path={RUTAS.login} element={<LoginPage />} />
@@ -128,9 +175,9 @@ export function App() {
 
           {/* La raíz lleva a cada rol a su pantalla inicial. */}
           <Route path="/" element={<RaizRedirect />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<PaginaNoEncontrada />} />
         </Routes>
-      </ProveedorUI>
-    </BrowserRouter>
+      </Suspense>
+    </LimiteError>
   );
 }

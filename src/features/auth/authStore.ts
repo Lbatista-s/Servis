@@ -12,7 +12,8 @@ import { persist } from 'zustand/middleware';
 
 import { alCaducarSesion, fuenteActiva, repositorios } from '@/data';
 import type { Actor, Rol, Usuario } from '@/domain/types';
-import { mensajeDeError } from '@/hooks/useAsync';
+import { clienteConsultas } from '@/hooks/clienteConsultas';
+import { mensajeDeError } from '@/lib/errores';
 
 interface EstadoAutenticacion {
   usuario: Usuario | null;
@@ -38,6 +39,8 @@ export const useAuth = create<EstadoAutenticacion>()(
         set({ cargando: true, error: null });
         try {
           const usuario = await repositorios.auth.iniciarSesion(correo, contrasena);
+          // Lo que hubiera en caché pertenece a la sesión anterior.
+          clienteConsultas.clear();
           set({ usuario, cargando: false, error: null });
           return true;
         } catch (fallo) {
@@ -55,11 +58,13 @@ export const useAuth = create<EstadoAutenticacion>()(
           return false;
         }
 
+        clienteConsultas.clear();
         set({ usuario, cargando: false, error: null });
         return true;
       },
 
       cerrarSesion() {
+        clienteConsultas.clear();
         set({ usuario: null, error: null });
         void repositorios.auth.cerrarSesion();
       },
@@ -90,6 +95,7 @@ export const useAuth = create<EstadoAutenticacion>()(
 // Si el servidor rechaza la sesión a mitad de uso, se vuelve al acceso.
 alCaducarSesion(() => {
   if (useAuth.getState().usuario) {
+    clienteConsultas.clear();
     useAuth.setState({ usuario: null, error: 'Tu sesión expiró. Vuelve a iniciar sesión.' });
   }
 });

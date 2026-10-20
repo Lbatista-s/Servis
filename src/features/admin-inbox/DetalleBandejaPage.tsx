@@ -30,7 +30,7 @@ import { useActor } from '@/features/auth/authStore';
 import { AccionesSolicitud } from '@/features/requests/AccionesSolicitud';
 import { camposDe, formatearValorCampo } from '@/features/requests/formularios';
 import { HistorialTimeline } from '@/features/requests/HistorialTimeline';
-import { mensajeDeError } from '@/hooks/useAsync';
+import { mensajeDeError } from '@/lib/errores';
 import { useRevalidar, useServicio, useSolicitud, useIndiceUsuarios } from '@/hooks/useDatos';
 import { useDescarga } from '@/hooks/useDescarga';
 import { formatearFecha } from '@/lib/format';
@@ -220,7 +220,7 @@ function ComentarioInterno({
     setError(null);
     try {
       await repositorios.solicitudes.guardar(solicitudId, { comentarioInterno: texto }, actor);
-      revalidar();
+      revalidar('solicitudes');
       avisos.exito('Comentario guardado', 'La observación interna quedó registrada.');
     } catch (fallo) {
       setError(mensajeDeError(fallo));

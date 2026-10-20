@@ -6,6 +6,8 @@
  * entorno; ningún componente se entera.
  */
 
+import { entorno } from '@/config/entorno';
+
 import { crearRepositoriosHttp } from './repositories/http';
 import { crearRepositoriosLocales } from './repositories/localStorage';
 import type { Repositorios } from './repositories/types';
@@ -14,7 +16,7 @@ export type FuenteDatos = 'local' | 'http';
 
 /** Fuente activa, leída de `VITE_DATA_SOURCE` (por defecto, `local`). */
 export function fuenteActiva(): FuenteDatos {
-  return import.meta.env.VITE_DATA_SOURCE === 'http' ? 'http' : 'local';
+  return entorno().fuenteDatos;
 }
 
 function crearRepositorios(fuente: FuenteDatos): Repositorios {
