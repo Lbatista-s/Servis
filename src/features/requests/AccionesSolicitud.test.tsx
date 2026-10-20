@@ -7,7 +7,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { ToastProvider, TooltipProvider } from '@/components/ui';
+import { ProveedorUI } from '@/components/ui';
 import { repositorios } from '@/data';
 import { restablecerAlmacen } from '@/data/repositories/localStorage';
 import type { Actor, Solicitud } from '@/domain/types';
@@ -23,11 +23,9 @@ const PERSONAL: Actor = {
 
 function renderizar(solicitud: Solicitud, actor: Actor) {
   return render(
-    <TooltipProvider>
-      <ToastProvider>
-        <AccionesSolicitud solicitud={solicitud} actor={actor} />
-      </ToastProvider>
-    </TooltipProvider>,
+    <ProveedorUI>
+      <AccionesSolicitud solicitud={solicitud} actor={actor} />
+    </ProveedorUI>,
   );
 }
 

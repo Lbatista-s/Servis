@@ -1,29 +1,35 @@
-/** Barra lateral: marca, navegación por rol, configuración y usuario activo. */
+/** Barra lateral: marca, navegación por rol (`Menu` de Ant Design), configuración y usuario. */
 
-import { NavLink, useNavigate } from 'react-router-dom';
+import { Badge, Menu, type MenuProps } from 'antd';
+import { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 
-import { Avatar, Icono, Tooltip } from '@/components/ui';
-import { useAuth, useUsuarioActual } from '@/features/auth/authStore';
+import { AvatarUsuario, Icono, Logotipo, Tooltip } from '@/components/ui';
+import { ETIQUETA_ROL } from '@/domain/types';
+import { useUsuarioActual } from '@/features/auth/authStore';
 import { ConfiguracionDialog } from '@/features/settings/ConfiguracionDialog';
 import { useSolicitudes } from '@/hooks/useDatos';
-import { ETIQUETA_ROL } from '@/domain/types';
-import { cn } from '@/lib/utils';
+import { COLORES_MARCA } from '@/theme/tokens';
 
-import { NAVEGACION_POR_ROL } from './navegacion';
-import { RUTAS } from './rutas';
+import { claveActiva, NAVEGACION_POR_ROL } from './navegacion';
+import { useCerrarSesion } from './useCerrarSesion';
+
+const CLAVE_CONFIGURACION = 'configuracion';
 
 export function Sidebar({ onNavegar }: { onNavegar?: () => void }) {
   const usuario = useUsuarioActual();
-  const cerrarSesion = useAuth((estado) => estado.cerrarSesion);
-  const navegar = useNavigate();
+  const salir = useCerrarSesion();
+  const ubicacion = useLocation();
+  const [configuracionAbierta, setConfiguracionAbierta] = useState(false);
 
-  // Contadores de los distintivos de navegación.
-  const { datos: pendientes } = useSolicitudes({
-    estados: ['enviada', 'en_revision', 'corregida'],
-  });
-  const { datos: propias } = useSolicitudes(
-    usuario?.rol === 'estudiante' ? { solicitanteId: usuario.id } : { solicitanteId: '—' },
+  // Contadores de los distintivos de navegación: la bandeja para el personal,
+  // las solicitudes propias para el estudiante. Sólo se consulta la que aplica.
+  const esEstudiante = usuario?.rol === 'estudiante';
+  const { datos: pendientes } = useSolicitudes(
+    { estados: ['enviada', 'en_revision', 'corregida'] },
+    usuario !== null && !esEstudiante,
   );
+  const { datos: propias } = useSolicitudes({ solicitanteId: usuario?.id }, esEstudiante);
 
   if (!usuario) return null;
 
@@ -36,101 +42,89 @@ export function Sidebar({ onNavegar }: { onNavegar?: () => void }) {
     ).length,
   };
 
+  const elementos = NAVEGACION_POR_ROL[usuario.rol];
+
+  const items: MenuProps['items'] = [
+    {
+      type: 'group',
+      key: 'principal',
+      label: 'Principal',
+      children: elementos.map((elemento) => {
+        const contador = elemento.contador ? contadores[elemento.contador] : 0;
+        return {
+          key: elemento.a,
+          icon: <Icono nombre={elemento.icono} />,
+          label: (
+            <Link to={elemento.a} onClick={onNavegar}>
+              {elemento.etiqueta}
+            </Link>
+          ),
+          extra:
+            contador > 0 ? (
+              <Badge
+                count={contador}
+                size="small"
+                color="#FFFFFF"
+                // Distintivo blanco con cifra en Vino: se lee igual en ambos temas.
+                style={{ color: COLORES_MARCA.vino, fontWeight: 700, boxShadow: 'none' }}
+              />
+            ) : undefined,
+        };
+      }),
+    },
+    {
+      type: 'group',
+      key: 'sistema',
+      label: 'Sistema',
+      children: [
+        {
+          key: CLAVE_CONFIGURACION,
+          icon: <Icono nombre="engranaje" />,
+          label: 'Configuración',
+          onClick: () => setConfiguracionAbierta(true),
+        },
+      ],
+    },
+  ];
+
   return (
     <nav
       aria-label="Navegación principal"
-      className="flex h-full w-sidebar shrink-0 flex-col overflow-y-auto border-r border-white/[0.06] bg-shell"
+      className="flex h-full w-sidebar shrink-0 flex-col overflow-y-auto bg-chrome"
     >
       {/* Marca */}
-      <div className="mb-2 flex items-center gap-2.5 border-b border-white/[0.07] px-4 pb-4 pt-5">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-primary">
-          <Icono nombre="documento" className="h-5 w-5 text-white" />
-        </span>
-        <span className="flex flex-col">
-          <span className="text-lg font-bold leading-tight text-white">SERVIS</span>
-          <span className="text-2xs uppercase tracking-wider text-white/40">
-            INTEC · Ingenierías
-          </span>
-        </span>
+      <div className="mb-2 flex flex-col gap-1.5 border-b border-white/10 px-4 pb-4 pt-5">
+        <Logotipo formato="compacto" version="negativo" alto={50} />
+        <span className="text-2xs uppercase tracking-wider text-white/90">Área de Ingenierías</span>
       </div>
 
-      <p className="px-4 pb-1 pt-3 text-2xs font-semibold uppercase tracking-widest text-white/[0.28]">
-        Principal
-      </p>
+      <Menu
+        theme="dark"
+        mode="inline"
+        selectedKeys={[claveActiva(ubicacion.pathname, elementos)]}
+        items={items}
+        style={{ borderInlineEnd: 'none' }}
+      />
 
-      <ul className="flex flex-col">
-        {NAVEGACION_POR_ROL[usuario.rol].map((elemento) => {
-          const contador = elemento.contador ? contadores[elemento.contador] : 0;
-          return (
-            <li key={elemento.a}>
-              <NavLink
-                to={elemento.a}
-                onClick={onNavegar}
-                className={({ isActive }) =>
-                  cn(
-                    'relative mx-2 my-px flex items-center gap-2.5 rounded border border-transparent',
-                    'py-2.5 pl-3.5 pr-3 text-base font-medium transition-all',
-                    isActive
-                      ? 'border-primary/30 bg-primary/[0.15] text-white'
-                      : 'text-white/55 hover:bg-white/[0.06] hover:text-white/85',
-                  )
-                }
-              >
-                {({ isActive }) => (
-                  <>
-                    {isActive ? (
-                      <span
-                        aria-hidden="true"
-                        className="absolute -left-2 top-1/2 h-3/5 w-[3px] -translate-y-1/2 rounded-r-sm bg-primary"
-                      />
-                    ) : null}
-                    <Icono
-                      nombre={elemento.icono}
-                      className={cn(isActive ? 'opacity-100' : 'opacity-80')}
-                    />
-                    <span className="flex-1">{elemento.etiqueta}</span>
-                    {contador > 0 ? (
-                      <span className="min-w-[18px] rounded-full bg-primary px-1.5 text-center text-2xs font-bold text-white">
-                        {contador}
-                      </span>
-                    ) : null}
-                  </>
-                )}
-              </NavLink>
-            </li>
-          );
-        })}
-      </ul>
-
-      <p className="px-4 pb-1 pt-5 text-2xs font-semibold uppercase tracking-widest text-white/[0.28]">
-        Sistema
-      </p>
-      <div className="mx-2">
-        <ConfiguracionDialog />
-      </div>
+      <ConfiguracionDialog
+        abierto={configuracionAbierta}
+        onCerrar={() => setConfiguracionAbierta(false)}
+      />
 
       {/* Usuario activo */}
-      <div className="mt-auto border-t border-white/[0.07] p-2 pt-3">
+      <div className="mt-auto border-t border-white/10 p-2 pt-3">
         <div className="flex items-center gap-2.5 rounded px-2 py-2.5">
-          <Avatar
-            nombre={usuario.nombre}
-            iniciales={usuario.iniciales}
-            color={usuario.colorAvatar}
-            tamano="lg"
-          />
+          <AvatarUsuario usuario={usuario} tamano="lg" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-base font-semibold text-white">{usuario.nombre}</p>
-            <p className="truncate text-xs text-white/40">{ETIQUETA_ROL[usuario.rol]}</p>
+            <p className="truncate text-xs text-white/90">{ETIQUETA_ROL[usuario.rol]}</p>
           </div>
           <Tooltip contenido="Cerrar sesión">
             <button
               type="button"
               aria-label="Cerrar sesión"
-              onClick={() => {
-                cerrarSesion();
-                navegar(RUTAS.login, { replace: true });
-              }}
-              className="rounded-sm p-1 text-white/60 opacity-60 transition-opacity hover:opacity-100"
+              onClick={salir}
+              className="rounded-sm p-1 text-white/90 transition-opacity hover:text-white"
             >
               <Icono nombre="salir" />
             </button>

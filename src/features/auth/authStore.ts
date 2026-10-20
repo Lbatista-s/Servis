@@ -1,54 +1,49 @@
 /**
  * Sesión activa.
  *
- * La autenticación es simulada a propósito: el prototipo no contempla
- * contraseñas reales y el sistema todavía no tiene backend. El selector de la
- * pantalla de acceso fija el usuario y, con él, el rol activo. La forma del
- * store no cambiará cuando exista autenticación real: bastará con que
- * `iniciarSesion` llame a la API en lugar de al repositorio local.
+ * Delegada en `repositorios.auth`: en modo local la autenticación es simulada
+ * (basta un correo de una cuenta activa); en modo `http` la valida Django. El
+ * usuario se persiste para no pedir acceso en cada recarga, y en modo `http`
+ * se vuelve a confirmar con el servidor al arrancar (`verificarSesion`).
  */
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { repositorios } from '@/data';
+import { alCaducarSesion, fuenteActiva, repositorios } from '@/data';
 import type { Actor, Rol, Usuario } from '@/domain/types';
+import { mensajeDeError } from '@/hooks/useAsync';
 
 interface EstadoAutenticacion {
   usuario: Usuario | null;
   cargando: boolean;
   error: string | null;
-  iniciarSesion: (correo: string) => Promise<boolean>;
+  iniciarSesion: (correo: string, contrasena?: string) => Promise<boolean>;
+  /** Cambio rápido de cuenta; sólo existe en el modo de demostración. */
   iniciarSesionComo: (usuarioId: string) => Promise<boolean>;
   cerrarSesion: () => void;
+  /** Confirma con el servidor que la sesión persistida sigue vigente. */
+  verificarSesion: () => Promise<void>;
   limpiarError: () => void;
 }
 
 export const useAuth = create<EstadoAutenticacion>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       usuario: null,
       cargando: false,
       error: null,
 
-      async iniciarSesion(correo) {
+      async iniciarSesion(correo, contrasena = '') {
         set({ cargando: true, error: null });
-        const usuario = await repositorios.usuarios.obtenerPorCorreo(correo);
-
-        if (!usuario) {
-          set({ cargando: false, error: 'No existe ningún usuario con ese correo institucional.' });
+        try {
+          const usuario = await repositorios.auth.iniciarSesion(correo, contrasena);
+          set({ usuario, cargando: false, error: null });
+          return true;
+        } catch (fallo) {
+          set({ cargando: false, error: mensajeDeError(fallo) });
           return false;
         }
-        if (!usuario.activo) {
-          set({
-            cargando: false,
-            error: 'Esta cuenta está desactivada. Contacta al administrador del sistema.',
-          });
-          return false;
-        }
-
-        set({ usuario, cargando: false, error: null });
-        return true;
       },
 
       async iniciarSesionComo(usuarioId) {
@@ -66,6 +61,18 @@ export const useAuth = create<EstadoAutenticacion>()(
 
       cerrarSesion() {
         set({ usuario: null, error: null });
+        void repositorios.auth.cerrarSesion();
+      },
+
+      async verificarSesion() {
+        if (fuenteActiva() !== 'http' || !get().usuario) return;
+        try {
+          const usuario = await repositorios.auth.usuarioActual();
+          set({ usuario });
+        } catch {
+          // Sin conexión no se descarta la sesión: el servidor decidirá en la
+          // siguiente petición.
+        }
       },
 
       limpiarError() {
@@ -79,6 +86,13 @@ export const useAuth = create<EstadoAutenticacion>()(
     },
   ),
 );
+
+// Si el servidor rechaza la sesión a mitad de uso, se vuelve al acceso.
+alCaducarSesion(() => {
+  if (useAuth.getState().usuario) {
+    useAuth.setState({ usuario: null, error: 'Tu sesión expiró. Vuelve a iniciar sesión.' });
+  }
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Selectores auxiliares

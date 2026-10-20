@@ -1,21 +1,21 @@
 /**
  * Pantalla 1 — Inicio de sesión.
  *
- * La autenticación es simulada: no hay contraseña real. El selector de usuario
- * fija la cuenta activa y, con ella, el rol; el campo de contraseña se conserva
- * por fidelidad con el prototipo y para que la pantalla no cambie cuando exista
- * autenticación de verdad.
+ * Con la API real (`VITE_DATA_SOURCE=http`) el correo y la contraseña los
+ * valida Django. En el modo de demostración la contraseña no se comprueba y un
+ * selector permite entrar con cualquiera de las cuentas de ejemplo.
  */
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { Input as AntInput, Select } from 'antd';
+import { useEffect, useRef } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
 import { INICIO_POR_ROL, RUTAS } from '@/app/rutas';
 import {
-  Avatar,
+  AvatarUsuario,
   Button,
   Field,
   FieldHint,
@@ -23,26 +23,21 @@ import {
   Icono,
   InlineNotification,
   Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
 } from '@/components/ui';
+import { fuenteActiva } from '@/data';
 import { ETIQUETA_ROL } from '@/domain/types';
 import { useServicios, useUsuarios } from '@/hooks/useDatos';
+
+import { correoInstitucional, EJEMPLO_CORREO } from '@/lib/esquemas';
 
 import { AuthLayout } from './AuthLayout';
 import { useAuth, useUsuarioActual } from './authStore';
 
+const DEMOSTRACION = fuenteActiva() === 'local';
+
 const esquemaAcceso = z.object({
-  correo: z
-    .string()
-    .min(1, 'Indica tu correo institucional.')
-    .email('El formato del correo no es válido.')
-    .refine((valor) => valor.trim().toLowerCase().endsWith('@intec.edu.do'), {
-      message: 'Debes usar tu correo institucional del INTEC (@intec.edu.do).',
-    }),
+  correo: correoInstitucional(),
+  contrasena: DEMOSTRACION ? z.string() : z.string().min(1, 'Escribe tu contraseña.'),
 });
 
 type DatosAcceso = z.infer<typeof esquemaAcceso>;
@@ -50,21 +45,25 @@ type DatosAcceso = z.infer<typeof esquemaAcceso>;
 export function LoginPage() {
   const usuario = useUsuarioActual();
   const { iniciarSesion, cargando, error, limpiarError } = useAuth();
-  const { datos: usuarios } = useUsuarios({ activo: true });
+  const { datos: usuarios } = useUsuarios({ activo: true }, DEMOSTRACION);
   const { datos: servicios } = useServicios({ soloActivos: true });
   const navegar = useNavigate();
   const ubicacion = useLocation();
 
   const formulario = useForm<DatosAcceso>({
     resolver: zodResolver(esquemaAcceso),
-    defaultValues: { correo: 'l.batista@intec.edu.do' },
+    defaultValues: DEMOSTRACION
+      ? { correo: 'l.batista@intec.edu.do', contrasena: 'demostracion' }
+      : { correo: '', contrasena: '' },
   });
 
   const correoActual = formulario.watch('correo');
 
-  // Cualquier cambio en el formulario descarta el error del intento anterior.
+  // Cambiar el correo descarta el error del intento anterior. Al montar no se
+  // borra: puede traer el aviso de que la sesión expiró.
+  const correoInicial = useRef(correoActual);
   useEffect(() => {
-    limpiarError();
+    if (correoActual !== correoInicial.current) limpiarError();
   }, [correoActual, limpiarError]);
 
   // Si ya hay sesión, se entra directamente al panel del rol.
@@ -74,12 +73,10 @@ export function LoginPage() {
   }
 
   async function enviar(datos: DatosAcceso) {
-    const exito = await iniciarSesion(datos.correo);
+    const exito = await iniciarSesion(datos.correo, datos.contrasena);
     if (!exito) return;
 
-    const cuenta = (usuarios ?? []).find(
-      (u) => u.correo.toLowerCase() === datos.correo.trim().toLowerCase(),
-    );
+    const cuenta = useAuth.getState().usuario;
     const destino =
       (ubicacion.state as { desde?: string } | null)?.desde ??
       (cuenta ? INICIO_POR_ROL[cuenta.rol] : RUTAS.inicio);
@@ -92,7 +89,11 @@ export function LoginPage() {
       destacado="cuando y donde los necesites."
       descripcion="La plataforma digital del Área de Ingenierías de INTEC para gestionar solicitudes académicas y administrativas de forma eficiente y trazable."
       estadisticas={[
-        { valor: String(servicios?.length ?? 0), etiqueta: 'Servicios digitalizados' },
+        // Contra la API real el catálogo puede exigir sesión: sin dato, la
+        // cifra se omite en lugar de mostrar un cero engañoso.
+        ...(servicios?.length
+          ? [{ valor: String(servicios.length), etiqueta: 'Servicios digitalizados' }]
+          : []),
         { valor: '100%', etiqueta: 'Seguimiento en línea' },
         { valor: '0', etiqueta: 'Papeles requeridos' },
       ]}
@@ -105,71 +106,70 @@ export function LoginPage() {
       <form onSubmit={formulario.handleSubmit(enviar)} noValidate>
         <Field error={formulario.formState.errors.correo?.message} className="mb-4">
           <FieldLabel requerido>Correo institucional</FieldLabel>
-          <div className="relative">
-            <Icono
-              nombre="correo"
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3"
-            />
-            <Input
-              type="email"
-              autoComplete="username"
-              placeholder="tu.nombre@intec.edu.do"
-              className="pl-[38px]"
-              {...formulario.register('correo')}
-            />
-          </div>
+          <Controller
+            control={formulario.control}
+            name="correo"
+            render={({ field }) => (
+              <Input
+                type="email"
+                autoComplete="username"
+                placeholder={EJEMPLO_CORREO}
+                prefix={<Icono nombre="correo" className="text-ink-3" />}
+                {...field}
+              />
+            )}
+          />
         </Field>
 
-        <Field className="mb-4">
-          <FieldLabel htmlFor="clave">Contraseña</FieldLabel>
-          <div className="relative">
-            <Icono
-              nombre="candado"
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3"
-            />
-            <Input
-              id="clave"
-              type="password"
-              autoComplete="current-password"
-              defaultValue="demostracion"
-              className="pl-[38px]"
-            />
-          </div>
-          <FieldHint>Autenticación simulada: en esta fase la contraseña no se verifica.</FieldHint>
+        <Field error={formulario.formState.errors.contrasena?.message} className="mb-4">
+          <FieldLabel htmlFor="clave" requerido={!DEMOSTRACION}>
+            Contraseña
+          </FieldLabel>
+          <Controller
+            control={formulario.control}
+            name="contrasena"
+            render={({ field }) => (
+              <AntInput.Password
+                id="clave"
+                autoComplete="current-password"
+                prefix={<Icono nombre="candado" className="text-ink-3" />}
+                {...field}
+              />
+            )}
+          />
+          {DEMOSTRACION ? (
+            <FieldHint>Modo de demostración: la contraseña no se verifica.</FieldHint>
+          ) : null}
         </Field>
 
         {/* Selector de cuenta de demostración: fija el rol activo. */}
-        <Field className="mb-5">
-          <FieldLabel htmlFor="cuenta">Acceder como</FieldLabel>
-          <Select
-            value={correoActual}
-            onValueChange={(valor) =>
-              formulario.setValue('correo', valor, { shouldValidate: true })
-            }
-          >
-            <SelectTrigger id="cuenta" aria-label="Seleccionar cuenta de demostración">
-              <SelectValue placeholder="Selecciona una cuenta" />
-            </SelectTrigger>
-            <SelectContent>
-              {(usuarios ?? []).map((cuenta) => (
-                <SelectItem key={cuenta.id} value={cuenta.correo}>
+        {DEMOSTRACION ? (
+          <Field className="mb-5">
+            <FieldLabel htmlFor="cuenta">Acceder como</FieldLabel>
+            <Select
+              id="cuenta"
+              className="w-full"
+              aria-label="Seleccionar cuenta de demostración"
+              placeholder="Selecciona una cuenta"
+              value={correoActual}
+              onChange={(valor: string) =>
+                formulario.setValue('correo', valor, { shouldValidate: true })
+              }
+              options={(usuarios ?? []).map((cuenta) => ({
+                value: cuenta.correo,
+                label: (
                   <span className="flex items-center gap-2">
-                    <Avatar
-                      nombre={cuenta.nombre}
-                      iniciales={cuenta.iniciales}
-                      color={cuenta.colorAvatar}
-                      tamano="md"
-                    />
+                    <AvatarUsuario usuario={cuenta} tamano="md" />
                     <span>
                       {cuenta.nombre}
                       <span className="text-ink-3"> · {ETIQUETA_ROL[cuenta.rol]}</span>
                     </span>
                   </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
+                ),
+              }))}
+            />
+          </Field>
+        ) : null}
 
         {error ? (
           <InlineNotification tono="error" className="mb-5">
@@ -180,13 +180,13 @@ export function LoginPage() {
         <div className="mb-6 flex items-center justify-end">
           <Link
             to={RUTAS.recuperar}
-            className="rounded-xs text-sm text-primary underline hover:text-primary-hover"
+            className="rounded-xs text-sm text-primary-dark underline hover:text-primary"
           >
             ¿Olvidaste tu contraseña?
           </Link>
         </div>
 
-        <Button type="submit" tamano="lg" className="w-full" disabled={cargando}>
+        <Button type="submit" tamano="lg" block disabled={cargando}>
           <Icono nombre="chevron" />
           {cargando ? 'Accediendo…' : 'Iniciar sesión'}
         </Button>

@@ -15,6 +15,13 @@
     @apply bg-canvas font-sans text-base text-ink antialiased;
   }
 
+  /* Línea gráfica: Montserrat para los títulos, Open Sans para el texto. */
+  h1,
+  h2,
+  h3 {
+    @apply font-display;
+  }
+
   /* Foco visible y consistente en todo el sistema (accesibilidad). */
   :focus-visible {
     @apply outline-none ring-2 ring-primary/60 ring-offset-1 ring-offset-surface;
@@ -46,9 +53,15 @@
   }
 }
 
-@layer components {
-  /* Tarjeta base reutilizada por casi todas las pantallas. */
-  .servis-card {
-    @apply rounded-lg border border-line bg-surface p-5;
-  }
+/*
+ * Ítem activo del menú lateral: además del relleno Vino, un filete con el
+ * rojo del logo a la izquierda. El Vino apenas contrasta con el marco
+ * (1,5:1); el filete supera 3:1, así el estado no depende sólo del relleno.
+ *
+ * Va fuera de `@layer`: Tailwind descarta las reglas de una capa cuyas clases
+ * no aparecen en el código, y las de Ant Design sólo existen en tiempo de
+ * ejecución.
+ */
+.ant-menu-dark .ant-menu-item-selected {
+  box-shadow: inset 3px 0 0 rgb(var(--c-chrome-filete)) !important;
 }

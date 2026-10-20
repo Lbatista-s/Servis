@@ -53,6 +53,7 @@ export function crearSolicitud(parcial: Partial<Solicitud> = {}): Solicitud {
     comentarioInterno: '',
     asignadaA: null,
     prioridad: 'normal',
+    documento: null,
     ...parcial,
   };
 }

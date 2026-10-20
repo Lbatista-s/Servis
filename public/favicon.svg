@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 116">
+  <title>SERVIS</title>
+  <polygon points="50,1 99,29.3 99,86.7 50,115 1,86.7 1,29.3" fill="#93070A" />
+  <g fill="none" stroke="#FFFFFF" stroke-width="12">
+    <path d="M60 38 H42 A11.25 11.25 0 0 0 42 60.5 H46" />
+    <path d="M56 60.5 H58 A11.25 11.25 0 0 1 58 83 H40" />
+  </g>
+  <g fill="#FFFFFF">
+    <polygon points="45,51.5 54,60.5 45,69.5" />
+    <rect x="63.5" y="32.5" width="11" height="11" rx="2" />
+    <rect x="25.5" y="77.5" width="11" height="11" rx="2" />
+  </g>
+</svg>

@@ -26,7 +26,9 @@ import { repositorios } from '@/data';
 import type { Actor, Adjunto, Servicio, Solicitud } from '@/domain/types';
 import { mensajeDeError } from '@/hooks/useAsync';
 import { useRevalidar } from '@/hooks/useDatos';
+import { contar } from '@/lib/texto';
 
+import { adjuntosDesde } from './adjuntos';
 import { CamposFormulario } from './CamposFormulario';
 import { camposDe, esquemaDe, valoresIniciales } from './formularios';
 
@@ -59,15 +61,8 @@ export function EdicionSolicitud({
   const obligatorios = servicio?.requisitos.filter((r) => r.obligatorio).length ?? 0;
   const requisitosCubiertos = adjuntos.length >= obligatorios;
 
-  function agregarArchivos(archivos: FileList) {
-    const nuevos: Adjunto[] = Array.from(archivos).map((archivo, indice) => ({
-      id: `adj-${Date.now()}-${indice}`,
-      nombre: archivo.name,
-      tamano: archivo.size,
-      tipo: archivo.type || 'application/octet-stream',
-      subidoEn: new Date().toISOString(),
-    }));
-    setAdjuntos((actuales) => [...actuales, ...nuevos]);
+  function agregarArchivos(archivos: readonly File[]) {
+    setAdjuntos((actuales) => [...actuales, ...adjuntosDesde(archivos)]);
   }
 
   async function guardar(valores: Record<string, string>) {
@@ -137,8 +132,9 @@ export function EdicionSolicitud({
 
         {servicio && !requisitosCubiertos ? (
           <InlineNotification tono="aviso" className="mt-4">
-            Este servicio exige {obligatorios} documento{obligatorios === 1 ? '' : 's'} obligatorio
-            {obligatorios === 1 ? '' : 's'}. Has adjuntado {adjuntos.length}.
+            Este servicio exige{' '}
+            {contar(obligatorios, 'documento obligatorio', 'documentos obligatorios')}. Has
+            adjuntado {adjuntos.length}.
           </InlineNotification>
         ) : null}
       </Card>

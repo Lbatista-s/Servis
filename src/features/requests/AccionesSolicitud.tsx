@@ -7,15 +7,11 @@
  * transiciones que exigen justificación abren un diálogo con validación.
  */
 
+import { Modal } from 'antd';
 import { useState } from 'react';
 
 import {
   Button,
-  Dialog,
-  DialogBody,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
   Field,
   FieldHint,
   FieldLabel,
@@ -131,68 +127,62 @@ export function AccionesSolicitud({
       ) : null}
 
       {/* Diálogo para las transiciones que exigen justificación. */}
-      <Dialog
+      <Modal
         open={transicionActiva !== null}
-        onOpenChange={(abierto) => {
-          if (!abierto) {
-            setTransicionActiva(null);
-            setError(null);
-          }
+        title={transicionActiva?.accion}
+        onCancel={() => {
+          setTransicionActiva(null);
+          setError(null);
         }}
+        destroyOnHidden
+        footer={
+          transicionActiva ? (
+            <div className="flex justify-end gap-2">
+              <Button variante="outline" onClick={() => setTransicionActiva(null)}>
+                Cancelar
+              </Button>
+              <Button
+                variante={transicionActiva.hacia === 'rechazada' ? 'danger' : 'warning'}
+                disabled={!comentarioValido || procesando}
+                onClick={() => ejecutar(transicionActiva, comentario)}
+              >
+                <Icono nombre={transicionActiva.hacia === 'rechazada' ? 'cerrar' : 'rotar'} />
+                {procesando ? 'Procesando…' : `Confirmar ${transicionActiva.accion.toLowerCase()}`}
+              </Button>
+            </div>
+          ) : null
+        }
       >
-        <DialogContent>
-          {transicionActiva ? (
-            <>
-              <DialogHeader
-                titulo={transicionActiva.accion}
-                descripcion={`Solicitud ${solicitud.id}`}
+        {transicionActiva ? (
+          <div className="flex flex-col gap-4">
+            <p className="text-base text-ink-3">Solicitud {solicitud.id}</p>
+
+            <InlineNotification tono="aviso">
+              Esta acción notificará al estudiante y quedará registrada de forma permanente en el
+              historial de la solicitud.
+            </InlineNotification>
+
+            <Field error={error ?? undefined}>
+              <FieldLabel requerido>
+                {transicionActiva.hacia === 'rechazada'
+                  ? 'Motivo del rechazo'
+                  : 'Motivo de la devolución'}
+              </FieldLabel>
+              <Textarea
+                value={comentario}
+                onChange={(evento) => setComentario(evento.target.value)}
+                placeholder="Describe con claridad el motivo para que el estudiante pueda tomar acción si aplica…"
+                autoSize={{ minRows: 4, maxRows: 10 }}
+                autoFocus
               />
-
-              <DialogBody>
-                <InlineNotification tono="aviso">
-                  Esta acción notificará al estudiante y quedará registrada de forma permanente en
-                  el historial de la solicitud.
-                </InlineNotification>
-
-                <Field error={error ?? undefined}>
-                  <FieldLabel requerido>
-                    {transicionActiva.hacia === 'rechazada'
-                      ? 'Motivo del rechazo'
-                      : 'Motivo de la devolución'}
-                  </FieldLabel>
-                  <Textarea
-                    value={comentario}
-                    onChange={(evento) => setComentario(evento.target.value)}
-                    placeholder="Describe con claridad el motivo para que el estudiante pueda tomar acción si aplica…"
-                    className="min-h-24"
-                    autoFocus
-                  />
-                  <FieldHint>
-                    Mínimo {minimo} caracteres ({longitud} escritos). Este texto será visible para
-                    el estudiante.
-                  </FieldHint>
-                </Field>
-              </DialogBody>
-
-              <DialogFooter>
-                <Button variante="outline" onClick={() => setTransicionActiva(null)}>
-                  Cancelar
-                </Button>
-                <Button
-                  variante={transicionActiva.hacia === 'rechazada' ? 'danger' : 'warning'}
-                  disabled={!comentarioValido || procesando}
-                  onClick={() => ejecutar(transicionActiva, comentario)}
-                >
-                  <Icono nombre={transicionActiva.hacia === 'rechazada' ? 'cerrar' : 'rotar'} />
-                  {procesando
-                    ? 'Procesando…'
-                    : `Confirmar ${transicionActiva.accion.toLowerCase()}`}
-                </Button>
-              </DialogFooter>
-            </>
-          ) : null}
-        </DialogContent>
-      </Dialog>
+              <FieldHint>
+                Mínimo {minimo} caracteres ({longitud} escritos). Este texto será visible para el
+                estudiante.
+              </FieldHint>
+            </Field>
+          </div>
+        ) : null}
+      </Modal>
     </>
   );
 }

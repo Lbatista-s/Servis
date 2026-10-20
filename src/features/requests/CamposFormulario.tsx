@@ -5,9 +5,17 @@
  * que ambos formularios se ven y validan igual sin duplicar el marcado.
  */
 
-import type { UseFormReturn } from 'react-hook-form';
+import { Controller, type UseFormReturn } from 'react-hook-form';
 
-import { Card, Field, FieldLabel, Input, SectionHeader, Textarea } from '@/components/ui';
+import {
+  Card,
+  DateInput,
+  Field,
+  FieldLabel,
+  Input,
+  SectionHeader,
+  Textarea,
+} from '@/components/ui';
 import { cn } from '@/lib/utils';
 
 import { agruparPorSeccion, type CampoFormulario } from './formularios';
@@ -49,18 +57,27 @@ export function CamposFormulario({
                 className={cn(campo.anchoCompleto && 'sm:col-span-2')}
               >
                 <FieldLabel requerido={campo.obligatorio}>{campo.etiqueta}</FieldLabel>
-                {campo.tipo === 'area' ? (
-                  <Textarea
-                    placeholder={campo.placeholder}
-                    {...formulario.register(campo.nombre)}
-                  />
-                ) : (
-                  <Input
-                    type={TIPO_HTML[campo.tipo]}
-                    placeholder={campo.placeholder}
-                    {...formulario.register(campo.nombre)}
-                  />
-                )}
+                <Controller
+                  control={formulario.control}
+                  name={campo.nombre}
+                  render={({ field }) =>
+                    campo.tipo === 'area' ? (
+                      <Textarea placeholder={campo.placeholder} {...field} />
+                    ) : campo.tipo === 'fecha' ? (
+                      <DateInput
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                      />
+                    ) : (
+                      <Input
+                        type={TIPO_HTML[campo.tipo]}
+                        placeholder={campo.placeholder}
+                        {...field}
+                      />
+                    )
+                  }
+                />
               </Field>
             ))}
           </div>

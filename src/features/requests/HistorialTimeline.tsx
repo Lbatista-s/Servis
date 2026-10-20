@@ -1,6 +1,6 @@
 /** Historial de una solicitud, renderizado como línea de tiempo. */
 
-import { Timeline, TimelineItem } from '@/components/ui';
+import { Timeline, type HitoTimeline } from '@/components/ui';
 import { esEstadoFinal } from '@/domain/requestStateMachine';
 import { ETIQUETA_ESTADO, type EntradaHistorial, type Solicitud } from '@/domain/types';
 import { formatearFechaHora } from '@/lib/format';
@@ -35,35 +35,27 @@ export function HistorialTimeline({ solicitud }: { solicitud: Solicitud }) {
   const entradas = solicitud.historial;
   const finalizada = esEstadoFinal(solicitud.estado);
 
-  return (
-    <Timeline>
-      {entradas.map((entrada, indice) => {
-        const esUltima = indice === entradas.length - 1;
-        return (
-          <TimelineItem
-            key={entrada.id}
-            // El último hito de una solicitud viva es el estado actual.
-            estado={esUltima && !finalizada ? 'activo' : 'completado'}
-            titulo={ETIQUETA_ESTADO[entrada.estadoNuevo]}
-            cuando={`${formatearFechaHora(entrada.fecha)} · ${entrada.autorNombre}`}
-            descripcion={descripcionDe(entrada)}
-            comentario={entrada.comentario}
-            ultimo={esUltima && finalizada}
-          />
-        );
-      })}
+  const hitos: HitoTimeline[] = entradas.map((entrada, indice) => ({
+    clave: entrada.id,
+    // El último hito de una solicitud viva es el estado actual.
+    estado: indice === entradas.length - 1 && !finalizada ? 'activo' : 'completado',
+    titulo: ETIQUETA_ESTADO[entrada.estadoNuevo],
+    cuando: `${formatearFechaHora(entrada.fecha)} · ${entrada.autorNombre}`,
+    descripcion: descripcionDe(entrada),
+    comentario: entrada.comentario,
+  }));
 
-      {/* Hito pendiente: sólo mientras la solicitud siga en curso. */}
-      {finalizada ? null : (
-        <TimelineItem
-          estado="pendiente"
-          titulo={siguienteHito(solicitud)}
-          cuando="Pendiente"
-          ultimo
-        />
-      )}
-    </Timeline>
-  );
+  // Hito pendiente: sólo mientras la solicitud siga en curso.
+  if (!finalizada) {
+    hitos.push({
+      clave: 'pendiente',
+      estado: 'pendiente',
+      titulo: siguienteHito(solicitud),
+      cuando: 'Pendiente',
+    });
+  }
+
+  return <Timeline hitos={hitos} />;
 }
 
 /** Texto del siguiente hito esperable según el estado actual. */

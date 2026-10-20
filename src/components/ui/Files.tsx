@@ -1,6 +1,7 @@
-/** Zona de carga y ficha de archivo adjunto. */
+/** Zona de carga (`Upload.Dragger` de Ant Design) y ficha de archivo adjunto. */
 
-import { useRef, type ChangeEvent, type ReactNode } from 'react';
+import { Upload } from 'antd';
+import type { ReactNode } from 'react';
 
 import type { Adjunto } from '@/domain/types';
 import { formatearFecha, formatearTamano } from '@/lib/format';
@@ -15,49 +16,29 @@ export function UploadZone({
   ayuda = 'PDF, JPG, PNG · Máximo 5 MB por archivo',
   disabled,
 }: {
-  onArchivos?: (archivos: FileList) => void;
+  onArchivos?: (archivos: File[]) => void;
   className?: string;
   titulo?: string;
   ayuda?: string;
   disabled?: boolean;
 }) {
-  const entrada = useRef<HTMLInputElement>(null);
-
-  function manejarCambio(evento: ChangeEvent<HTMLInputElement>) {
-    if (evento.target.files && evento.target.files.length > 0) {
-      onArchivos?.(evento.target.files);
-    }
-    // Permite volver a seleccionar el mismo archivo.
-    evento.target.value = '';
-  }
-
   return (
-    <>
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={() => entrada.current?.click()}
-        className={cn(
-          'w-full rounded-lg border-2 border-dashed border-line-2 bg-surface-2 px-6 py-8 text-center',
-          'transition-all hover:border-primary hover:bg-primary-light',
-          'disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-line-2 disabled:hover:bg-surface-2',
-          className,
-        )}
-      >
-        <Icono nombre="subir" className="mx-auto mb-3 h-8 w-8 text-primary" />
-        <span className="block text-md font-semibold text-ink">{titulo}</span>
-        <span className="mt-1 block text-sm text-ink-3">{ayuda}</span>
-      </button>
-      <input
-        ref={entrada}
-        type="file"
-        multiple
-        className="sr-only"
-        tabIndex={-1}
-        aria-hidden="true"
-        onChange={manejarCambio}
-      />
-    </>
+    <Upload.Dragger
+      className={className}
+      multiple
+      disabled={disabled}
+      showUploadList={false}
+      // Los archivos no se suben a ningún servidor: se entregan a la pantalla.
+      beforeUpload={(archivo, lote) => {
+        // Se notifica una sola vez por selección, con el lote completo.
+        if (archivo === lote[lote.length - 1]) onArchivos?.(lote);
+        return false;
+      }}
+    >
+      <Icono nombre="subir" className="mx-auto mb-3 h-8 w-8 text-primary" />
+      <span className="block text-md font-semibold text-ink">{titulo}</span>
+      <span className="mt-1 block text-sm text-ink-3">{ayuda}</span>
+    </Upload.Dragger>
   );
 }
 

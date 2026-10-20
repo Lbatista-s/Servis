@@ -7,8 +7,10 @@
  * siempre el mismo tipo de fallo venga de donde venga.
  */
 
+import { archivoRegistrado } from '@/data/archivos';
 import { aplicarTransicion, validarEdicion } from '@/domain/businessRules';
 import type { OpcionesTransicion } from '@/domain/businessRules';
+import { crearDocumento } from '@/domain/documentos';
 import type { Actor, EstadoSolicitud, Solicitud } from '@/domain/types';
 import type {
   CambiosSolicitud,
@@ -19,6 +21,7 @@ import type {
 import { ErrorRepositorio } from '@/data/repositories/types';
 
 import { actualizarAlmacen, leerAlmacen, resolver } from './almacen';
+import { generarDocumentoMuestra } from './documentoMuestra';
 
 /**
  * Genera el siguiente identificador correlativo con el prefijo del prototipo
@@ -87,6 +90,7 @@ export class RepositorioSolicitudesLocal implements IRequestRepository {
         comentarioInterno: '',
         asignadaA: null,
         prioridad: 'normal',
+        documento: null,
       };
 
       return [{ ...almacen, solicitudes: [solicitud, ...almacen.solicitudes] }, solicitud];
@@ -153,8 +157,22 @@ export class RepositorioSolicitudesLocal implements IRequestRepository {
           throw new ErrorRepositorio('REGLA_DE_NEGOCIO', transicion.error.mensaje);
         }
 
-        const actualizada =
+        let actualizada =
           hacia === 'en_revision' ? { ...transicion.valor, asignadaA: actor.id } : transicion.valor;
+
+        // Al completar, el sistema emite el documento de salida (en el backend
+        // lo genera el servidor; aquí basta con registrar su existencia).
+        if (hacia === 'completada') {
+          const servicio = almacen.servicios.find((s) => s.id === actual.servicioId);
+          actualizada = {
+            ...actualizada,
+            documento: crearDocumento(
+              id,
+              servicio?.nombre ?? actual.servicioId,
+              new Date(actualizada.actualizadaEn),
+            ),
+          };
+        }
 
         const solicitudes = [...almacen.solicitudes];
         solicitudes[indice] = actualizada;
@@ -183,5 +201,44 @@ export class RepositorioSolicitudesLocal implements IRequestRepository {
     } catch (error) {
       return Promise.reject(error);
     }
+  }
+
+  descargarAdjunto(solicitudId: string, adjuntoId: string): Promise<Blob> {
+    const solicitud = leerAlmacen().solicitudes.find((s) => s.id === solicitudId);
+    const adjunto = solicitud?.adjuntos.find((a) => a.id === adjuntoId);
+    if (!solicitud || !adjunto) {
+      return Promise.reject(new ErrorRepositorio('NO_ENCONTRADO', 'No existe ese adjunto.'));
+    }
+
+    // Sin servidor sólo se conserva el contenido de lo adjuntado en esta sesión.
+    const archivo = archivoRegistrado(adjuntoId);
+    if (!archivo) {
+      return Promise.reject(
+        new ErrorRepositorio(
+          'NO_ENCONTRADO',
+          `El contenido de «${adjunto.nombre}» no está disponible en el modo de demostración: ` +
+            'sólo se conservan los archivos adjuntados durante esta sesión.',
+        ),
+      );
+    }
+    return resolver(archivo);
+  }
+
+  async descargarDocumento(id: string): Promise<Blob> {
+    const almacen = leerAlmacen();
+    const solicitud = almacen.solicitudes.find((s) => s.id === id);
+    if (!solicitud) throw new ErrorRepositorio('NO_ENCONTRADO', `No existe la solicitud ${id}.`);
+    if (!solicitud.documento) {
+      throw new ErrorRepositorio(
+        'REGLA_DE_NEGOCIO',
+        'El documento estará disponible cuando la solicitud se complete.',
+      );
+    }
+
+    return generarDocumentoMuestra({
+      solicitud,
+      servicio: almacen.servicios.find((s) => s.id === solicitud.servicioId),
+      solicitante: almacen.usuarios.find((u) => u.id === solicitud.solicitanteId),
+    });
   }
 }

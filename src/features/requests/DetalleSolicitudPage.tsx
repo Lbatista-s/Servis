@@ -4,22 +4,26 @@ import { Navigate, useParams } from 'react-router-dom';
 
 import { RUTAS } from '@/app/rutas';
 import {
-  Avatar,
+  AvatarUsuario,
   Breadcrumb,
   Button,
+  ButtonLink,
   Card,
   EmptyState,
   FileChip,
   Icono,
   InlineNotification,
+  ListaDatos,
   Loading,
   SectionHeader,
   StatusBadge,
 } from '@/components/ui';
+import { repositorios } from '@/data';
 import { puedeEditarEstudiante } from '@/domain/businessRules';
 import { esEstadoFinal } from '@/domain/requestStateMachine';
 import { useActor, useUsuarioActual } from '@/features/auth/authStore';
 import { useServicio, useSolicitud } from '@/hooks/useDatos';
+import { useDescarga } from '@/hooks/useDescarga';
 import { formatearFecha } from '@/lib/format';
 
 import { AccionesSolicitud } from './AccionesSolicitud';
@@ -33,6 +37,7 @@ export function DetalleSolicitudPage() {
   const { datos: servicio } = useServicio(solicitud?.servicioId);
   const usuario = useUsuarioActual();
   const actor = useActor();
+  const { descargar, pendiente } = useDescarga();
 
   if (cargando) return <Loading mensaje="Cargando la solicitud…" />;
 
@@ -43,9 +48,7 @@ export function DetalleSolicitudPage() {
         titulo="No encontramos esa solicitud"
         descripcion="Es posible que haya sido eliminada o que el enlace sea incorrecto."
       >
-        <Button asChild>
-          <a href={RUTAS.inicio}>Volver al inicio</a>
-        </Button>
+        <ButtonLink to={RUTAS.inicio}>Volver al inicio</ButtonLink>
       </EmptyState>
     );
   }
@@ -58,6 +61,15 @@ export function DetalleSolicitudPage() {
   const campos = camposDe(solicitud.servicioId);
   // El dominio decide si esta solicitud es editable ahora mismo por este actor.
   const editable = actor !== null && puedeEditarEstudiante(solicitud, actor);
+  const { documento } = solicitud;
+  const descargarDocumento = () =>
+    documento
+      ? descargar({
+          clave: 'documento',
+          nombre: documento.nombre,
+          obtener: () => repositorios.solicitudes.descargarDocumento(solicitud.id),
+        })
+      : undefined;
   const ultimoComentario = [...solicitud.historial]
     .reverse()
     .find((entrada) => entrada.comentario && entrada.estadoNuevo === solicitud.estado);
@@ -82,12 +94,7 @@ export function DetalleSolicitudPage() {
             {usuario ? (
               <>
                 {' · '}
-                <Avatar
-                  nombre={usuario.nombre}
-                  iniciales={usuario.iniciales}
-                  color={usuario.colorAvatar}
-                  tamano="xs"
-                />
+                <AvatarUsuario usuario={usuario} tamano="xs" />
                 {usuario.nombre}
               </>
             ) : null}
@@ -95,10 +102,15 @@ export function DetalleSolicitudPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
           <StatusBadge estado={solicitud.estado} />
-          {solicitud.estado === 'completada' ? (
-            <Button variante="outline" tamano="sm">
+          {documento ? (
+            <Button
+              variante="outline"
+              tamano="sm"
+              onClick={descargarDocumento}
+              disabled={pendiente === 'documento'}
+            >
               <Icono nombre="descargar" />
-              Descargar documento
+              {pendiente === 'documento' ? 'Preparando…' : 'Descargar documento'}
             </Button>
           ) : null}
         </div>
@@ -133,20 +145,14 @@ export function DetalleSolicitudPage() {
           ) : (
             <Card>
               <SectionHeader titulo="Datos enviados" />
-              <dl className="grid gap-3 sm:grid-cols-2">
-                {campos.map((campo) => (
-                  <div key={campo.nombre}>
-                    <dt className="text-xs font-semibold uppercase tracking-wide text-ink-3">
-                      {campo.etiqueta}
-                    </dt>
-                    <dd className="mt-0.5 text-base text-ink">
-                      {formatearValorCampo(campo, solicitud.datosFormulario[campo.nombre]) || (
-                        <span className="text-ink-4">Sin completar</span>
-                      )}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
+              <ListaDatos
+                vacio="Sin completar"
+                datos={campos.map((campo) => ({
+                  etiqueta: campo.etiqueta,
+                  valor: formatearValorCampo(campo, solicitud.datosFormulario[campo.nombre]),
+                  anchoCompleto: campo.anchoCompleto,
+                }))}
+              />
             </Card>
           )}
 
@@ -171,7 +177,21 @@ export function DetalleSolicitudPage() {
                   {solicitud.adjuntos.map((adjunto) => (
                     <li key={adjunto.id}>
                       <FileChip adjunto={adjunto}>
-                        <Button variante="ghost" tamano="icon" aria-label={`Ver ${adjunto.nombre}`}>
+                        <Button
+                          variante="ghost"
+                          tamano="icon"
+                          aria-label={`Ver ${adjunto.nombre}`}
+                          disabled={pendiente === adjunto.id}
+                          onClick={() =>
+                            descargar({
+                              clave: adjunto.id,
+                              nombre: adjunto.nombre,
+                              modo: 'abrir',
+                              obtener: () =>
+                                repositorios.solicitudes.descargarAdjunto(solicitud.id, adjunto.id),
+                            })
+                          }
+                        >
                           <Icono nombre="ojo" />
                         </Button>
                       </FileChip>
@@ -182,12 +202,17 @@ export function DetalleSolicitudPage() {
             </Card>
           )}
 
-          <Card className={solicitud.estado === 'completada' ? undefined : 'opacity-60'}>
+          <Card className={documento ? undefined : 'opacity-60'}>
             <SectionHeader titulo="Documento generado" />
-            {solicitud.estado === 'completada' ? (
-              <Button variante="outline" className="w-full">
+            {documento ? (
+              <Button
+                variante="outline"
+                className="w-full"
+                onClick={descargarDocumento}
+                disabled={pendiente === 'documento'}
+              >
                 <Icono nombre="descargar" />
-                {servicio?.plantilla ?? 'documento.docx'}
+                <span className="truncate">{documento.nombre}</span>
               </Button>
             ) : (
               <p className="py-4 text-center text-base text-ink-3">
