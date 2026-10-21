@@ -332,7 +332,7 @@ revisión sin tocar la principal.
 npm test
 ```
 
-Son 202 pruebas, que cubren:
+Son 205 pruebas, que cubren:
 
 - **Máquina de estados**: las 81 combinaciones de estados frente a la tabla de la especificación,
   la autorización por rol y las transiciones que exigen comentario.

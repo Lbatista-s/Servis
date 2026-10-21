@@ -67,7 +67,7 @@ Resumen para Render:
    ```json
    "rewrites": [
      { "source": "/api/:path*", "destination": "https://servis-api.onrender.com/api/:path*" },
-     { "source": "/(.*)", "destination": "/index.html" }
+     { "source": "/((?!api/).*)", "destination": "/index.html" }
    ]
    ```
 2. En Vercel, en **Settings → Environment Variables**:

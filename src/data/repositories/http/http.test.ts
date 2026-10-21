@@ -290,6 +290,37 @@ describe('errores', () => {
     await expect(usuarios.listar()).rejects.toMatchObject({ codigo: 'ERROR_RED' });
   });
 
+  it.each([200, 404])(
+    'una página web con estado %i se trata como que la API no respondió',
+    async (estado) => {
+      // Lo que devuelve la reescritura de la SPA (o el 404 del hosting) cuando
+      // la petición no llega a la API.
+      servidor(
+        () =>
+          new Response('<!doctype html><html></html>', {
+            status: estado,
+            headers: { 'Content-Type': 'text/html; charset=utf-8' },
+          }),
+      );
+      await expect(usuarios.listar()).rejects.toMatchObject({
+        codigo: 'ERROR_RED',
+        message:
+          'El servidor no respondió como se esperaba. Recarga la página e inténtalo de nuevo.',
+      });
+    },
+  );
+
+  it('un 403 en HTML de Django (p. ej. CSRF) sigue siendo «prohibido»', async () => {
+    servidor(
+      () =>
+        new Response('<h1>Forbidden (403)</h1>', {
+          status: 403,
+          headers: { 'Content-Type': 'text/html' },
+        }),
+    );
+    await expect(usuarios.listar()).rejects.toMatchObject({ codigo: 'PROHIBIDO' });
+  });
+
   it('un 401 cierra la sesión', async () => {
     const caducada = vi.fn();
     alCaducarSesion(caducada);
