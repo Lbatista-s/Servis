@@ -6,7 +6,7 @@ import type { ReactNode } from 'react';
 import { cv } from '@/theme/css';
 
 import { Button } from './Button';
-import { Icono, type NombreIcono } from './Icons';
+import { Icono } from './Icons';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Aviso en línea
@@ -47,13 +47,13 @@ export function InlineNotification({
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function EmptyState({
-  icono = 'bandeja',
+  icono = '📭',
   titulo,
   descripcion,
   children,
   className,
 }: {
-  icono?: NombreIcono;
+  icono?: string;
   titulo: string;
   descripcion?: string;
   children?: ReactNode;
@@ -63,7 +63,11 @@ export function EmptyState({
     <Empty
       className={className}
       style={{ paddingBlock: 40, paddingInline: 24 }}
-      image={<Icono nombre={icono} className="mx-auto h-6 w-6 text-ink-4" />}
+      image={
+        <span className="text-4xl" aria-hidden="true">
+          {icono}
+        </span>
+      }
       styles={{ image: { height: 'auto', marginBottom: 8 } }}
       description={
         <span className="flex flex-col items-center gap-1">
@@ -96,7 +100,7 @@ export function EstadoError({
 }) {
   return (
     <div role="alert" className={className}>
-      <EmptyState icono="alerta" titulo={titulo} descripcion={mensaje ?? undefined}>
+      <EmptyState icono="⚠️" titulo={titulo} descripcion={mensaje ?? undefined}>
         {onReintentar ? (
           <Button onClick={onReintentar}>
             <Icono nombre="rotar" />

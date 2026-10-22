@@ -10,7 +10,7 @@ export function PaginaNoEncontrada() {
       <Logotipo formato="compacto" alto={48} version={modo === 'oscuro' ? 'negativo' : 'color'} />
       <div className="w-full max-w-lg rounded-lg border border-line bg-surface">
         <EmptyState
-          icono="buscar"
+          icono="🧭"
           titulo="No encontramos esta página"
           descripcion="Es posible que el enlace esté mal escrito o que la página ya no exista."
         >

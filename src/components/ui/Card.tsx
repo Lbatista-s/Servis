@@ -10,6 +10,11 @@ import { cv } from '@/theme/css';
 const FONDO = {
   superficie: undefined,
   suave: { background: cv('surface.2') },
+  institucional: {
+    // Gris INTEC del marco con el Vino asomando en la esquina.
+    background: `linear-gradient(135deg, ${cv('chrome')} 55%, ${cv('chrome.activo')})`,
+    borderColor: 'transparent',
+  },
 } satisfies Record<string, CSSProperties | undefined>;
 
 export interface CardProps extends Omit<AntCardProps, 'variant'> {
@@ -103,9 +108,8 @@ export function NoteBlock({ children, className }: { children: ReactNode; classN
   return (
     <div
       className={cn(
-        // Nota neutra: un filete a la izquierda basta para separarla del resto.
-        'border-l-2 border-line-2 bg-surface-2 px-4 py-3 text-base text-ink-2',
-        '[&_strong]:text-ink',
+        'rounded-r border-l-[3px] border-primary bg-primary-light px-4 py-3 text-base text-ink-2',
+        '[&_strong]:text-primary-dark',
         className,
       )}
     >

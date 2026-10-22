@@ -57,8 +57,13 @@ export function RecuperarPage() {
 
   return (
     <AuthLayout
-      titular="Recupera tu acceso"
-      descripcion="Te enviaremos un enlace al correo institucional registrado. El enlace expira en 30 minutos."
+      titular="Recupera tu acceso de forma"
+      destacado="segura y rápida."
+      descripcion="Te enviaremos instrucciones al correo institucional registrado en el sistema SERVIS. El enlace expira en 30 minutos."
+      estadisticas={[
+        { valor: '30', etiqueta: 'Minutos de validez' },
+        { valor: 'TLS', etiqueta: 'Cifrado seguro' },
+      ]}
     >
       <ButtonLink to={RUTAS.login} variante="ghost" tamano="sm" className="mb-5 -ml-3">
         ← Volver al inicio de sesión

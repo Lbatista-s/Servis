@@ -159,7 +159,6 @@ export function BandejaPage() {
       key: 'accion',
       render: (_, solicitud) => (
         <Button
-          variante="outline"
           tamano="sm"
           onClick={(evento) => {
             evento.stopPropagation();
@@ -213,15 +212,40 @@ export function BandejaPage() {
       </PageHeader>
 
       <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-5">
-        <StatCard etiqueta="Pendientes" valor={cuenta(['enviada'])} tono="info" />
+        <StatCard
+          etiqueta="Pendientes"
+          valor={cuenta(['enviada'])}
+          icono="bandeja"
+          fondoIcono="bg-info-light"
+          tono="info"
+        />
         <StatCard
           etiqueta="En revisión"
           valor={cuenta(['en_revision', 'corregida'])}
+          icono="ojo"
+          fondoIcono="bg-warning-light"
           tono="warning"
         />
-        <StatCard etiqueta="Aprobadas" valor={cuenta(['aprobada'])} tono="info" />
-        <StatCard etiqueta="Rechazadas" valor={cuenta(['rechazada'])} tono="danger" />
-        <StatCard etiqueta="Completadas" valor={cuenta(['completada'])} tono="success" />
+        <StatCard
+          etiqueta="Aprobadas"
+          valor={cuenta(['aprobada'])}
+          icono="verificar"
+          fondoIcono="bg-success-light"
+          tono="success"
+        />
+        <StatCard
+          etiqueta="Rechazadas"
+          valor={cuenta(['rechazada'])}
+          icono="cerrar"
+          fondoIcono="bg-danger-light"
+          tono="danger"
+        />
+        <StatCard
+          etiqueta="Completadas"
+          valor={cuenta(['completada'])}
+          icono="descargar"
+          fondoIcono="bg-emerald-light"
+        />
       </div>
 
       <div className="mb-5 flex flex-wrap items-center gap-2">
@@ -274,7 +298,7 @@ export function BandejaPage() {
       ) : lista.length === 0 ? (
         <Card>
           <EmptyState
-            icono="bandeja"
+            icono="📭"
             titulo="No hay solicitudes que coincidan"
             descripcion="Ajusta los filtros o el término de búsqueda para ver más resultados."
           />

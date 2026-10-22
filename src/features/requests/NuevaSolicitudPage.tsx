@@ -23,7 +23,6 @@ import {
   InlineNotification,
   ListaDatos,
   NoteBlock,
-  PageHeader,
   SectionHeader,
   Sobretitulo,
   Steps,
@@ -137,14 +136,19 @@ export function NuevaSolicitudPage() {
 
       <div className="grid gap-6 xl:grid-cols-[1fr_300px] xl:items-start">
         <div>
-          <PageHeader
-            titulo={servicio.nombre}
-            subtitulo={
-              pideDocumentos
-                ? 'Completa el formulario y adjunta los documentos requeridos.'
-                : 'Completa el formulario; este servicio no pide documentos.'
-            }
-          />
+          <div className="mb-6 flex items-center gap-3 rounded-md border border-primary-light-2 bg-primary-light px-4 py-3.5">
+            <span aria-hidden="true" className="text-3xl">
+              {servicio.icono}
+            </span>
+            <div>
+              <p className="font-semibold text-ink">{servicio.nombre}</p>
+              <p className="text-sm text-ink-3">
+                {pideDocumentos
+                  ? 'Completa el formulario y adjunta los documentos requeridos para procesar tu solicitud.'
+                  : 'Completa el formulario para procesar tu solicitud; este servicio no pide documentos.'}
+              </p>
+            </div>
+          </div>
 
           <Steps pasos={PASOS} actual={paso} className="mb-7" />
 

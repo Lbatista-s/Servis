@@ -175,7 +175,7 @@ export function UsuariosPage() {
       ) : lista.length === 0 ? (
         <Card>
           <EmptyState
-            icono="usuario"
+            icono="👤"
             titulo="No hay usuarios que coincidan"
             descripcion="Ajusta los filtros o el término de búsqueda."
           />
