@@ -57,8 +57,10 @@ títulos y Open Sans para el texto.
   línea; `src/theme/antd.ts` genera el tema de Ant Design de cada modo.
 - El tema arranca en claro y se cambia con el botón sol/luna de la barra superior o del acceso; la
   elección se recuerda en el navegador.
-- `src/components/ui/Logotipo.tsx` es el logotipo en vector: logo comercial oficial de INTEC más el
-  hexágono de SERVIS (125 %), según la regla de logos auxiliares del manual.
+- `src/components/ui/Logotipo.tsx` es el logotipo en vector, según el «Modelo de logos auxiliares»
+  del manual: logo comercial oficial de INTEC, hexágono de SERVIS al 125 % apoyado en su lado
+  superior derecho y nombre a la derecha del logo de INTEC (Vino en fondos claros, blanco en el
+  marco). Una prueba comprueba la geometría.
 - Todo par de texto y fondo de ambas paletas supera 4,5:1; lo comprueba `src/theme/tema.test.tsx`.
 
 ---
@@ -332,7 +334,7 @@ revisión sin tocar la principal.
 npm test
 ```
 
-Son 205 pruebas, que cubren:
+Son 213 pruebas, que cubren:
 
 - **Máquina de estados**: las 81 combinaciones de estados frente a la tabla de la especificación,
   la autorización por rol y las transiciones que exigen comentario.
