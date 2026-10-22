@@ -87,6 +87,19 @@ export interface Usuario {
   ultimoAcceso: string;
 }
 
+/**
+ * Documento que SERVIS puede pedir en una solicitud (cédula, récord de notas…).
+ * El catálogo es único y cada servicio elige cuáles pide.
+ */
+export interface TipoDocumento {
+  id: string;
+  nombre: string;
+}
+
+/**
+ * Documento que pide un servicio. `id` es el del `TipoDocumento` del catálogo y
+ * `descripcion` copia su nombre, para mostrarlo sin consultar el catálogo.
+ */
 export interface Requisito {
   id: string;
   descripcion: string;
@@ -128,8 +141,8 @@ export interface Adjunto {
 
 /**
  * Documento oficial que el sistema entrega al completar la solicitud (carta de
- * pasantía, certificación…). Lo genera el servidor; en modo local se genera en
- * el navegador un documento de muestra sin validez.
+ * pasantía, certificación…). Lo genera el servidor; la API simulada entrega un
+ * documento de muestra sin validez.
  */
 export interface Documento {
   nombre: string;
@@ -149,6 +162,19 @@ export interface EntradaHistorial {
   readonly estadoAnterior: EstadoSolicitud | null;
   readonly estadoNuevo: EstadoSolicitud;
   readonly comentario: string | null;
+}
+
+/**
+ * Aviso para un usuario sobre una solicitud: al estudiante, cuando cambia el
+ * estado de la suya; al personal, cuando llega una nueva o corregida.
+ */
+export interface Notificacion {
+  readonly id: string;
+  readonly solicitudId: string;
+  readonly titulo: string;
+  readonly detalle: string;
+  readonly fecha: string;
+  readonly leida: boolean;
 }
 
 export type Prioridad = 'normal' | 'alta';

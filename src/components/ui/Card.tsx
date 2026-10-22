@@ -84,7 +84,9 @@ export function PageHeader({
         <h1 className="text-4xl font-bold text-ink">{titulo}</h1>
         {subtitulo ? <p className="mt-1 text-md text-ink-3">{subtitulo}</p> : null}
       </div>
-      {children ? <div className="flex shrink-0 flex-wrap gap-2">{children}</div> : null}
+      {children ? (
+        <div className="flex shrink-0 flex-wrap items-center gap-2">{children}</div>
+      ) : null}
     </div>
   );
 }

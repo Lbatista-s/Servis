@@ -18,7 +18,7 @@ import {
 } from '@/components/ui';
 import { repositorios } from '@/data';
 import { COLORES_AVATAR, ETIQUETA_ROL, ROLES } from '@/domain/types';
-import { mensajeDeError } from '@/hooks/useAsync';
+import { mensajeDeError } from '@/lib/errores';
 import { useRevalidar } from '@/hooks/useDatos';
 import { correoInstitucional, DOMINIO_INSTITUCIONAL } from '@/lib/esquemas';
 import { iniciales } from '@/lib/utils';
@@ -69,7 +69,7 @@ export function NuevoUsuarioDialog() {
           : {}),
       });
 
-      revalidar();
+      revalidar('usuarios');
       avisos.exito('Usuario creado', `${datos.nombre} ya puede acceder al sistema.`);
       formulario.reset();
       setAbierto(false);

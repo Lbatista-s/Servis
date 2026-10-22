@@ -58,6 +58,9 @@ function codigoDesdeEstado(estado: number): CodigoErrorRepositorio {
   return 'REGLA_DE_NEGOCIO';
 }
 
+const MENSAJE_SIN_API =
+  'El servidor no respondió como se esperaba. Recarga la página e inténtalo de nuevo.';
+
 const MENSAJE_POR_CODIGO: Partial<Record<CodigoErrorRepositorio, string>> = {
   NO_AUTENTICADO: 'Tu sesión expiró. Vuelve a iniciar sesión.',
   PROHIBIDO: 'No tienes permiso para realizar esta acción.',
@@ -169,6 +172,16 @@ export async function peticion<T>(ruta: string, opciones: OpcionesPeticion = {})
     respuesta = await enviar(ruta, opciones);
   }
 
+  // DRF responde en JSON también los 404. Una página web con éxito o con 404
+  // significa que la petición no alcanzó la API: la reescritura de la SPA
+  // devolvió `index.html`, o el hosting su página de «no encontrado».
+  if (
+    (respuesta.ok || respuesta.status === 404) &&
+    respuesta.headers.get('content-type')?.includes('text/html')
+  ) {
+    throw new ErrorRepositorio('ERROR_RED', MENSAJE_SIN_API);
+  }
+
   if (!respuesta.ok) {
     if (respuesta.status === 401 && sesionRequerida) {
       guardarTokens(null);
@@ -234,12 +247,4 @@ export async function detalleOpcional<T>(ruta: string): Promise<T | null> {
     if (error instanceof ErrorRepositorio && error.codigo === 'NO_ENCONTRADO') return null;
     throw error;
   }
-}
-
-/** Error uniforme para lo que la API no ofrece. */
-export function noImplementado(metodo: string): never {
-  throw new ErrorRepositorio(
-    'NO_IMPLEMENTADO',
-    `La API no ofrece «${metodo}». Esta acción sólo existe en el modo de demostración.`,
-  );
 }

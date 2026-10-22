@@ -8,13 +8,15 @@ import {
   Badge,
   CampoBusqueda,
   EmptyState,
+  EsqueletoTarjetas,
+  EstadoError,
   Icono,
-  Loading,
   PageHeader,
   SelectorFiltro,
 } from '@/components/ui';
 import { ETIQUETA_CATEGORIA, type CategoriaServicio } from '@/domain/types';
 import { useServicios } from '@/hooks/useDatos';
+import { useRetardado } from '@/hooks/useRetardado';
 import { opcionesConTodos, TODOS, type ConTodos } from '@/lib/filtros';
 import { contar } from '@/lib/texto';
 
@@ -22,10 +24,16 @@ export function CatalogoPage() {
   const [busqueda, setBusqueda] = useState('');
   const [categoria, setCategoria] = useState<ConTodos<CategoriaServicio>>(TODOS);
 
-  const { datos: servicios, cargando } = useServicios({
+  const termino = useRetardado(busqueda.trim());
+  const {
+    datos: servicios,
+    cargando,
+    error,
+    recargar,
+  } = useServicios({
     soloActivos: true,
     ...(categoria !== TODOS ? { categoria } : {}),
-    ...(busqueda ? { busqueda } : {}),
+    ...(termino ? { busqueda: termino } : {}),
   });
 
   const lista = servicios ?? [];
@@ -58,7 +66,9 @@ export function CatalogoPage() {
       </div>
 
       {cargando ? (
-        <Loading mensaje="Cargando el catálogo…" />
+        <EsqueletoTarjetas mensaje="Cargando el catálogo…" conEncabezado={false} />
+      ) : error ? (
+        <EstadoError mensaje={error} onReintentar={recargar} />
       ) : lista.length === 0 ? (
         <EmptyState
           icono="🔍"

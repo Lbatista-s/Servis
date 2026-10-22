@@ -24,7 +24,7 @@ import { repositorios } from '@/data';
 import { accionesPara } from '@/domain/businessRules';
 import type { Transicion } from '@/domain/requestStateMachine';
 import type { Actor, EstadoSolicitud, Solicitud } from '@/domain/types';
-import { mensajeDeError } from '@/hooks/useAsync';
+import { mensajeDeError } from '@/lib/errores';
 import { useRevalidar } from '@/hooks/useDatos';
 
 import type { ButtonProps } from '@/components/ui';
@@ -72,7 +72,7 @@ export function AccionesSolicitud({
       await repositorios.solicitudes.transicionar(solicitud.id, transicion.hacia, actor, {
         comentario: texto,
       });
-      revalidar();
+      revalidar('solicitudes');
       setTransicionActiva(null);
       setComentario('');
       avisos.exito(`${transicion.accion} — ${solicitud.id}`, 'El historial quedó registrado.');

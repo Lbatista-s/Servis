@@ -1,43 +1,32 @@
 /**
  * Pantalla 1 — Inicio de sesión.
  *
- * Con la API real (`VITE_DATA_SOURCE=http`) el correo y la contraseña los
- * valida Django. En el modo de demostración la contraseña no se comprueba y un
- * selector permite entrar con cualquiera de las cuentas de ejemplo.
+ * El correo y la contraseña los valida la API. Mientras responde el servidor
+ * simulado, un aviso indica la contraseña común y permite rellenar el
+ * formulario con una cuenta de cada rol.
  */
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Input as AntInput, Select } from 'antd';
+import { Input as AntInput } from 'antd';
 import { useEffect, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
 import { INICIO_POR_ROL, RUTAS } from '@/app/rutas';
-import {
-  AvatarUsuario,
-  Button,
-  Field,
-  FieldHint,
-  FieldLabel,
-  Icono,
-  InlineNotification,
-  Input,
-} from '@/components/ui';
-import { fuenteActiva } from '@/data';
+import { Button, Field, FieldLabel, Icono, InlineNotification, Input } from '@/components/ui';
+import { entorno } from '@/config/entorno';
 import { ETIQUETA_ROL } from '@/domain/types';
-import { useServicios, useUsuarios } from '@/hooks/useDatos';
-
+import { useServicios } from '@/hooks/useDatos';
 import { correoInstitucional, EJEMPLO_CORREO } from '@/lib/esquemas';
+import { CONTRASENA_SIMULADA, CUENTAS_SIMULADAS } from '@/mocks/cuentas';
 
 import { AuthLayout } from './AuthLayout';
 import { useAuth, useUsuarioActual } from './authStore';
 
-const DEMOSTRACION = fuenteActiva() === 'local';
-
 const esquemaAcceso = z.object({
   correo: correoInstitucional(),
-  contrasena: DEMOSTRACION ? z.string() : z.string().min(1, 'Escribe tu contraseña.'),
+  contrasena: z.string().min(1, 'Escribe tu contraseña.'),
 });
 
 type DatosAcceso = z.infer<typeof esquemaAcceso>;
@@ -45,16 +34,13 @@ type DatosAcceso = z.infer<typeof esquemaAcceso>;
 export function LoginPage() {
   const usuario = useUsuarioActual();
   const { iniciarSesion, cargando, error, limpiarError } = useAuth();
-  const { datos: usuarios } = useUsuarios({ activo: true }, DEMOSTRACION);
   const { datos: servicios } = useServicios({ soloActivos: true });
   const navegar = useNavigate();
   const ubicacion = useLocation();
 
   const formulario = useForm<DatosAcceso>({
     resolver: zodResolver(esquemaAcceso),
-    defaultValues: DEMOSTRACION
-      ? { correo: 'l.batista@intec.edu.do', contrasena: 'demostracion' }
-      : { correo: '', contrasena: '' },
+    defaultValues: { correo: '', contrasena: '' },
   });
 
   const correoActual = formulario.watch('correo');
@@ -70,6 +56,11 @@ export function LoginPage() {
   if (usuario) {
     const destino = (ubicacion.state as { desde?: string } | null)?.desde;
     return <Navigate to={destino ?? INICIO_POR_ROL[usuario.rol]} replace />;
+  }
+
+  function usarCuenta(correo: string) {
+    formulario.setValue('correo', correo, { shouldValidate: true });
+    formulario.setValue('contrasena', CONTRASENA_SIMULADA, { shouldValidate: true });
   }
 
   async function enviar(datos: DatosAcceso) {
@@ -103,6 +94,30 @@ export function LoginPage() {
         Usa tu correo institucional INTEC para acceder.
       </p>
 
+      {entorno().apiSimulada ? (
+        <InlineNotification tono="info" className="!mb-6">
+          <p className="font-semibold">Entorno con datos simulados</p>
+          <p className="font-normal">
+            Todas las cuentas usan la contraseña{' '}
+            <code className="font-mono font-semibold">{CONTRASENA_SIMULADA}</code>. Elige una para
+            rellenar el formulario:
+          </p>
+          <ul className="mt-2 flex list-none p-0 flex-wrap gap-1.5">
+            {CUENTAS_SIMULADAS.map((cuenta) => (
+              <li key={cuenta.correo}>
+                <button
+                  type="button"
+                  onClick={() => usarCuenta(cuenta.correo)}
+                  className="rounded-sm border border-line bg-surface px-2 py-0.5 text-xs font-medium text-ink-2 hover:border-primary hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                >
+                  {ETIQUETA_ROL[cuenta.rol]}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </InlineNotification>
+      ) : null}
+
       <form onSubmit={formulario.handleSubmit(enviar)} noValidate>
         <Field error={formulario.formState.errors.correo?.message} className="mb-4">
           <FieldLabel requerido>Correo institucional</FieldLabel>
@@ -122,7 +137,7 @@ export function LoginPage() {
         </Field>
 
         <Field error={formulario.formState.errors.contrasena?.message} className="mb-4">
-          <FieldLabel htmlFor="clave" requerido={!DEMOSTRACION}>
+          <FieldLabel htmlFor="clave" requerido>
             Contraseña
           </FieldLabel>
           <Controller
@@ -137,39 +152,7 @@ export function LoginPage() {
               />
             )}
           />
-          {DEMOSTRACION ? (
-            <FieldHint>Modo de demostración: la contraseña no se verifica.</FieldHint>
-          ) : null}
         </Field>
-
-        {/* Selector de cuenta de demostración: fija el rol activo. */}
-        {DEMOSTRACION ? (
-          <Field className="mb-5">
-            <FieldLabel htmlFor="cuenta">Acceder como</FieldLabel>
-            <Select
-              id="cuenta"
-              className="w-full"
-              aria-label="Seleccionar cuenta de demostración"
-              placeholder="Selecciona una cuenta"
-              value={correoActual}
-              onChange={(valor: string) =>
-                formulario.setValue('correo', valor, { shouldValidate: true })
-              }
-              options={(usuarios ?? []).map((cuenta) => ({
-                value: cuenta.correo,
-                label: (
-                  <span className="flex items-center gap-2">
-                    <AvatarUsuario usuario={cuenta} tamano="md" />
-                    <span>
-                      {cuenta.nombre}
-                      <span className="text-ink-3"> · {ETIQUETA_ROL[cuenta.rol]}</span>
-                    </span>
-                  </span>
-                ),
-              }))}
-            />
-          </Field>
-        ) : null}
 
         {error ? (
           <InlineNotification tono="error" className="mb-5">

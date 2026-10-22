@@ -1,6 +1,6 @@
 /**
  * Prueba de integración de interfaz: la botonera de acciones y el diálogo de
- * justificación, sobre repositorios reales respaldados por localStorage.
+ * justificación, sobre los repositorios HTTP y la API simulada.
  */
 
 import { render, screen, waitFor, within } from '@testing-library/react';
@@ -9,8 +9,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { ProveedorUI } from '@/components/ui';
 import { repositorios } from '@/data';
-import { restablecerAlmacen } from '@/data/repositories/localStorage';
 import type { Actor, Solicitud } from '@/domain/types';
+import { iniciarSesionSimulada } from '@/mocks/base';
 
 import { AccionesSolicitud } from './AccionesSolicitud';
 
@@ -29,16 +29,15 @@ function renderizar(solicitud: Solicitud, actor: Actor) {
   );
 }
 
-/** SRV-1042 está en revisión en los datos de demostración. */
+/** SRV-1042 está en revisión en los datos simulados. */
 async function solicitudEnRevision(): Promise<Solicitud> {
   const solicitud = await repositorios.solicitudes.obtener('SRV-1042');
-  if (!solicitud) throw new Error('Falta SRV-1042 en los datos de demostración.');
+  if (!solicitud) throw new Error('Falta SRV-1042 en los datos simulados.');
   return solicitud;
 }
 
 beforeEach(() => {
-  localStorage.clear();
-  restablecerAlmacen();
+  iniciarSesionSimulada(PERSONAL.id);
 });
 
 describe('AccionesSolicitud', () => {

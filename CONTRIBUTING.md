@@ -81,9 +81,20 @@ piensa a qué parte del sistema pertenece:
 - **Regla de negocio o del ciclo de vida** → `src/domain/`. Código puro, sin React, con su prueba.
 - **Indicador del cuadro de mando** → `src/domain/indicadores/` (definición y cálculo) y su
   explicación en `docs/cuadro-de-mando.md`.
-- **Lectura o escritura de datos** → `src/data/repositories/`. Nunca desde un componente.
+- **Lectura de datos en una pantalla** → un hook de TanStack Query en `src/hooks/useDatos.ts`
+  (clave que empieza por el recurso: `['solicitudes', …]`). Tras una escritura, invalida sólo el
+  recurso afectado con `useRevalidar()('solicitudes')`.
+- **Escritura de datos** → el repositorio (`repositorios.solicitudes.guardar…`). Nunca `fetch`
+  desde un componente.
 - **Ruta de la API o nombre de un campo del JSON** → sólo `src/data/repositories/http/rutas.ts` y
   `mapeadores.ts`; el contrato está en `docs/api.md`.
+- **Función que necesita un endpoint nuevo** → el endpoint va, en el mismo PR, a:
+  1. `docs/api.md` (contrato para el backend);
+  2. `src/data/repositories/types.ts` y `http/` (rutas, mapeador y repositorio);
+  3. la API simulada, `src/mocks/handlers.ts`, con su prueba en `src/mocks/apiSimulada.test.ts`.
+
+  Así la función se puede usar y probar antes de que exista en Django.
+
 - **Pantalla o componente de una funcionalidad** → `src/features/<funcionalidad>/`.
 - **Componente reutilizable en varias pantallas** → `src/components/ui/`.
 - **Utilidad sin dependencias de React** → `src/lib/`.
@@ -95,14 +106,23 @@ piensa a qué parte del sistema pertenece:
 Estas no son sugerencias: ESLint falla la compilación si se incumplen.
 
 - **Nada de `any`** en código de producción.
-- **Ningún componente accede a `localStorage`.** Sólo puede hacerlo
-  `src/data/repositories/localStorage/`. Todo lo demás pasa por los repositorios o los hooks.
+- **Ningún componente accede a `localStorage`.** Los datos viven en la API; sólo la API simulada
+  (`src/mocks/`) lo usa para guardar los suyos. Las preferencias del navegador (sesión, tema) pasan
+  por Zustand.
 
 Y una que no detecta ninguna herramienta, pero rompe la interfaz en silencio:
 
 - **Sobre componentes de Ant Design, las utilidades de visibilidad de Tailwind llevan `!`**
   (`lg:!hidden`, `!hidden sm:!inline-block`). Ant Design se configura con prioridad alta
   (`hashPriority="high"`) y su `display` gana a una utilidad normal: el elemento no se oculta.
+
+Y en las pantallas:
+
+- **Toda consulta tiene sus tres estados:** esqueleto mientras carga (`EsqueletoTabla`,
+  `EsqueletoDetalle`…, no un indicador giratorio), `EstadoError` con «Reintentar» si falla y un
+  `EmptyState` si no hay resultados.
+- **Toda pantalla empieza con `PageHeader`**, con las acciones principales a la derecha.
+- **Los documentos se ven en el visor** (`useVisorDocumento`), no en una pestaña nueva.
 
 ## Estilo
 

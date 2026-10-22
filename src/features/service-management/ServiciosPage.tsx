@@ -1,8 +1,8 @@
 /**
  * Pantalla 11 — Gestión del catálogo de servicios.
  *
- * El interruptor de activación pasa por la regla de negocio: un servicio sin
- * requisitos no puede activarse, y el intento devuelve un error explicativo.
+ * Cada servicio se publica o retira con su interruptor y se edita con el
+ * lápiz: datos generales y documentos que pide, elegidos del catálogo.
  */
 
 import { Popover, Switch, Table, type TableColumnsType } from 'antd';
@@ -12,20 +12,22 @@ import {
   Badge,
   Button,
   Card,
+  EsqueletoTabla,
+  EstadoError,
   Icono,
-  Loading,
   PageHeader,
-  Tooltip,
   useToast,
 } from '@/components/ui';
 import { repositorios } from '@/data';
 import { ETIQUETA_CATEGORIA, type Servicio } from '@/domain/types';
-import { mensajeDeError } from '@/hooks/useAsync';
+import { mensajeDeError } from '@/lib/errores';
 import { useRevalidar, useServicios } from '@/hooks/useDatos';
 import { contar } from '@/lib/texto';
 
+import { EditarServicioDialog, NuevoServicioDialog } from './ServicioDialog';
+
 export function ServiciosPage() {
-  const { datos: servicios, cargando } = useServicios();
+  const { datos: servicios, cargando, error, recargar } = useServicios();
   const revalidar = useRevalidar();
   const avisos = useToast();
   const [procesando, setProcesando] = useState<string | null>(null);
@@ -37,20 +39,20 @@ export function ServiciosPage() {
     setProcesando(servicio.id);
     try {
       await repositorios.servicios.cambiarActivacion(servicio.id, siguiente);
-      revalidar();
+      revalidar('servicios');
       avisos.exito(
         siguiente ? 'Servicio activado' : 'Servicio desactivado',
         `«${servicio.nombre}» ${siguiente ? 'ya aparece' : 'dejó de aparecer'} en el catálogo.`,
       );
     } catch (fallo) {
-      // Aquí se materializa la regla: activar sin requisitos es imposible.
       avisos.error('No se pudo cambiar el estado', mensajeDeError(fallo));
     } finally {
       setProcesando(null);
     }
   }
 
-  if (cargando) return <Loading mensaje="Cargando el catálogo…" />;
+  if (cargando) return <EsqueletoTabla mensaje="Cargando el catálogo…" />;
+  if (error) return <EstadoError mensaje={error} onReintentar={recargar} />;
 
   const columnas: TableColumnsType<Servicio> = [
     {
@@ -91,7 +93,7 @@ export function ServiciosPage() {
       render: (plantilla: string) => (
         <span className="flex items-center gap-1.5 text-ink-2">
           <Icono nombre="documento" className="h-3.5 w-3.5 text-primary" />
-          {plantilla}
+          {plantilla || 'Pendiente'}
         </span>
       ),
     },
@@ -112,11 +114,7 @@ export function ServiciosPage() {
       key: 'acciones',
       render: (_, servicio) => (
         <span className="flex gap-1.5">
-          <Tooltip contenido="Editar servicio">
-            <Button variante="outline" tamano="icon" aria-label={`Editar ${servicio.nombre}`}>
-              <Icono nombre="editar" />
-            </Button>
-          </Tooltip>
+          <EditarServicioDialog servicio={servicio} />
 
           <Popover
             trigger="click"
@@ -139,14 +137,7 @@ export function ServiciosPage() {
         titulo="Gestión del catálogo"
         subtitulo={`${lista.length} servicios configurados · ${activos} activos · Plantillas y requisitos`}
       >
-        <Tooltip contenido="El alta de servicios se habilitará en la fase de integración">
-          <span>
-            <Button tamano="sm" disabled>
-              <Icono nombre="mas" />
-              Nuevo servicio
-            </Button>
-          </span>
-        </Tooltip>
+        <NuevoServicioDialog />
       </PageHeader>
 
       <Card sinRelleno>
@@ -166,7 +157,7 @@ function ListaRequisitos({ servicio }: { servicio: Servicio }) {
   if (servicio.requisitos.length === 0) {
     return (
       <p className="max-w-72 text-base text-ink-3">
-        Este servicio no tiene requisitos definidos, por lo que no puede activarse.
+        Este servicio no pide documentos: sólo los datos de su formulario.
       </p>
     );
   }

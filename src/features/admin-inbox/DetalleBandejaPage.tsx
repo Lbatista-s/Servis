@@ -11,12 +11,13 @@ import {
   ButtonLink,
   Card,
   EmptyState,
+  EsqueletoDetalle,
+  EstadoError,
   FieldHint,
   FileChip,
   Icono,
   InlineNotification,
   ListaDatos,
-  Loading,
   NoteBlock,
   SectionHeader,
   Sobretitulo,
@@ -30,20 +31,23 @@ import { useActor } from '@/features/auth/authStore';
 import { AccionesSolicitud } from '@/features/requests/AccionesSolicitud';
 import { camposDe, formatearValorCampo } from '@/features/requests/formularios';
 import { HistorialTimeline } from '@/features/requests/HistorialTimeline';
-import { mensajeDeError } from '@/hooks/useAsync';
+import { mensajeDeError } from '@/lib/errores';
 import { useRevalidar, useServicio, useSolicitud, useIndiceUsuarios } from '@/hooks/useDatos';
 import { useDescarga } from '@/hooks/useDescarga';
+import { useVisorDocumento } from '@/hooks/useVisorDocumento';
 import { formatearFecha } from '@/lib/format';
 
 export function DetalleBandejaPage() {
   const { id } = useParams<{ id: string }>();
-  const { datos: solicitud, cargando } = useSolicitud(id);
+  const { datos: solicitud, cargando, error, recargar } = useSolicitud(id);
   const { datos: servicio } = useServicio(solicitud?.servicioId);
   const usuarios = useIndiceUsuarios();
   const actor = useActor();
   const { descargar, pendiente } = useDescarga();
+  const { ver, visor } = useVisorDocumento();
 
-  if (cargando) return <Loading mensaje="Cargando la solicitud…" />;
+  if (cargando) return <EsqueletoDetalle mensaje="Cargando la solicitud…" />;
+  if (error) return <EstadoError mensaje={error} onReintentar={recargar} />;
 
   if (!solicitud) {
     return (
@@ -122,26 +126,36 @@ export function DetalleBandejaPage() {
                 {solicitud.adjuntos.map((adjunto) => (
                   <li key={adjunto.id}>
                     <FileChip adjunto={adjunto}>
-                      {(['abrir', 'descargar'] as const).map((modo) => (
-                        <Button
-                          key={modo}
-                          variante="ghost"
-                          tamano="icon"
-                          aria-label={`${modo === 'abrir' ? 'Ver' : 'Descargar'} ${adjunto.nombre}`}
-                          disabled={pendiente === adjunto.id}
-                          onClick={() =>
-                            descargar({
-                              clave: adjunto.id,
-                              nombre: adjunto.nombre,
-                              modo,
-                              obtener: () =>
-                                repositorios.solicitudes.descargarAdjunto(solicitud.id, adjunto.id),
-                            })
-                          }
-                        >
-                          <Icono nombre={modo === 'abrir' ? 'ojo' : 'descargar'} />
-                        </Button>
-                      ))}
+                      <Button
+                        variante="ghost"
+                        tamano="icon"
+                        aria-label={`Ver ${adjunto.nombre}`}
+                        onClick={() =>
+                          ver({
+                            nombre: adjunto.nombre,
+                            obtener: () =>
+                              repositorios.solicitudes.descargarAdjunto(solicitud.id, adjunto.id),
+                          })
+                        }
+                      >
+                        <Icono nombre="ojo" />
+                      </Button>
+                      <Button
+                        variante="ghost"
+                        tamano="icon"
+                        aria-label={`Descargar ${adjunto.nombre}`}
+                        disabled={pendiente === adjunto.id}
+                        onClick={() =>
+                          descargar({
+                            clave: adjunto.id,
+                            nombre: adjunto.nombre,
+                            obtener: () =>
+                              repositorios.solicitudes.descargarAdjunto(solicitud.id, adjunto.id),
+                          })
+                        }
+                      >
+                        <Icono nombre="descargar" />
+                      </Button>
                     </FileChip>
                   </li>
                 ))}
@@ -190,6 +204,7 @@ export function DetalleBandejaPage() {
           ) : null}
         </aside>
       </div>
+      {visor}
     </>
   );
 }
@@ -220,7 +235,7 @@ function ComentarioInterno({
     setError(null);
     try {
       await repositorios.solicitudes.guardar(solicitudId, { comentarioInterno: texto }, actor);
-      revalidar();
+      revalidar('solicitudes');
       avisos.exito('Comentario guardado', 'La observación interna quedó registrada.');
     } catch (fallo) {
       setError(mensajeDeError(fallo));

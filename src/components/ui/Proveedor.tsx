@@ -1,5 +1,6 @@
 /**
- * Proveedor único de la interfaz: tema (claro u oscuro), idioma y avisos.
+ * Proveedor único de la interfaz: caché de datos, tema (claro u oscuro),
+ * idioma y avisos.
  *
  * - Publica las variables CSS de la paleta, que usan Tailwind y los estilos en
  *   línea, y marca el documento con `data-theme` según el tema activo.
@@ -9,12 +10,14 @@
  */
 
 import { StyleProvider } from '@ant-design/cssinjs';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { App as AntApp, ConfigProvider } from 'antd';
 import esES from 'antd/locale/es_ES';
 import dayjs from 'dayjs';
 import 'dayjs/locale/es';
 import { useEffect, useMemo, type ReactNode } from 'react';
 
+import { clienteConsultas } from '@/hooks/clienteConsultas';
 import { crearTemaAntd } from '@/theme/antd';
 import { variablesCss } from '@/theme/css';
 import { useTema } from '@/theme/temaStore';
@@ -33,11 +36,13 @@ export function ProveedorUI({ children }: { children: ReactNode }) {
   }, [modo]);
 
   return (
-    <StyleProvider hashPriority="high">
-      <style>{HOJA_VARIABLES}</style>
-      <ConfigProvider theme={temaAntd} locale={esES}>
-        <AntApp component={false}>{children}</AntApp>
-      </ConfigProvider>
-    </StyleProvider>
+    <QueryClientProvider client={clienteConsultas}>
+      <StyleProvider hashPriority="high">
+        <style>{HOJA_VARIABLES}</style>
+        <ConfigProvider theme={temaAntd} locale={esES}>
+          <AntApp component={false}>{children}</AntApp>
+        </ConfigProvider>
+      </StyleProvider>
+    </QueryClientProvider>
   );
 }

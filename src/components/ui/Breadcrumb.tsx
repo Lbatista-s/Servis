@@ -16,8 +16,13 @@ export interface Miga {
 export function Breadcrumb({ migas, className }: { migas: readonly Miga[]; className?: string }) {
   return (
     <AntBreadcrumb
-      className={cn('mb-5', className)}
-      separator={<Icono nombre="chevron" className="h-3 w-3 align-middle" />}
+      // Ant Design alinea los elementos por la línea base y el separador (un
+      // SVG) quedaba más alto que el texto: se centran en el eje vertical.
+      className={cn(
+        'mb-5 [&_.ant-breadcrumb-separator]:flex [&_.ant-breadcrumb-separator]:items-center [&_ol]:items-center',
+        className,
+      )}
+      separator={<Icono nombre="chevron" className="h-3 w-3" />}
       items={migas.map((miga, indice) => {
         const esUltima = indice === migas.length - 1;
         return {

@@ -16,6 +16,7 @@ import {
   type GetRef,
   type InputProps as AntInputProps,
   type InputRef,
+  Select,
 } from 'antd';
 import dayjs from 'dayjs';
 import { createContext, forwardRef, useContext, useId, type ReactNode } from 'react';
@@ -173,3 +174,36 @@ export const Textarea = forwardRef<GetRef<typeof AntInput.TextArea>, TextareaPro
     );
   },
 );
+
+/**
+ * Lista desplegable con las opciones como texto. Recibe y entrega la opción
+ * elegida (cadena vacía si no hay ninguna), igual que los demás controles.
+ */
+export function SelectInput({
+  id,
+  value,
+  onChange,
+  onBlur,
+  opciones,
+  placeholder = 'Selecciona una opción',
+}: {
+  id?: string;
+  value: string;
+  onChange: (valor: string) => void;
+  onBlur?: () => void;
+  opciones: readonly string[];
+  placeholder?: string;
+}) {
+  const atributos = useAtributosControl(id);
+  return (
+    <Select
+      {...atributos}
+      className="w-full"
+      value={value || undefined}
+      placeholder={placeholder}
+      onChange={(valor: string) => onChange(valor)}
+      onBlur={onBlur}
+      options={opciones.map((opcion) => ({ value: opcion, label: opcion }))}
+    />
+  );
+}

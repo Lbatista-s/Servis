@@ -1,61 +1,94 @@
 /**
- * Hooks de acceso a datos.
+ * Hooks de acceso a datos, sobre TanStack Query.
  *
- * Los componentes consumen estos hooks y nunca los repositorios directamente.
- * Tras cualquier mutación se llama a `revalidar()`, lo que refresca todas las
- * consultas activas: es un caché mínimo pero suficiente para la demostración, y
- * sustituible por React Query sin tocar las pantallas.
+ * Los componentes consumen estos hooks y nunca los repositorios directamente
+ * para leer. Cada consulta tiene una clave que empieza por su recurso
+ * (`['solicitudes', …]`), de modo que tras una escritura basta con invalidar
+ * ese recurso: `useRevalidar()('solicitudes')`.
  */
 
-import { create } from 'zustand';
+import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+  type UseQueryResult,
+} from '@tanstack/react-query';
+import { useCallback, useMemo } from 'react';
 
 import { repositorios } from '@/data';
 import type { FiltroServicios, FiltroSolicitudes, FiltroUsuarios } from '@/data/repositories/types';
 import type { Metas } from '@/domain/indicadores/definiciones';
-import type { Servicio, Solicitud, Usuario } from '@/domain/types';
+import type { Notificacion, Servicio, Solicitud, TipoDocumento, Usuario } from '@/domain/types';
+import { mensajeDeError } from '@/lib/errores';
 
-import { useAsync, type EstadoAsincrono } from './useAsync';
+import { RECURSOS, type Recurso } from './clienteConsultas';
 
-/** Contador global de revalidación: al incrementarse, todo se vuelve a leer. */
-interface EstadoRevalidacion {
-  version: number;
-  revalidar: () => void;
+export interface EstadoAsincrono<T> {
+  datos: T | null;
+  /** Primera carga (sin datos todavía). Las recargas en segundo plano no cuentan. */
+  cargando: boolean;
+  error: string | null;
+  /** Vuelve a ejecutar la consulta. */
+  recargar: () => void;
 }
 
-export const useRevalidacion = create<EstadoRevalidacion>((set) => ({
-  version: 0,
-  revalidar: () => set((estado) => ({ version: estado.version + 1 })),
-}));
+/** Adapta el resultado de `useQuery` a la forma que usan las pantallas. */
+function estado<T>(consulta: UseQueryResult<T>, porDefecto: T | null = null): EstadoAsincrono<T> {
+  return {
+    datos: consulta.data ?? porDefecto,
+    cargando: consulta.isLoading,
+    error: consulta.error ? mensajeDeError(consulta.error) : null,
+    recargar: () => void consulta.refetch(),
+  };
+}
 
-/** Acción para invalidar el caché después de una mutación. */
-export function useRevalidar(): () => void {
-  return useRevalidacion((estado) => estado.revalidar);
+/**
+ * Invalida la caché tras una escritura. Sin argumentos, todos los recursos;
+ * con ellos, sólo los indicados.
+ */
+export function useRevalidar(): (...recursos: Recurso[]) => void {
+  const cliente = useQueryClient();
+  return useCallback(
+    (...recursos: Recurso[]) => {
+      const afectados = new Set(recursos.length > 0 ? recursos : RECURSOS);
+      // Las notificaciones salen del historial: cambian con las solicitudes.
+      if (afectados.has('solicitudes')) afectados.add('notificaciones');
+      for (const recurso of afectados) {
+        void cliente.invalidateQueries({ queryKey: [recurso] });
+      }
+    },
+    [cliente],
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Solicitudes
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** `habilitado = false` no consulta nada y devuelve una lista vacía. */
+/**
+ * `habilitado = false` no consulta nada y devuelve una lista vacía. Al cambiar
+ * el filtro se sigue mostrando el resultado anterior hasta que llega el nuevo.
+ */
 export function useSolicitudes(
   filtro: FiltroSolicitudes = {},
   habilitado = true,
 ): EstadoAsincrono<Solicitud[]> {
-  const version = useRevalidacion((estado) => estado.version);
-  // El filtro se serializa para comparar por valor y no por identidad de objeto,
-  // que cambiaría en cada render.
-  const clave = JSON.stringify(filtro);
-  return useAsync(
-    () => (habilitado ? repositorios.solicitudes.listar(filtro) : Promise.resolve([])),
-    [clave, version, habilitado],
-  );
+  const consulta = useQuery({
+    queryKey: ['solicitudes', 'lista', filtro],
+    queryFn: () => repositorios.solicitudes.listar(filtro),
+    enabled: habilitado,
+    placeholderData: keepPreviousData,
+  });
+  return estado(consulta, habilitado ? null : []);
 }
 
 export function useSolicitud(id: string | undefined): EstadoAsincrono<Solicitud | null> {
-  const version = useRevalidacion((estado) => estado.version);
-  return useAsync(
-    () => (id ? repositorios.solicitudes.obtener(id) : Promise.resolve(null)),
-    [id, version],
+  return estado(
+    useQuery({
+      queryKey: ['solicitudes', 'detalle', id],
+      queryFn: () => repositorios.solicitudes.obtener(id ?? ''),
+      enabled: Boolean(id),
+    }),
   );
 }
 
@@ -64,16 +97,32 @@ export function useSolicitud(id: string | undefined): EstadoAsincrono<Solicitud 
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function useServicios(filtro: FiltroServicios = {}): EstadoAsincrono<Servicio[]> {
-  const version = useRevalidacion((estado) => estado.version);
-  const clave = JSON.stringify(filtro);
-  return useAsync(() => repositorios.servicios.listar(filtro), [clave, version]);
+  return estado(
+    useQuery({
+      queryKey: ['servicios', 'lista', filtro],
+      queryFn: () => repositorios.servicios.listar(filtro),
+      placeholderData: keepPreviousData,
+    }),
+  );
+}
+
+/** Catálogo de documentos que los servicios pueden pedir. */
+export function useDocumentos(): EstadoAsincrono<TipoDocumento[]> {
+  return estado(
+    useQuery({
+      queryKey: ['documentos'],
+      queryFn: () => repositorios.documentos.listar(),
+    }),
+  );
 }
 
 export function useServicio(id: string | undefined): EstadoAsincrono<Servicio | null> {
-  const version = useRevalidacion((estado) => estado.version);
-  return useAsync(
-    () => (id ? repositorios.servicios.obtener(id) : Promise.resolve(null)),
-    [id, version],
+  return estado(
+    useQuery({
+      queryKey: ['servicios', 'detalle', id],
+      queryFn: () => repositorios.servicios.obtener(id ?? ''),
+      enabled: Boolean(id),
+    }),
   );
 }
 
@@ -81,20 +130,13 @@ export function useServicio(id: string | undefined): EstadoAsincrono<Servicio | 
 // Usuarios
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * `habilitado = false` no consulta nada y devuelve una lista vacía: el selector
- * de cuentas del acceso sólo existe en el modo de demostración, y sin sesión
- * fallaría contra la API real.
- */
-export function useUsuarios(
-  filtro: FiltroUsuarios = {},
-  habilitado = true,
-): EstadoAsincrono<Usuario[]> {
-  const version = useRevalidacion((estado) => estado.version);
-  const clave = JSON.stringify(filtro);
-  return useAsync(
-    () => (habilitado ? repositorios.usuarios.listar(filtro) : Promise.resolve([])),
-    [clave, version, habilitado],
+export function useUsuarios(filtro: FiltroUsuarios = {}): EstadoAsincrono<Usuario[]> {
+  return estado(
+    useQuery({
+      queryKey: ['usuarios', 'lista', filtro],
+      queryFn: () => repositorios.usuarios.listar(filtro),
+      placeholderData: keepPreviousData,
+    }),
   );
 }
 
@@ -104,13 +146,13 @@ export function useUsuarios(
  */
 export function useIndiceUsuarios(): Map<string, Usuario> {
   const { datos } = useUsuarios();
-  return new Map((datos ?? []).map((usuario) => [usuario.id, usuario]));
+  return useMemo(() => new Map((datos ?? []).map((usuario) => [usuario.id, usuario])), [datos]);
 }
 
 /** Índice de servicios por identificador, con el mismo propósito. */
 export function useIndiceServicios(): Map<string, Servicio> {
   const { datos } = useServicios();
-  return new Map((datos ?? []).map((servicio) => [servicio.id, servicio]));
+  return useMemo(() => new Map((datos ?? []).map((servicio) => [servicio.id, servicio])), [datos]);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -118,6 +160,20 @@ export function useIndiceServicios(): Map<string, Servicio> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function useMetas(): EstadoAsincrono<Metas> {
-  const version = useRevalidacion((estado) => estado.version);
-  return useAsync(() => repositorios.metas.obtener(), [version]);
+  return estado(useQuery({ queryKey: ['metas'], queryFn: () => repositorios.metas.obtener() }));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Notificaciones
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Se consultan de nuevo cada minuto mientras la aplicación está abierta. */
+export function useNotificaciones(): EstadoAsincrono<Notificacion[]> {
+  return estado(
+    useQuery({
+      queryKey: ['notificaciones'],
+      queryFn: () => repositorios.notificaciones.listar(),
+      refetchInterval: 60_000,
+    }),
+  );
 }

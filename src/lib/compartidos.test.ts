@@ -2,7 +2,13 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { claveActiva, NAVEGACION_POR_ROL, titulosDe } from '@/app/navegacion';
+import {
+  claveActiva,
+  elementosDe,
+  NAVEGACION_POR_ROL,
+  titulosDe,
+  VISTAS_BANDEJA,
+} from '@/app/navegacion';
 import { INICIO_POR_ROL, RUTAS } from '@/app/rutas';
 import { ETIQUETA_ESTADO } from '@/domain/types';
 
@@ -61,18 +67,27 @@ describe('navegación', () => {
   });
 
   it('marca en el menú la sección de la que depende cada pantalla de detalle', () => {
-    const estudiante = NAVEGACION_POR_ROL.estudiante;
-    expect(claveActiva(RUTAS.nuevaSolicitud('pasantia'), estudiante)).toBe(RUTAS.catalogo);
-    expect(claveActiva(RUTAS.detalleSolicitud('SRV-1042'), estudiante)).toBe(RUTAS.inicio);
-    expect(
-      claveActiva(RUTAS.detalleBandeja('SRV-1042'), NAVEGACION_POR_ROL.personal_administrativo),
-    ).toBe(RUTAS.bandeja);
+    const estudiante = elementosDe(NAVEGACION_POR_ROL.estudiante);
+    const personal = elementosDe(NAVEGACION_POR_ROL.personal_administrativo);
+    expect(claveActiva(RUTAS.nuevaSolicitud('pasantia'), '', estudiante)).toBe(RUTAS.catalogo);
+    expect(claveActiva(RUTAS.detalleSolicitud('SRV-1042'), '', estudiante)).toBe(
+      RUTAS.misSolicitudes,
+    );
+    expect(claveActiva(RUTAS.detalleBandeja('SRV-1042'), '', personal)).toBe(RUTAS.bandeja);
+  });
+
+  it('distingue las vistas rápidas de la bandeja por su consulta', () => {
+    const personal = elementosDe(NAVEGACION_POR_ROL.personal_administrativo);
+    expect(claveActiva(RUTAS.bandeja, '', personal)).toBe(RUTAS.bandeja);
+    expect(claveActiva(RUTAS.bandeja, '?vista=asignadas', personal)).toBe(VISTAS_BANDEJA.asignadas);
+    // Una consulta desconocida cae en la bandeja completa.
+    expect(claveActiva(RUTAS.bandeja, '?vista=otra', personal)).toBe(RUTAS.bandeja);
   });
 
   it('el inicio del administrador no se marca en sus subsecciones', () => {
-    const administrador = NAVEGACION_POR_ROL.administrador;
-    expect(claveActiva(RUTAS.inicioAdmin, administrador)).toBe(RUTAS.inicioAdmin);
-    expect(claveActiva(RUTAS.usuarios, administrador)).toBe(RUTAS.usuarios);
+    const administrador = elementosDe(NAVEGACION_POR_ROL.administrador);
+    expect(claveActiva(RUTAS.inicioAdmin, '', administrador)).toBe(RUTAS.inicioAdmin);
+    expect(claveActiva(RUTAS.usuarios, '', administrador)).toBe(RUTAS.usuarios);
   });
 
   it('cada rol entra en su pantalla: cuadro de mando, bandeja o página de inicio', () => {

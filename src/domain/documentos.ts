@@ -1,8 +1,8 @@
 /**
  * Documento de salida de una solicitud completada.
  *
- * El nombre del archivo es el mismo venga del servidor o de la generación de
- * muestra local, para que la interfaz no dependa del origen.
+ * El nombre del archivo es el mismo venga del servidor real o de la API
+ * simulada, para que la interfaz no dependa del origen.
  */
 
 import type { Documento } from './types';

@@ -1,6 +1,6 @@
 # Contrato de la API de SERVIS
 
-Es la API REST que espera el frontend cuando se ejecuta con `VITE_DATA_SOURCE=http`. Está pensada para Django REST Framework (DRF) y se deriva de lo que la interfaz ya usa.
+Es la API REST que consume el frontend. Está pensada para Django REST Framework (DRF) y se deriva de lo que la interfaz ya usa. Mientras no exista el backend, la responde la API simulada de `src/mocks/` (`VITE_API_MOCK=true`), que sigue este mismo documento: ante una duda sobre el comportamiento esperado, `src/mocks/handlers.ts` es una referencia ejecutable.
 
 **Si el backend ya existe con otra forma**, no hace falta cambiarlo para cumplir este documento. Del lado del frontend basta con ajustar:
 
@@ -29,14 +29,14 @@ El cuerpo sigue el formato de DRF. El frontend muestra el primer mensaje que enc
 2. `{"non_field_errors": ["…"]}`
 3. `{"<campo>": ["…"]}`
 
-| Estado | Cuándo                                                                        | Qué hace el frontend                                                                  |
-| ------ | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| 400    | Validación o regla de negocio (transición inválida, servicio sin requisitos…) | Muestra el mensaje.                                                                   |
-| 401    | Sin sesión o sesión caducada                                                  | Cierra la sesión y vuelve al acceso. Con JWT, antes intenta renovar el token una vez. |
-| 403    | Autenticado pero sin permiso                                                  | Muestra «No tienes permiso…».                                                         |
-| 404    | No existe                                                                     | En `GET` de detalle se interpreta como «no encontrado».                               |
-| 409    | Conflicto (correo duplicado…)                                                 | Muestra el mensaje.                                                                   |
-| 5xx    | Error del servidor                                                            | Mensaje genérico.                                                                     |
+| Estado | Cuándo                                                                             | Qué hace el frontend                                                                  |
+| ------ | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| 400    | Validación o regla de negocio (transición inválida, documento fuera del catálogo…) | Muestra el mensaje.                                                                   |
+| 401    | Sin sesión o sesión caducada                                                       | Cierra la sesión y vuelve al acceso. Con JWT, antes intenta renovar el token una vez. |
+| 403    | Autenticado pero sin permiso                                                       | Muestra «No tienes permiso…».                                                         |
+| 404    | No existe                                                                          | En `GET` de detalle se interpreta como «no encontrado».                               |
+| 409    | Conflicto (correo duplicado…)                                                      | Muestra el mensaje.                                                                   |
+| 5xx    | Error del servidor                                                                 | Mensaje genérico.                                                                     |
 
 > Con `SessionAuthentication`, DRF responde **403** (no 401) cuando no hay sesión. Así la sesión caducada no se detecta. Conviene que la vista de autenticación devuelva 401, o definir `authenticate_header` en una subclase.
 
@@ -66,6 +66,15 @@ El frontend admite dos modos, que se eligen con `VITE_API_AUTH`.
 
 - Las peticiones llevan `Authorization: Bearer <access>`.
 - Los nombres de las credenciales están en `desdeCredenciales()` de `mapeadores.ts`. simplejwt usa por defecto `username`/`password`: cámbialos ahí si hace falta.
+
+### Recuperación de contraseña (ambos modos)
+
+| Método y ruta          | Cuerpo       | Respuesta                                                   |
+| ---------------------- | ------------ | ----------------------------------------------------------- |
+| `POST auth/recuperar/` | `{"correo"}` | `204` **siempre**, exista o no la cuenta; `400` sin correo. |
+
+- La respuesta no debe revelar si el correo está registrado.
+- En Django encaja con `PasswordResetForm` (o `django-rest-passwordreset`): envía un enlace con un token de un solo uso que caduca en 30 minutos, como anuncia la pantalla. La página que abre el enlace puede ser la de Django (`PasswordResetConfirmView`) hasta que el frontend tenga una propia.
 
 ## Recursos
 
@@ -109,7 +118,11 @@ El frontend admite dos modos, que se eligen con `VITE_API_AUTH`.
   "color": "bg-canvas",
   "categoria": "academico",
   "requisitos": [
-    { "id": 1, "descripcion": "Carta de aceptación de la empresa", "obligatorio": true }
+    {
+      "id": "carta-aceptacion",
+      "descripcion": "Carta de aceptación de la empresa en papel membretado",
+      "obligatorio": true
+    }
   ],
   "plantilla": "carta-pasantia.html",
   "activo": true,
@@ -117,20 +130,37 @@ El frontend admite dos modos, que se eligen con `VITE_API_AUTH`.
 }
 ```
 
-- **`id` es la clave del servicio, no un número**: `pasantia`, `cambio`, `reingreso`, `grado`, `carnet`, `objetos`… El frontend elige el formulario de cada servicio por esa clave (`CAMPOS_POR_SERVICIO` en `src/features/requests/formularios.ts`). Con un id numérico, todos mostrarían el formulario genérico. En Django hay dos opciones:
+- **`id` es la clave del servicio, no un número**: `pasantia`, `cambio`, `reingreso`, `grado`, `carneton`, `objetos`… El frontend elige el formulario de cada servicio por esa clave (`CAMPOS_POR_SERVICIO` en `src/features/requests/formularios.ts`). Con un id numérico, todos mostrarían el formulario genérico. En Django hay dos opciones:
   - `clave = models.SlugField(primary_key=True)`;
   - o conservar el `id` numérico y exponer la clave como `id` en el serializer, aceptando `servicio_id` con `SlugRelatedField(slug_field="clave")`.
 - `categoria` puede ser `academico`, `administrativo` o `identidad`.
 - `icono` y `color` son opcionales y solo afectan a la presentación.
+- **`requisitos` son documentos del catálogo** (ver abajo): `id` es la clave del documento y `descripcion` su nombre, que el servidor copia del catálogo e ignora si el cliente envía otro. Un `id` que no está en el catálogo responde `400`.
 
 | Método y ruta                                   | Uso                                                                                                   |
 | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | `GET servicios/?activo=true&categoria=&search=` | Catálogo. Conviene que sea público (`AllowAny`): la pantalla de acceso muestra cuántos servicios hay. |
 | `GET servicios/{id}/`                           | Detalle                                                                                               |
 | `POST servicios/`                               | Crear                                                                                                 |
-| `PATCH servicios/{id}/`                         | Editar; `{"activo": true}` debe fallar con 400 si el servicio no tiene requisitos                     |
+| `PATCH servicios/{id}/`                         | Editar datos y requisitos. Un servicio puede no pedir documentos.                                     |
 
-> Los campos del formulario de cada servicio están definidos hoy en el frontend (`src/features/requests/formularios.ts`) y se envían en `datos_formulario` con esos mismos nombres, en `camelCase`. Para la carta de pasantía, por ejemplo: `empresa`, `rnc`, `cargo`, `departamento`, `fechaInicio`, `fechaFin`, `supervisorNombre`…
+> Los campos del formulario de cada servicio están definidos hoy en el frontend (`src/features/requests/formularios.ts`) y se envían en `datos_formulario` con esos mismos nombres, en `camelCase`. Para la carta de pasantía, por ejemplo: `empresa`, `rnc`, `cargo`, `departamento`, `fechaInicio`, `fechaFin`, `supervisorNombre`… Los campos de tipo lista envían el texto de la opción elegida. La correspondencia de cada formulario con el de INTEC está en [servicios-intec.md](./servicios-intec.md).
+
+### Catálogo de documentos
+
+Lista única de los documentos que SERVIS puede pedir (documento de identidad, récord de notas, carta de aceptación…). Al editar un servicio, el administrador activa o desactiva cada uno y lo marca como obligatorio u opcional.
+
+```json
+{ "id": "documento-identidad", "nombre": "Documento de identidad" }
+```
+
+| Método y ruta      | Cuerpo       | Uso                                                                                        |
+| ------------------ | ------------ | ------------------------------------------------------------------------------------------ |
+| `GET documentos/`  | —            | Todo el catálogo, en orden alfabético. Paginado.                                           |
+| `POST documentos/` | `{"nombre"}` | Añade un documento. Solo el **administrador** (`403` si no); `409` si ya existe uno igual. |
+
+- En Django encaja un modelo `TipoDocumento(clave: SlugField, nombre)` y, en `Servicio`, una relación con tabla intermedia `Requisito(servicio, tipo_documento, obligatorio)`.
+- Cambiar los requisitos de un servicio no afecta a las solicitudes ya enviadas: conservan sus adjuntos.
 
 ### Solicitud
 
@@ -178,14 +208,14 @@ El frontend admite dos modos, que se eligen con `VITE_API_AUTH`.
 - `documento` vale `null` hasta que la solicitud se completa. Después es `{"nombre": "carta-de-pasantia-1042.pdf", "generado_en": "…"}`.
 - **Las claves de `datos_formulario` no se convierten** a ningún formato: se guardan y se devuelven tal cual (por ejemplo `fechaInicio`).
 
-| Método y ruta                                                     | Cuerpo                                                 | Uso                                                                                                             |
-| ----------------------------------------------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
-| `GET solicitudes/?solicitante=&estado=&estado=&servicio=&search=` | —                                                      | Lista. `estado` puede repetirse. Un estudiante solo debe recibir las suyas.                                     |
-| `GET solicitudes/{id}/`                                           | —                                                      | Detalle                                                                                                         |
-| `POST solicitudes/`                                               | `{"servicio_id", "datos_formulario"}`                  | Crea en `borrador`. El solicitante sale de la sesión.                                                           |
-| `PATCH solicitudes/{id}/`                                         | `datos_formulario`, `comentario_interno`, `asignada_a` | Editar (solo en estados editables)                                                                              |
-| `DELETE solicitudes/{id}/`                                        | —                                                      | Eliminar                                                                                                        |
-| `POST solicitudes/{id}/transiciones/`                             | `{"hacia": "devuelta", "comentario": "Falta el CV."}`  | Cambio de estado. Devuelve la solicitud actualizada; `400` si la transición no es válida para ese estado y rol. |
+| Método y ruta                                                                 | Cuerpo                                                 | Uso                                                                                                                                              |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET solicitudes/?solicitante=&estado=&estado=&servicio=&asignada_a=&search=` | —                                                      | Lista. `estado` puede repetirse; `asignada_a` filtra por la persona que la revisa («Asignadas a mí»). Un estudiante solo debe recibir las suyas. |
+| `GET solicitudes/{id}/`                                                       | —                                                      | Detalle                                                                                                                                          |
+| `POST solicitudes/`                                                           | `{"servicio_id", "datos_formulario"}`                  | Crea en `borrador`. El solicitante sale de la sesión.                                                                                            |
+| `PATCH solicitudes/{id}/`                                                     | `datos_formulario`, `comentario_interno`, `asignada_a` | Editar (solo en estados editables)                                                                                                               |
+| `DELETE solicitudes/{id}/`                                                    | —                                                      | Eliminar                                                                                                                                         |
+| `POST solicitudes/{id}/transiciones/`                                         | `{"hacia": "devuelta", "comentario": "Falta el CV."}`  | Cambio de estado. Devuelve la solicitud actualizada; `400` si la transición no es válida para ese estado y rol.                                  |
 
 Las transiciones válidas y quién puede ejecutarlas están en `src/domain/requestStateMachine.ts` y en el README (sección «Transiciones válidas»). El servidor debe aplicar las mismas reglas:
 
@@ -217,6 +247,45 @@ Implementación sugerida en Django:
 4. Servirlo en `GET solicitudes/{id}/documento/`, comprobando que quien lo pide es el solicitante o personal administrativo.
 
 Si una carta requiere la firma real de una autoridad, el personal puede subir el PDF firmado antes de completar la solicitud en lugar de generarlo. Para el frontend el endpoint es el mismo.
+
+#### Quién genera y quién muestra los PDF
+
+| Tarea                         | Dónde                    | Por qué                                                                                                                                                                                              |
+| ----------------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Generar el documento oficial  | **Backend** (WeasyPrint) | Es un documento institucional: su contenido, membrete y fecha no pueden depender del navegador ni poder alterarse desde él. El servidor lo guarda y puede volver a servirlo, verificarlo o anularlo. |
+| Firmar o sellar (si se exige) | **Backend** o personal   | Un PDF firmado se sube como archivo; el frontend no maneja certificados.                                                                                                                             |
+| Mostrar, descargar e imprimir | **Frontend**             | El visor integrado (`src/components/visor/`, con pdf.js vía `react-pdf`) muestra el PDF que devuelve el endpoint, sin abrir otra pestaña. Sirve igual para los adjuntos PDF e imágenes.              |
+
+Mientras no exista el backend, la API simulada (`src/mocks/`) genera un PDF **de muestra** con jsPDF, marcado como «MUESTRA», para que el flujo completo se pueda probar. jsPDF sólo se descarga con la API simulada activa.
+
+### Notificaciones
+
+| Método y ruta                        | Uso                                                                         |
+| ------------------------------------ | --------------------------------------------------------------------------- |
+| `GET notificaciones/`                | Avisos del usuario de la sesión, del más reciente al más antiguo. Paginado. |
+| `GET notificaciones/?no_leidas=true` | Sólo los no leídos.                                                         |
+| `POST notificaciones/{id}/leida/`    | Marca uno como leído. `204`.                                                |
+| `POST notificaciones/leer-todas/`    | Marca todos como leídos. `204`.                                             |
+
+```json
+{
+  "id": "h-1042-3",
+  "solicitud_id": "SRV-1042",
+  "titulo": "SRV-1042 fue devuelta para corrección",
+  "detalle": "Carta de pasantía · Ricardo Almanzar (Personal administrativo)",
+  "fecha": "2026-10-20T14:05:00Z",
+  "leida": false
+}
+```
+
+Quién recibe qué (lo mismo que hace la API simulada en `src/mocks/notificaciones.ts`):
+
+- **Estudiante:** cuando su solicitud pasa a `devuelta`, `aprobada`, `rechazada` o `completada`.
+- **Personal administrativo y coordinador:** cuando llega una solicitud `enviada` o `corregida`.
+- **Administrador:** ninguna; no interviene en el flujo.
+- Nadie recibe aviso de un cambio que hizo él mismo.
+
+En Django basta un modelo `Notificacion(usuario, solicitud, titulo, detalle, fecha, leida)` que se crea en la misma transacción que la entrada del historial. Si más adelante se envían también por correo, el contrato no cambia.
 
 ### Metas del cuadro de mando
 

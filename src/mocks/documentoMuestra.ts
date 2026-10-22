@@ -1,10 +1,10 @@
 /**
- * Documento de salida de muestra, generado en el navegador.
+ * PDF que entrega la API simulada.
  *
- * En producción el documento oficial lo genera el backend al completar la
- * solicitud. En modo local no hay servidor, así que se compone aquí un PDF con
- * los datos reales de la solicitud y una marca visible de que no tiene validez,
- * para que la demostración recorra el flujo completo.
+ * El documento oficial lo genera el backend al completar la solicitud. Mientras
+ * no exista, la API simulada compone aquí un PDF con los datos reales de la
+ * solicitud y una marca visible de que no tiene validez. También genera un PDF
+ * de ejemplo para los adjuntos de los datos iniciales, que no tienen contenido.
  *
  * `jsPDF` se importa bajo demanda: sólo se descarga al pedir un documento.
  */
@@ -138,11 +138,33 @@ export async function generarDocumentoMuestra({
   pdf.text('DOCUMENTO DE MUESTRA — SIN VALIDEZ OFICIAL', MARGEN + 12, alto - 92);
   pdf.setFont('helvetica', 'normal');
   pdf.text(
-    `Generado por SERVIS en modo demostración. Referencia ${solicitud.id}.`,
+    `Documento de muestra generado por la API simulada de SERVIS. Referencia ${solicitud.id}.`,
     MARGEN + 12,
     alto - 78,
   );
 
+  return pdf.output('blob');
+}
+
+/** PDF de una página que representa un adjunto de los datos iniciales. */
+export async function generarAdjuntoMuestra(nombre: string): Promise<Blob> {
+  const { jsPDF } = await import('jspdf');
+  const pdf = new jsPDF({ unit: 'pt', format: 'letter' });
+  const ancho = pdf.internal.pageSize.getWidth();
+  pdf.setFillColor(COLORES_MARCA.rojo);
+  pdf.rect(0, 0, ancho, 8, 'F');
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(16);
+  pdf.text('Documento adjunto de ejemplo', MARGEN, 100);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(11);
+  pdf.setTextColor(GRIS);
+  parrafo(
+    pdf,
+    `«${nombre}» forma parte de los datos simulados de SERVIS. Cuando el backend esté conectado, aquí se verá el archivo que subió el estudiante.`,
+    130,
+    ancho - MARGEN * 2,
+  );
   return pdf.output('blob');
 }
 

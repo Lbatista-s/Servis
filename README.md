@@ -13,17 +13,18 @@ línea; el personal administrativo las revisa, aprueba, rechaza o devuelve para 
 trazabilidad completa de cada acción.
 
 Esta aplicación es la implementación en React del prototipo de alta fidelidad
-`SERVIS_HiFi_Prototipo.html`, que se conserva en el repositorio como referencia de diseño.
+`docs/prototipo/SERVIS_HiFi_Prototipo.html`, que se conserva en el repositorio como referencia de diseño.
 
 ## Documentación
 
-| Documento                                            | Para qué sirve                                                                                                              |
-| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Este `README.md`                                     | Visión general: instalación, roles de prueba, pantallas, modelo de dominio, estructura, persistencia, despliegue y pruebas. |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md)                 | Convenciones del equipo: ramas, commits, comprobaciones antes de un PR y dónde va cada cosa.                                |
-| [`docs/cuadro-de-mando.md`](docs/cuadro-de-mando.md) | El cuadro de mando integral (Kaplan y Norton): fundamento, indicadores, fórmulas, metas y por qué cada rol ve lo que ve.    |
-| [`docs/api.md`](docs/api.md)                         | Contrato de la API REST que espera el frontend, para el equipo del backend de Django.                                       |
-| [`docs/integracion.md`](docs/integracion.md)         | Pasos para conectar el backend: dónde ajustar rutas y campos, proxy de Vite, rewrite de Vercel y variables de entorno.      |
+| Documento                                            | Para qué sirve                                                                                                           |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Este `README.md`                                     | Visión general: instalación, cuentas de prueba, pantallas, modelo de dominio, estructura, datos, despliegue y pruebas.   |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md)                 | Convenciones del equipo: ramas, commits, comprobaciones antes de un PR y dónde va cada cosa.                             |
+| [`docs/cuadro-de-mando.md`](docs/cuadro-de-mando.md) | El cuadro de mando integral (Kaplan y Norton): fundamento, indicadores, fórmulas, metas y por qué cada rol ve lo que ve. |
+| [`docs/api.md`](docs/api.md)                         | Contrato de la API REST que espera el frontend, para el equipo del backend de Django.                                    |
+| [`docs/servicios-intec.md`](docs/servicios-intec.md) | Correspondencia de cada servicio con los formularios del Centro de Servicio de INTEC: campos, documentos y exclusiones.  |
+| [`docs/integracion.md`](docs/integracion.md)         | Pasos para conectar el backend: dónde ajustar rutas y campos, proxy de Vite, rewrite de Vercel y variables de entorno.   |
 
 ---
 
@@ -37,10 +38,11 @@ Esta aplicación es la implementación en React del prototipo de alta fidelidad
 | Estilos       | Tailwind CSS para maquetación, mismos tokens     |
 | Enrutamiento  | React Router v6                                  |
 | Estado global | Zustand (con `persist` para la sesión)           |
+| Datos remotos | TanStack Query sobre repositorios HTTP           |
+| API simulada  | Mock Service Worker (MSW) hasta tener backend    |
 | Formularios   | React Hook Form + Zod                            |
-| Datos         | Repositorios intercambiables: `local` o `http`   |
-| Documentos    | jsPDF (PDF de muestra en modo local)             |
-| Pruebas       | Vitest + React Testing Library                   |
+| Documentos    | Visor con react-pdf (pdf.js)                     |
+| Pruebas       | Vitest + React Testing Library + MSW             |
 | Calidad       | ESLint + Prettier                                |
 
 Los componentes de interfaz son de Ant Design, configurados con la paleta del manual de identidad
@@ -91,15 +93,12 @@ npm run dev               # http://localhost:5173
 
 ---
 
-## Roles de prueba
+## Cuentas de prueba
 
-Con los datos de demostración (`VITE_DATA_SOURCE=local`, el valor por defecto) la autenticación
-está **simulada**: la contraseña no se verifica. En la pantalla de acceso, el desplegable
-**«Acceder como»** fija la cuenta activa y, con ella, el rol. En modo desarrollo hay además una
-barra superior que permite saltar entre roles sin volver a iniciar sesión.
-
-Con la API real (`VITE_DATA_SOURCE=http`) el correo y la contraseña los valida Django, y
-desaparecen el desplegable y la barra de roles.
+Mientras no esté conectado el backend, la API la responde un **servidor simulado** (ver
+[Datos y API](#datos-y-api)). Todas sus cuentas usan la contraseña **`servis2026`**, y una
+contraseña incorrecta se rechaza igual que lo hará Django. La pantalla de acceso lo indica y ofrece
+rellenar el formulario con una cuenta de cada rol.
 
 | Correo                    | Nombre           | Rol                       | Pantalla inicial   |
 | ------------------------- | ---------------- | ------------------------- | ------------------ |
@@ -119,20 +118,22 @@ bloqueo de acceso de cuentas inactivas.
 
 ## Pantallas
 
-| #   | Ruta                             | Pantalla                                      | Rol                                                         |
-| --- | -------------------------------- | --------------------------------------------- | ----------------------------------------------------------- |
-| 1   | `/login`                         | Inicio de sesión                              | Público                                                     |
-| 2   | `/recuperar`                     | Recuperar contraseña                          | Público                                                     |
-| 3   | `/inicio`                        | Inicio del estudiante                         | Estudiante                                                  |
-| 4   | `/catalogo`                      | Catálogo de servicios                         | Estudiante                                                  |
-| 5   | `/solicitudes/nueva/:servicioId` | Nueva solicitud (formulario por pasos)        | Estudiante                                                  |
-| 6   | `/solicitudes/:id`               | Detalle y seguimiento                         | Estudiante                                                  |
-| 7   | `/bandeja`                       | Bandeja administrativa                        | Personal administrativo · Coordinador                       |
-| 8   | `/bandeja/:id`                   | Detalle con acciones de revisión              | Personal administrativo · Coordinador                       |
-| 9   | `/cuadro-de-mando`               | Cuadro de mando integral y análisis operativo | Coordinador (inicio, edita metas) · Personal administrativo |
-| 10  | `/admin/usuarios`                | Gestión de usuarios                           | Administrador                                               |
-| 11  | `/admin/servicios`               | Gestión del catálogo                          | Administrador                                               |
-| 12  | `/admin`                         | Inicio del administrador                      | Administrador                                               |
+| #   | Ruta                             | Pantalla                                                      | Rol                                                         |
+| --- | -------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------- |
+| 1   | `/login`                         | Inicio de sesión                                              | Público                                                     |
+| 2   | `/recuperar`                     | Recuperar contraseña (`POST auth/recuperar/`)                 | Público                                                     |
+| 3   | `/inicio`                        | Inicio del estudiante                                         | Estudiante                                                  |
+| 4   | `/catalogo`                      | Catálogo de servicios                                         | Estudiante                                                  |
+| 5   | `/solicitudes/nueva/:servicioId` | Nueva solicitud (formulario por pasos)                        | Estudiante                                                  |
+| 6   | `/solicitudes/:id`               | Detalle y seguimiento                                         | Estudiante                                                  |
+| 6b  | `/solicitudes`                   | Mis solicitudes (búsqueda y filtro)                           | Estudiante                                                  |
+| 6c  | `/documentos`                    | Mis documentos (visor y descarga)                             | Estudiante                                                  |
+| 7   | `/bandeja`                       | Bandeja; vistas `?vista=pendientes`, `asignadas`, `devueltas` | Personal administrativo · Coordinador                       |
+| 8   | `/bandeja/:id`                   | Detalle con acciones de revisión                              | Personal administrativo · Coordinador                       |
+| 9   | `/cuadro-de-mando`               | Cuadro de mando integral y análisis operativo                 | Coordinador (inicio, edita metas) · Personal administrativo |
+| 10  | `/admin/usuarios`                | Gestión de usuarios                                           | Administrador                                               |
+| 11  | `/admin/servicios`               | Catálogo: alta, edición y documentos pedidos                  | Administrador                                               |
+| 12  | `/admin`                         | Inicio del administrador                                      | Administrador                                               |
 
 Cada rol entra en su pantalla. El coordinador entra al cuadro de mando integral (Kaplan y Norton)
 y el personal administrativo a la bandeja. El estudiante y el administrador entran a una página de
@@ -140,10 +141,24 @@ inicio simple. El porqué, los indicadores, sus fórmulas y sus metas están en
 [`docs/cuadro-de-mando.md`](docs/cuadro-de-mando.md).
 
 La antigua ruta `/reportes` redirige a `/cuadro-de-mando`, donde los reportes viven ahora como la
-pestaña «Análisis operativo».
+pestaña «Análisis operativo». Cualquier otra ruta desconocida muestra una página 404.
 
 Las rutas están protegidas por el componente `<RequireRole>`. Un rol no autorizado no ve un error:
 se le redirige a la pantalla inicial que le corresponde.
+
+En todas las pantallas:
+
+- **Barra superior:** tema claro u oscuro, **notificaciones** (contador de no leídas y enlace a la
+  solicitud) y el **menú de perfil**, único control de la cuenta: nombre, rol, correo,
+  Configuración y Cerrar sesión.
+- **Barra lateral:** la navegación del rol por grupos (el personal tiene accesos directos con
+  contador a las solicitudes pendientes, asignadas a él y devueltas). El logotipo lleva a la
+  pantalla de inicio y al pie está el contacto del Área de Ingenierías.
+- **Documentos:** los adjuntos y los documentos emitidos se abren en un **visor integrado** con
+  paginación, zoom, descarga e impresión.
+- **Exportar CSV** en la bandeja (lo que se ve, con los filtros aplicados) y en el cuadro de mando.
+- Mientras cargan, las pantallas muestran un esqueleto con su forma; si una consulta falla,
+  ofrecen «Reintentar».
 
 ---
 
@@ -181,7 +196,6 @@ estados para verificarlo.
 - Todo rechazo exige una justificación de al menos **30 caracteres**.
 - Toda devolución exige indicar el motivo.
 - Una solicitud no puede aprobarse sin haber pasado por `en_revision`.
-- Un servicio no puede activarse sin requisitos definidos.
 - Cada cambio de estado genera automáticamente una entrada **inmutable** en el historial, con
   autor, fecha, estado anterior, estado nuevo y comentario.
 - Una solicitud `completada` no puede modificarse (igual que `rechazada` y `cancelada`).
@@ -202,7 +216,8 @@ El código se organiza por funcionalidad, no por tipo de archivo.
 
 ```
 src/
-  app/                    Router, armazón, barra lateral y superior, navegación y rutas por rol
+  app/                    Router, armazón, barras, notificaciones, 404, límites de error y rutas por rol
+  config/entorno.ts       Variables VITE_* validadas con Zod
   domain/                 Lógica pura, sin React ni almacenamiento
     types.ts              Entidades, roles y estados
     requestStateMachine.ts  Transiciones válidas del ciclo de vida
@@ -210,15 +225,13 @@ src/
     documentos.ts         Nombre del documento de salida
     indicadores/          Cuadro de mando: definiciones, calendario laboral y cálculo
   data/
-    seed.ts               Datos de demostración del prototipo (SRV-1035 a SRV-1042)
-    seedHistorial.ts      Historial cerrado de 6 meses para el cuadro de mando (SRV-09xx)
-    schema.ts             Versionado del esquema y migraciones
     archivos.ts           Archivos adjuntos pendientes de subir
     repositories/
-      types.ts            Contratos: solicitudes, usuarios, servicios, autenticación y metas
-      localStorage/       Implementación local (demostración)
+      types.ts            Contratos: solicitudes, usuarios, servicios, metas, notificaciones y auth
       http/               API de Django: cliente, rutas, mapeadores y repositorios
-    index.ts              Factoría según VITE_DATA_SOURCE
+    index.ts              Instancia única de los repositorios
+  mocks/                  API simulada (MSW): handlers, estado, cuentas y datos sembrados
+    datos/                Solicitudes del prototipo (SRV-1035 a 1042) e historial de 6 meses (SRV-09xx)
   features/
     auth/                 Acceso, recuperación y sesión
     catalog/              Catálogo de servicios
@@ -228,66 +241,61 @@ src/
     admin/                Inicio del administrador
     user-management/      Gestión de usuarios
     service-management/   Gestión del catálogo
-    settings/             Configuración y datos de demostración
-  components/ui/          Envoltorios finos de Ant Design con la API en español
+    settings/             Configuración y restablecimiento de los datos simulados
+  components/ui/          Envoltorios finos de Ant Design con la API en español, esqueletos de carga
+  components/visor/       Visor de PDF e imágenes (react-pdf, cargado bajo demanda)
   theme/                  Tokens de la línea gráfica (claro y oscuro) y tema de Ant Design
-  hooks/                  Acceso a datos, descargas y utilidades de React
-  lib/                    Formato, filtros, descargas y utilidades sin React
+  hooks/                  Consultas (TanStack Query), visor, descargas y utilidades de React
+  lib/                    Formato, filtros, CSV, descargas y utilidades sin React
   test/                   Configuración y fábricas de prueba
 docs/                     Documentación funcional y técnica (ver «Documentación»)
 ```
 
 ---
 
-## Persistencia
+## Datos y API
 
-> **Por defecto la persistencia es `localStorage`.** El backend de Django vive en otro repositorio;
-> el frontend ya está preparado para conectarse a él (ver más abajo).
+La aplicación habla **siempre** con una API REST a través de los repositorios HTTP
+(`src/data/repositories/http/`), con el contrato de [`docs/api.md`](docs/api.md). El backend de
+Django vive en otro repositorio y aún no está conectado, así que mientras tanto la API la responde
+un **servidor simulado**:
 
-Los datos viven en el navegador bajo la clave `servis:datos`. Esto es deliberado: el objetivo de
-esta entrega es demostrar el sistema funcionando, no desplegar infraestructura.
+- Es [Mock Service Worker](https://mswjs.io) (`src/mocks/`): un _service worker_ que intercepta las
+  peticiones a `/api` y responde como lo hará Django REST Framework (`snake_case`, paginación,
+  sesión con CSRF o JWT, errores 400/401/403/404/409).
+- Aplica las mismas reglas que el dominio (`src/domain/`), así que una acción inválida se rechaza
+  igual que en el servidor real.
+- Guarda sus datos en el navegador (`servis:api-simulada`): cada visitante tiene su propia copia, y
+  los cambios sobreviven a una recarga pero no se comparten entre dispositivos.
+- Se siembra con las solicitudes del prototipo (`SRV-1035` a `SRV-1042`), un historial cerrado de
+  unas 90 solicitudes de los seis meses anteriores (`SRV-09xx`) para las tendencias del cuadro de
+  mando, los usuarios del equipo, el catálogo de 12 servicios y las metas iniciales.
+- Al completar una solicitud genera un **PDF de muestra** (marcado «MUESTRA», sin validez oficial).
+- **Configuración → Restablecer datos simulados** (en el menú de perfil) vuelve al estado inicial;
+  conviene usarlo antes de una presentación.
 
-Ahora bien, la persistencia está **desacoplada de la interfaz** para que añadir un backend no
-obligue a tocar ni una pantalla:
+Se controla con `VITE_API_MOCK` (por defecto `true`). Con `false`, el servidor simulado, MSW y jsPDF
+**no se descargan**: las peticiones van al backend real y ninguna pantalla cambia.
 
-- Todos los métodos de repositorio son **asíncronos** (`Promise<T>`), aunque hoy resuelvan de
-  inmediato. Las firmas no cambiarán al pasar a HTTP.
-- Ningún componente accede a `localStorage`: una regla de ESLint lo prohíbe fuera de
-  `src/data/repositories/localStorage/`. La interfaz consume hooks (`useSolicitudes`,
-  `useServicios`, `useUsuarios`) o el propio repositorio.
-- El esquema está versionado (`SERVIS_SCHEMA_VERSION`, hoy **v3**) con una cadena de migraciones,
-  de modo que un cambio de estructura no rompa los datos ya guardados.
-- Al primer arranque el almacén se siembra con:
-  - las solicitudes del prototipo, `SRV-1035` a `SRV-1042`;
-  - un historial cerrado de unas 90 solicitudes de los seis meses anteriores (`SRV-09xx`), que
-    alimenta las tendencias del cuadro de mando;
-  - los usuarios del equipo, el catálogo de 11 servicios y las metas iniciales del cuadro de mando.
+Las consultas pasan por **TanStack Query** (`src/hooks/useDatos.ts`): caché por recurso,
+reintentos ante fallos de red, filtros resueltos en el servidor y revalidación precisa tras cada
+escritura. Ningún componente toca `localStorage`; una regla de ESLint lo impide fuera de
+`src/mocks/`.
+
+### Generación de documentos PDF
+
+Los documentos oficiales (la carta de pasantía, etc.) **los genera el backend** al completar la
+solicitud: es un documento institucional que no puede depender del navegador. El frontend sólo los
+**muestra** en el visor integrado y permite descargarlos o imprimirlos. El reparto completo está en
+[`docs/api.md`](docs/api.md#quién-genera-y-quién-muestra-los-pdf).
 
 ### Conexión con el backend (Django)
 
-La implementación HTTP (`src/data/repositories/http/`) está completa y probada contra un servidor
-simulado. Cubre:
-
-- autenticación por sesión de Django con CSRF, o por JWT;
-- conversión `snake_case` ↔ `camelCase` y paginación de DRF;
-- subida de adjuntos y descarga del documento de salida (la carta de pasantía, etc.).
-
-Activarla es cambiar `VITE_DATA_SOURCE=local` por `VITE_DATA_SOURCE=http`: la factoría de
-`src/data/index.ts` elige la implementación y ninguna pantalla cambia.
-
-- [`docs/api.md`](docs/api.md): contrato de la API que espera el frontend, para el equipo del
-  backend (rutas, JSON, errores, autenticación y generación de PDF con WeasyPrint).
+- [`docs/api.md`](docs/api.md): contrato de la API para el equipo del backend (rutas, JSON,
+  errores, autenticación, notificaciones, recuperación de contraseña y generación de PDF).
 - [`docs/integracion.md`](docs/integracion.md): pasos del día de la conexión. Las rutas se ajustan
   en `http/rutas.ts` y los nombres de campos en `http/mapeadores.ts`; también cubre el proxy de
   Vite, el rewrite de Vercel y las variables de entorno.
-
-En modo local, al completar una solicitud se genera en el navegador un **PDF de muestra** (sin
-validez oficial) con los datos de la solicitud, para poder demostrar el flujo completo.
-
-### Restablecer los datos de demostración
-
-En la barra lateral, **Configuración → Restablecer datos de demostración** devuelve el sistema a su
-estado inicial. Conviene usarlo antes de una presentación para partir de datos limpios.
 
 ---
 
@@ -298,8 +306,9 @@ servidor propio. `vercel.json` deja la configuración lista:
 
 1. En [vercel.com](https://vercel.com) → **Add New… → Project** e importar `Lbatista-s/Servis`.
 2. Seleccionar la rama que se quiere desplegar.
-3. **Deploy.** No hay que tocar los ajustes de compilación ni añadir variables de entorno: la
-   fuente de datos por defecto ya es `local`.
+3. **Deploy.** No hay que tocar los ajustes de compilación. Mientras no haya backend conviene
+   declarar `VITE_API_MOCK=true` en **Settings → Environment Variables** (es también el valor por
+   defecto), para que quede explícito qué API usa cada entorno.
 
 La clave está en las **reescrituras** declaradas en `vercel.json`: sin ellas, recargar `/bandeja` o
 abrir un enlace directo a `/solicitudes/SRV-1042` devolvería 404, porque Vercel buscaría un archivo
@@ -308,17 +317,12 @@ en esa ruta en lugar de dejar que React Router resuelva la navegación.
 Cada `push` genera un despliegue de vista previa con su propia URL, útil para compartir una rama en
 revisión sin tocar la principal.
 
-> **Sobre el selector rápido de rol:** sólo se monta en modo desarrollo, por lo que **no aparece en
-> el despliegue de Vercel**. Para cambiar de rol en la demostración se usa el desplegable
-> «Acceder como» de la pantalla de acceso, cerrando sesión antes desde la barra lateral.
-
 > **Con backend:** para usar la API de Django hacen falta un rewrite de `/api` en `vercel.json` y
-> las variables `VITE_DATA_SOURCE` y `VITE_API_AUTH`. Los pasos están en
+> las variables `VITE_API_MOCK=false` y `VITE_API_AUTH`. Los pasos están en
 > [`docs/integracion.md`](docs/integracion.md).
 
-> **Sobre los datos:** al vivir en `localStorage`, cada visitante tiene su propia copia sembrada en
-> su navegador. Los cambios de una persona no se ven en el dispositivo de otra. Es suficiente para
-> la demostración y desaparecerá al conectar el backend real.
+> **Sobre los datos simulados:** viven en el navegador de cada visitante, así que los cambios de
+> una persona no se ven en el dispositivo de otra. Desaparece al conectar el backend real.
 
 ---
 
@@ -328,22 +332,24 @@ revisión sin tocar la principal.
 npm test
 ```
 
-Son 175 pruebas, que cubren:
+Son 205 pruebas, que cubren:
 
 - **Máquina de estados**: las 81 combinaciones de estados frente a la tabla de la especificación,
   la autorización por rol y las transiciones que exigen comentario.
 - **Reglas de negocio**: justificación de 30 caracteres, motivo de devolución, aprobación sin
   revisión, inmutabilidad de los estados finales, activación de servicios, propiedad de la
   solicitud y permiso para editar las metas.
-- **Repositorios locales**: sembrado, migraciones del esquema, filtros, autenticación simulada,
-  adjuntos, documento de salida y metas.
+- **API simulada** (a través de los repositorios HTTP, como la aplicación): acceso y contraseña,
+  filtros, permisos por rol, adjuntos, documento de salida, usuarios, servicios, metas,
+  notificaciones y recuperación de contraseña.
 - **Capa HTTP**: contra un `fetch` simulado, conversión de claves, paginación, errores, sesión con
   CSRF, JWT con renovación, subida de adjuntos, descarga de documentos y metas.
 - **Cuadro de mando**: calendario laboral, cada indicador, evaluación frente a la meta, tendencia,
-  serie mensual y el historial de demostración.
-- **Interfaz**: el flujo crítico completo (crear → enviar → revisar → aprobar → completar), la
-  botonera de acciones, la accesibilidad de los campos, el tema y el cuadro de mando, con React
-  Testing Library.
+  serie mensual y el historial sembrado.
+- **Interfaz**, con React Testing Library contra la API simulada: el flujo crítico completo
+  (crear → enviar → revisar → aprobar → completar), la botonera de acciones, el visor de
+  documentos, la campana, el alta de servicios, la barra lateral, la página 404, el límite de
+  errores, la accesibilidad de los campos, el tema y el cuadro de mando.
 
 La integración continua (`.github/workflows/ci.yml`) ejecuta en cada push el formato, ESLint, los
 tipos, las pruebas y la compilación.

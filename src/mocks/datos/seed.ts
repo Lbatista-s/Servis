@@ -9,7 +9,15 @@
 
 import { aplicarTransicion } from '@/domain/businessRules';
 import { crearDocumento } from '@/domain/documentos';
-import type { Actor, EstadoSolicitud, Servicio, Solicitud, Usuario } from '@/domain/types';
+import type {
+  Actor,
+  EstadoSolicitud,
+  Requisito,
+  Servicio,
+  Solicitud,
+  TipoDocumento,
+  Usuario,
+} from '@/domain/types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Usuarios
@@ -124,6 +132,34 @@ export const USUARIOS_DEMO: readonly Usuario[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Catálogo de documentos que SERVIS puede pedir
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const DOCUMENTOS_DEMO: readonly TipoDocumento[] = [
+  { id: 'documento-identidad', nombre: 'Documento de identidad (cédula o pasaporte)' },
+  { id: 'record-notas', nombre: 'Récord de notas' },
+  { id: 'carta-aceptacion', nombre: 'Carta de aceptación de la empresa en papel membretado' },
+  { id: 'datos-supervisor', nombre: 'Datos completos del supervisor inmediato' },
+  { id: 'carta-motivacion', nombre: 'Carta de motivación dirigida al Área' },
+  { id: 'carta-baja', nombre: 'Carta explicativa del período de baja' },
+  { id: 'acta-nacimiento', nombre: 'Acta de nacimiento legalizada' },
+  { id: 'fotografia', nombre: 'Fotografía tamaño 2x2 de fondo blanco' },
+  { id: 'foto-solicitante', nombre: 'Foto a escala 1:1 del solicitante' },
+  { id: 'acta-nacimiento-estudiante', nombre: 'Acta de nacimiento del estudiante (PDF)' },
+  { id: 'acta-nacimiento-familiar', nombre: 'Acta de nacimiento del familiar (PDF)' },
+  { id: 'foto-objeto', nombre: 'Foto del objeto' },
+  { id: 'certificado-prueba', nombre: 'Certificado de la prueba a exonerar' },
+  { id: 'matricula-vehiculo', nombre: 'Foto de la matrícula del vehículo' },
+];
+
+/** Requisito de un servicio a partir de un documento del catálogo. */
+function pide(documentoId: string, obligatorio = true): Requisito {
+  const documento = DOCUMENTOS_DEMO.find((d) => d.id === documentoId);
+  if (!documento) throw new Error(`Documento desconocido en el catálogo: ${documentoId}`);
+  return { id: documento.id, descripcion: documento.nombre, obligatorio };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Catálogo de servicios
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -138,18 +174,7 @@ export const SERVICIOS_DEMO: readonly Servicio[] = [
     plantilla: 'plantilla_pasantia_v1.docx',
     activo: true,
     diasEstimados: 3,
-    requisitos: [
-      {
-        id: 'pasantia-r1',
-        descripcion: 'Carta de aceptación de la empresa en papel membretado',
-        obligatorio: true,
-      },
-      {
-        id: 'pasantia-r2',
-        descripcion: 'Datos completos del supervisor inmediato',
-        obligatorio: false,
-      },
-    ],
+    requisitos: [pide('carta-aceptacion'), pide('datos-supervisor', false)],
   },
   {
     id: 'cambio',
@@ -161,11 +186,7 @@ export const SERVICIOS_DEMO: readonly Servicio[] = [
     plantilla: 'plantilla_cambio_v1.docx',
     activo: true,
     diasEstimados: 7,
-    requisitos: [
-      { id: 'cambio-r1', descripcion: 'Récord de notas actualizado', obligatorio: true },
-      { id: 'cambio-r2', descripcion: 'Carta de motivación dirigida al Área', obligatorio: true },
-      { id: 'cambio-r3', descripcion: 'Constancia de no deuda con Tesorería', obligatorio: false },
-    ],
+    requisitos: [pide('record-notas'), pide('carta-motivacion')],
   },
   {
     id: 'reingreso',
@@ -177,19 +198,7 @@ export const SERVICIOS_DEMO: readonly Servicio[] = [
     plantilla: 'plantilla_reingreso_v1.docx',
     activo: true,
     diasEstimados: 5,
-    requisitos: [
-      { id: 'reingreso-r1', descripcion: 'Copia de la cédula de identidad', obligatorio: true },
-      {
-        id: 'reingreso-r2',
-        descripcion: 'Carta explicativa del período de baja',
-        obligatorio: true,
-      },
-      {
-        id: 'reingreso-r3',
-        descripcion: 'Constancia de no deuda con Tesorería',
-        obligatorio: false,
-      },
-    ],
+    requisitos: [pide('documento-identidad'), pide('carta-baja')],
   },
   {
     id: 'grado',
@@ -201,50 +210,20 @@ export const SERVICIOS_DEMO: readonly Servicio[] = [
     plantilla: 'plantilla_grado_v1.docx',
     activo: true,
     diasEstimados: 10,
-    requisitos: [
-      { id: 'grado-r1', descripcion: 'Récord de notas completo', obligatorio: true },
-      { id: 'grado-r2', descripcion: 'Acta de nacimiento legalizada', obligatorio: true },
-      {
-        id: 'grado-r3',
-        descripcion: 'Comprobante de pago de derechos de grado',
-        obligatorio: true,
-      },
-      { id: 'grado-r4', descripcion: 'Fotografía tamaño 2x2 de fondo blanco', obligatorio: false },
-    ],
+    requisitos: [pide('record-notas'), pide('acta-nacimiento'), pide('fotografia', false)],
   },
   {
     id: 'talleres',
     nombre: 'Talleres a la carta',
-    descripcion: 'Inscríbete en talleres especializados ofrecidos por el Área.',
+    descripcion:
+      'Arma un grupo de al menos 15 personas y solicita el taller que prefieran, en modalidad virtual.',
     icono: '🛠️',
     color: '#FEF3C7',
     categoria: 'academico',
     plantilla: 'plantilla_talleres_v1.docx',
     activo: true,
     diasEstimados: 2,
-    requisitos: [
-      { id: 'talleres-r1', descripcion: 'Constancia de inscripción vigente', obligatorio: true },
-    ],
-  },
-  {
-    id: 'reembolso',
-    nombre: 'Solicitud de reembolso',
-    descripcion: 'Solicita el reembolso de pagos realizados incorrectamente.',
-    icono: '💰',
-    color: '#DCFCE7',
-    categoria: 'administrativo',
-    plantilla: 'plantilla_reembolso_v1.docx',
-    activo: true,
-    diasEstimados: 8,
-    requisitos: [
-      { id: 'reembolso-r1', descripcion: 'Comprobante del pago realizado', obligatorio: true },
-      { id: 'reembolso-r2', descripcion: 'Justificación escrita del reembolso', obligatorio: true },
-      {
-        id: 'reembolso-r3',
-        descripcion: 'Certificación bancaria de la cuenta',
-        obligatorio: false,
-      },
-    ],
+    requisitos: [],
   },
   {
     id: 'ingles',
@@ -256,14 +235,13 @@ export const SERVICIOS_DEMO: readonly Servicio[] = [
     plantilla: 'plantilla_ingles_v1.docx',
     activo: true,
     diasEstimados: 4,
-    requisitos: [
-      { id: 'ingles-r1', descripcion: 'Documento de identidad vigente', obligatorio: true },
-    ],
+    requisitos: [pide('documento-identidad')],
   },
   {
     id: 'descuento',
     nombre: 'Plan de descuento familiar',
-    descripcion: 'Solicita la aplicación del descuento para familiares directos.',
+    descripcion:
+      'Descuento en el costo de los créditos cuando un familiar directo estudia o estudió en el INTEC.',
     icono: '👨‍👩‍👧',
     color: '#FEF3E8',
     categoria: 'administrativo',
@@ -271,65 +249,74 @@ export const SERVICIOS_DEMO: readonly Servicio[] = [
     activo: true,
     diasEstimados: 6,
     requisitos: [
-      {
-        id: 'descuento-r1',
-        descripcion: 'Acta de nacimiento que acredite el vínculo',
-        obligatorio: true,
-      },
-      {
-        id: 'descuento-r2',
-        descripcion: 'Constancia de inscripción de ambos familiares',
-        obligatorio: true,
-      },
+      pide('foto-solicitante'),
+      pide('acta-nacimiento-estudiante'),
+      pide('acta-nacimiento-familiar'),
     ],
   },
   {
-    id: 'carnet',
-    nombre: 'Solicitud de carnet',
-    descripcion: 'Obtén o repón tu carnet estudiantil institucional.',
+    id: 'carneton',
+    nombre: 'Carnetón de estacionamiento',
+    descripcion:
+      'Solicita el carnetón para acceder a los estacionamientos del campus. La primera emisión es gratuita.',
     icono: '🪪',
     color: '#F0FDF4',
     categoria: 'identidad',
-    plantilla: 'plantilla_carnet_v1.docx',
+    plantilla: 'plantilla_carneton_v1.docx',
     activo: true,
     diasEstimados: 3,
-    requisitos: [
-      { id: 'carnet-r1', descripcion: 'Fotografía tamaño 2x2 de fondo blanco', obligatorio: true },
-      { id: 'carnet-r2', descripcion: 'Copia del documento de identidad', obligatorio: true },
-    ],
+    requisitos: [pide('matricula-vehiculo')],
   },
   {
     id: 'objetos',
     nombre: 'Objetos perdidos',
-    descripcion: 'Reporta un objeto perdido o consulta el repositorio.',
+    descripcion: 'Reporta un objeto que perdiste o encontraste en el campus.',
     icono: '🔍',
     color: '#FFF1F2',
     categoria: 'identidad',
     plantilla: 'plantilla_objetos_v1.docx',
-    activo: false,
+    activo: true,
     diasEstimados: 1,
-    requisitos: [
-      { id: 'objetos-r1', descripcion: 'Descripción detallada del objeto', obligatorio: true },
-    ],
+    requisitos: [pide('foto-objeto', false)],
   },
   {
     id: 'resultados',
-    nombre: 'Revisión de resultados',
-    descripcion: 'Solicita la revisión formal de tus resultados de prueba.',
+    nombre: 'Revisión de resultados de pruebas',
+    descripcion:
+      'Solicita la revisión de tus resultados de PAAG4, PAAG3, EPAA, PAI, POMA, EXANI-III, ELASH o PNI.',
     icono: '📊',
     color: '#DBEAFE',
     categoria: 'academico',
     plantilla: 'plantilla_resultados_v1.docx',
-    activo: false,
+    activo: true,
     diasEstimados: 5,
-    requisitos: [
-      { id: 'resultados-r1', descripcion: 'Copia de la evaluación cuestionada', obligatorio: true },
-      {
-        id: 'resultados-r2',
-        descripcion: 'Argumentación escrita de la revisión',
-        obligatorio: true,
-      },
-    ],
+    requisitos: [],
+  },
+  {
+    id: 'certificado-pruebas',
+    nombre: 'Certificado de pruebas',
+    descripcion:
+      'Solicita el certificado de resultados de PAAG4, PAAG3, EPAA, PAI, POMA, EXANI-III, ELASH o PNI.',
+    icono: '📜',
+    color: '#F3E8FF',
+    categoria: 'academico',
+    plantilla: 'plantilla_certificado_pruebas_v1.docx',
+    activo: true,
+    diasEstimados: 5,
+    requisitos: [],
+  },
+  {
+    id: 'exoneracion-pruebas',
+    nombre: 'Exoneración de pruebas',
+    descripcion:
+      'Solicita la exoneración de la prueba de admisión (PAAG4, EPAA) o de inglés (ELASH, PNI) con una prueba equivalente.',
+    icono: '✅',
+    color: '#DCFCE7',
+    categoria: 'academico',
+    plantilla: 'plantilla_exoneracion_v1.docx',
+    activo: true,
+    diasEstimados: 5,
+    requisitos: [pide('certificado-prueba')],
   },
 ];
 
@@ -425,9 +412,11 @@ const PLANTILLAS: readonly PlantillaSolicitud[] = [
     creadaEn: '2026-06-29T13:20:00.000Z',
     estadoFinal: 'completada',
     datosFormulario: {
-      objeto: 'Calculadora científica Casio fx-991',
-      lugar: 'Edificio de Ingenierías, aula 305',
+      reporte: 'Objeto perdido',
+      telefono: '+1 (809) 555-0142',
       fecha: '2026-06-28',
+      lugar: 'Edificio de Ingenierías, aula 305',
+      descripcion: 'Calculadora científica Casio fx-991 con estuche negro.',
     },
   },
   {
@@ -436,7 +425,16 @@ const PLANTILLAS: readonly PlantillaSolicitud[] = [
     solicitanteId: 'usr-miguel',
     creadaEn: '2026-06-28T16:45:00.000Z',
     estadoFinal: 'enviada',
-    datosFormulario: { taller: 'Automatización industrial con PLC', turno: 'Sabatino' },
+    datosFormulario: {
+      taller: 'Fitness: Zumba',
+      diaPreferido: 'Sábado',
+      horaPreferida: '10:00 a. m.',
+      telefono: '+1 (809) 555-0178',
+      integrantes: Array.from(
+        { length: 15 },
+        (_, i) => `Integrante ${i + 1} | ${1090100 + i}`,
+      ).join('\n'),
+    },
   },
   {
     id: 'SRV-1037',
@@ -456,15 +454,19 @@ const PLANTILLAS: readonly PlantillaSolicitud[] = [
     solicitanteId: 'usr-miguel',
     creadaEn: '2026-06-26T14:00:00.000Z',
     estadoFinal: 'rechazada',
-    datosFormulario: { nivelDeclarado: 'Intermedio', fechaPreferida: '2026-07-15' },
+    datosFormulario: {
+      motivo: 'Necesito el puntaje de la prueba ELASH para fines de graduación.',
+      periodo: '2026-2',
+      telefono: '+1 (809) 555-0178',
+    },
   },
   {
     id: 'SRV-1035',
-    servicioId: 'carnet',
+    servicioId: 'carneton',
     solicitanteId: 'usr-ana',
     creadaEn: '2026-06-25T13:35:00.000Z',
     estadoFinal: 'completada',
-    datosFormulario: { motivo: 'Reposición por pérdida', tipoSangre: 'O+' },
+    datosFormulario: { telefono: '+1 (809) 555-0142', vehiculoElectrico: 'No' },
   },
 ];
 
@@ -501,9 +503,7 @@ export function construirSolicitudesDemo(): Solicitud[] {
   return PLANTILLAS.map((plantilla, indice) => {
     const usuario = USUARIOS_DEMO.find((u) => u.id === plantilla.solicitanteId);
     if (!usuario) {
-      throw new Error(
-        `Solicitante desconocido en los datos de demostración: ${plantilla.solicitanteId}`,
-      );
+      throw new Error(`Solicitante desconocido en los datos simulados: ${plantilla.solicitanteId}`);
     }
     const solicitante: Actor = { id: usuario.id, nombre: usuario.nombre, rol: usuario.rol };
 

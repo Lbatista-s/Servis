@@ -5,15 +5,13 @@
  * volver a desplegar.
  */
 
+import { entorno } from '@/config/entorno';
+
 export type ModoAutenticacion = 'sesion' | 'jwt';
 
-/**
- * Raíz de la API, sin barra final. Por defecto `/api`: en desarrollo el proxy
- * de Vite y en Vercel un rewrite la reenvían al backend, de modo que el
- * navegador sólo ve un origen (sin CORS y con cookies de sesión).
- */
+/** Raíz de la API, sin barra final (ver `src/config/entorno.ts`). */
 export function urlBase(): string {
-  return (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/+$/, '');
+  return entorno().apiBaseUrl;
 }
 
 /**
@@ -22,5 +20,5 @@ export function urlBase(): string {
  * - `jwt`: `Authorization: Bearer` con `djangorestframework-simplejwt`.
  */
 export function modoAutenticacion(): ModoAutenticacion {
-  return import.meta.env.VITE_API_AUTH === 'jwt' ? 'jwt' : 'sesion';
+  return entorno().apiAuth;
 }

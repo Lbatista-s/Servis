@@ -13,9 +13,11 @@ import {
   type ColorAvatar,
   type Documento,
   type EntradaHistorial,
+  type Notificacion,
   type Requisito,
   type Servicio,
   type Solicitud,
+  type TipoDocumento,
   type Usuario,
 } from '@/domain/types';
 
@@ -93,6 +95,21 @@ export function aServicio(dto: Dto): Servicio {
     plantilla: texto(dto.plantilla),
     activo: Boolean(dto.activo),
     diasEstimados: Number(dto.diasEstimados ?? 0),
+  };
+}
+
+export function aTipoDocumento(dto: Dto): TipoDocumento {
+  return { id: texto(dto.id), nombre: texto(dto.nombre) };
+}
+
+export function aNotificacion(dto: Dto): Notificacion {
+  return {
+    id: texto(dto.id),
+    solicitudId: texto(dto.solicitudId),
+    titulo: texto(dto.titulo),
+    detalle: texto(dto.detalle),
+    fecha: texto(dto.fecha),
+    leida: Boolean(dto.leida),
   };
 }
 

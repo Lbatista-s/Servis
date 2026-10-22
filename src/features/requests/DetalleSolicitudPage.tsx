@@ -10,11 +10,13 @@ import {
   ButtonLink,
   Card,
   EmptyState,
+  EsqueletoDetalle,
+  EstadoError,
   FileChip,
   Icono,
   InlineNotification,
   ListaDatos,
-  Loading,
+  PageHeader,
   SectionHeader,
   StatusBadge,
 } from '@/components/ui';
@@ -24,6 +26,7 @@ import { esEstadoFinal } from '@/domain/requestStateMachine';
 import { useActor, useUsuarioActual } from '@/features/auth/authStore';
 import { useServicio, useSolicitud } from '@/hooks/useDatos';
 import { useDescarga } from '@/hooks/useDescarga';
+import { useVisorDocumento } from '@/hooks/useVisorDocumento';
 import { formatearFecha } from '@/lib/format';
 
 import { AccionesSolicitud } from './AccionesSolicitud';
@@ -33,13 +36,15 @@ import { HistorialTimeline } from './HistorialTimeline';
 
 export function DetalleSolicitudPage() {
   const { id } = useParams<{ id: string }>();
-  const { datos: solicitud, cargando } = useSolicitud(id);
+  const { datos: solicitud, cargando, error, recargar } = useSolicitud(id);
   const { datos: servicio } = useServicio(solicitud?.servicioId);
   const usuario = useUsuarioActual();
   const actor = useActor();
   const { descargar, pendiente } = useDescarga();
+  const { ver, visor } = useVisorDocumento();
 
-  if (cargando) return <Loading mensaje="Cargando la solicitud…" />;
+  if (cargando) return <EsqueletoDetalle mensaje="Cargando la solicitud…" />;
+  if (error) return <EstadoError mensaje={error} onReintentar={recargar} />;
 
   if (!solicitud) {
     return (
@@ -62,13 +67,12 @@ export function DetalleSolicitudPage() {
   // El dominio decide si esta solicitud es editable ahora mismo por este actor.
   const editable = actor !== null && puedeEditarEstudiante(solicitud, actor);
   const { documento } = solicitud;
+  const obtenerDocumento = () => repositorios.solicitudes.descargarDocumento(solicitud.id);
+  const verDocumento = () =>
+    documento ? ver({ nombre: documento.nombre, obtener: obtenerDocumento }) : undefined;
   const descargarDocumento = () =>
     documento
-      ? descargar({
-          clave: 'documento',
-          nombre: documento.nombre,
-          obtener: () => repositorios.solicitudes.descargarDocumento(solicitud.id),
-        })
+      ? descargar({ clave: 'documento', nombre: documento.nombre, obtener: obtenerDocumento })
       : undefined;
   const ultimoComentario = [...solicitud.historial]
     .reverse()
@@ -79,17 +83,15 @@ export function DetalleSolicitudPage() {
       <Breadcrumb
         migas={[
           { etiqueta: 'Inicio', a: RUTAS.inicio },
-          { etiqueta: 'Mis solicitudes', a: RUTAS.inicio },
+          { etiqueta: 'Mis solicitudes', a: RUTAS.misSolicitudes },
           { etiqueta: `#${solicitud.id}` },
         ]}
       />
 
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-ink">
-            {servicio?.nombre ?? solicitud.servicioId}
-          </h1>
-          <p className="mt-1 flex flex-wrap items-center gap-1.5 text-base text-ink-3">
+      <PageHeader
+        titulo={servicio?.nombre ?? solicitud.servicioId}
+        subtitulo={
+          <span className="flex flex-wrap items-center gap-1.5">
             #{solicitud.id} · Creada el {formatearFecha(solicitud.creadaEn)}
             {usuario ? (
               <>
@@ -98,23 +100,17 @@ export function DetalleSolicitudPage() {
                 {usuario.nombre}
               </>
             ) : null}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2.5">
-          <StatusBadge estado={solicitud.estado} />
-          {documento ? (
-            <Button
-              variante="outline"
-              tamano="sm"
-              onClick={descargarDocumento}
-              disabled={pendiente === 'documento'}
-            >
-              <Icono nombre="descargar" />
-              {pendiente === 'documento' ? 'Preparando…' : 'Descargar documento'}
-            </Button>
-          ) : null}
-        </div>
-      </div>
+          </span>
+        }
+      >
+        <StatusBadge estado={solicitud.estado} />
+        {documento ? (
+          <Button variante="outline" tamano="sm" onClick={verDocumento}>
+            <Icono nombre="ojo" />
+            Ver documento
+          </Button>
+        ) : null}
+      </PageHeader>
 
       {/* Aviso destacado cuando la solicitud exige acción del estudiante. */}
       {solicitud.estado === 'devuelta' && ultimoComentario ? (
@@ -181,12 +177,9 @@ export function DetalleSolicitudPage() {
                           variante="ghost"
                           tamano="icon"
                           aria-label={`Ver ${adjunto.nombre}`}
-                          disabled={pendiente === adjunto.id}
                           onClick={() =>
-                            descargar({
-                              clave: adjunto.id,
+                            ver({
                               nombre: adjunto.nombre,
-                              modo: 'abrir',
                               obtener: () =>
                                 repositorios.solicitudes.descargarAdjunto(solicitud.id, adjunto.id),
                             })
@@ -205,15 +198,21 @@ export function DetalleSolicitudPage() {
           <Card className={documento ? undefined : 'opacity-60'}>
             <SectionHeader titulo="Documento generado" />
             {documento ? (
-              <Button
-                variante="outline"
-                className="w-full"
-                onClick={descargarDocumento}
-                disabled={pendiente === 'documento'}
-              >
-                <Icono nombre="descargar" />
-                <span className="truncate">{documento.nombre}</span>
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variante="outline" className="min-w-0 flex-1" onClick={verDocumento}>
+                  <Icono nombre="ojo" />
+                  <span className="truncate">{documento.nombre}</span>
+                </Button>
+                <Button
+                  variante="ghost"
+                  tamano="icon"
+                  aria-label={`Descargar ${documento.nombre}`}
+                  onClick={descargarDocumento}
+                  disabled={pendiente === 'documento'}
+                >
+                  <Icono nombre="descargar" />
+                </Button>
+              </div>
             ) : (
               <p className="py-4 text-center text-base text-ink-3">
                 <span aria-hidden="true" className="mb-2 block text-3xl">
@@ -242,6 +241,7 @@ export function DetalleSolicitudPage() {
           ) : null}
         </aside>
       </div>
+      {visor}
     </>
   );
 }

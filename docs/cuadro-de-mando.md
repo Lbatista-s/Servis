@@ -129,12 +129,12 @@ En la pantalla, cada ficha del mapa indica qué objetivo impulsa. El detalle de 
 ### Metas
 
 - Las fija el coordinador desde «Editar metas». La regla está en `puedeEditarMetas()` del dominio, y el repositorio la vuelve a comprobar.
-- En modo local se guardan con el resto de los datos. Con la API se leen y guardan en `GET` y `PUT indicadores/metas/` (ver `docs/api.md`).
-- Los valores iniciales se calibraron con los datos de demostración para que el cuadro muestre una mezcla realista de estados.
+- Se leen y guardan en `GET` y `PUT indicadores/metas/` (ver `docs/api.md`); mientras tanto, la API simulada las guarda con el resto de sus datos.
+- Los valores iniciales se calibraron con los datos simulados para que el cuadro muestre una mezcla realista de estados.
 
-### Datos de demostración
+### Datos simulados
 
-Para que las tendencias tengan sentido, se generan unas 90 solicitudes **cerradas** en los seis meses anteriores (`SRV-0901` en adelante), con `src/data/seedHistorial.ts`:
+Para que las tendencias tengan sentido, se generan unas 90 solicitudes **cerradas** en los seis meses anteriores (`SRV-0901` en adelante), con `src/mocks/datos/seedHistorial.ts`, que siembra la API simulada:
 
 - se construyen recorriendo la máquina de estados real;
 - el generador usa una semilla fija, así que siempre produce lo mismo;

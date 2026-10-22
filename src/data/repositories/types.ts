@@ -1,10 +1,10 @@
 /**
  * Contratos de la capa de persistencia.
  *
- * Todos los métodos son asíncronos aunque la implementación actual resuelva de
- * inmediato desde localStorage. Cuando el sistema pase a un backend real bastará
- * con proporcionar otra implementación de estas mismas interfaces: ni la
- * interfaz de usuario ni el estado global cambian.
+ * La implementación es HTTP (`./http/`), contra Django o, mientras no exista,
+ * contra la API simulada de `src/mocks/`. Si algún día cambia el transporte,
+ * basta con otra implementación de estas interfaces: ni la interfaz de usuario
+ * ni el estado global cambian.
  */
 
 import type { OpcionesTransicion } from '@/domain/businessRules';
@@ -13,9 +13,11 @@ import type {
   Actor,
   Adjunto,
   EstadoSolicitud,
+  Notificacion,
   Rol,
   Servicio,
   Solicitud,
+  TipoDocumento,
   Usuario,
 } from '@/domain/types';
 
@@ -59,6 +61,8 @@ export interface FiltroSolicitudes {
   solicitanteId?: string;
   estados?: readonly EstadoSolicitud[];
   servicioId?: string;
+  /** Sólo las asignadas a esta persona del personal. */
+  asignadaA?: string;
   /** Búsqueda libre por identificador de solicitud. */
   busqueda?: string;
 }
@@ -136,8 +140,18 @@ export interface IServiceRepository {
   obtener(id: string): Promise<Servicio | null>;
   crear(datos: DatosNuevoServicio): Promise<Servicio>;
   actualizar(id: string, cambios: Partial<DatosNuevoServicio>): Promise<Servicio>;
-  /** Aplica la regla: no se puede activar un servicio sin requisitos. */
   cambiarActivacion(id: string, activo: boolean): Promise<Servicio>;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Catálogo de documentos
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface IDocumentosRepository {
+  /** Todos los documentos que SERVIS puede pedir, en orden alfabético. */
+  listar(): Promise<TipoDocumento[]>;
+  /** Añade un documento al catálogo. Sólo el administrador; `CONFLICTO` si ya existe. */
+  crear(nombre: string): Promise<TipoDocumento>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -148,6 +162,17 @@ export interface IMetasRepository {
   obtener(): Promise<Metas>;
   /** Sólo el coordinador fija las metas; el resto recibe `PROHIBIDO`. */
   guardar(metas: Metas, actor: Actor): Promise<Metas>;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Notificaciones
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface INotificacionesRepository {
+  /** Avisos del usuario de la sesión, del más reciente al más antiguo. */
+  listar(): Promise<Notificacion[]>;
+  marcarLeida(id: string): Promise<void>;
+  marcarTodasLeidas(): Promise<void>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -163,6 +188,11 @@ export interface IAuthRepository {
   cerrarSesion(): Promise<void>;
   /** Usuario de la sesión vigente, o `null` si no hay sesión. */
   usuarioActual(): Promise<Usuario | null>;
+  /**
+   * Pide el correo de recuperación de contraseña. Resuelve igual exista o no
+   * la cuenta, para no revelar qué correos están registrados.
+   */
+  solicitarRecuperacion(correo: string): Promise<void>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -174,7 +204,7 @@ export interface Repositorios {
   solicitudes: IRequestRepository;
   usuarios: IUserRepository;
   servicios: IServiceRepository;
+  documentos: IDocumentosRepository;
   metas: IMetasRepository;
-  /** Restablece el almacenamiento a los datos de demostración iniciales. */
-  restablecerDemo(): Promise<void>;
+  notificaciones: INotificacionesRepository;
 }

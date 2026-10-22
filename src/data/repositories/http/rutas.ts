@@ -26,6 +26,8 @@ export const API = {
     /** POST: par de tokens JWT (modo `jwt`). */
     token: 'auth/token/',
     renovar: 'auth/token/refresh/',
+    /** POST: envía el correo para restablecer la contraseña. */
+    recuperar: 'auth/recuperar/',
   },
   solicitudes: {
     lista: 'solicitudes/',
@@ -50,6 +52,15 @@ export const API = {
     lista: 'servicios/',
     detalle: (id: string) => `servicios/${segmento(id)}/`,
   },
+  /** GET: catálogo de documentos que se pueden pedir; POST: añade uno. */
+  documentos: 'documentos/',
+  notificaciones: {
+    lista: 'notificaciones/',
+    /** POST: marca una notificación como leída. */
+    leida: (id: string) => `notificaciones/${segmento(id)}/leida/`,
+    /** POST: marca todas como leídas. */
+    leerTodas: 'notificaciones/leer-todas/',
+  },
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -61,6 +72,7 @@ export function consultaSolicitudes(filtro: FiltroSolicitudes = {}): Consulta {
     solicitante: filtro.solicitanteId,
     estado: filtro.estados,
     servicio: filtro.servicioId,
+    asignada_a: filtro.asignadaA,
     search: filtro.busqueda?.trim(),
   };
 }

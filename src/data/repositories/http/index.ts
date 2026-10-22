@@ -1,8 +1,8 @@
 /**
  * Repositorios sobre la API REST de Django.
  *
- * Implementan las mismas interfaces que los de `localStorage/`, así que
- * activarlos (`VITE_DATA_SOURCE=http`) no exige tocar ninguna pantalla. Las
+ * Son los únicos repositorios de la aplicación. Mientras no exista el backend,
+ * les responde la API simulada de `src/mocks/` con el mismo contrato. Las
  * rutas viven en `./rutas.ts` y la forma del JSON en `./mapeadores.ts`; el
  * contrato completo está en `docs/api.md`.
  *
@@ -14,7 +14,16 @@
 import { archivoRegistrado, olvidarArchivo } from '@/data/archivos';
 import type { OpcionesTransicion } from '@/domain/businessRules';
 import { METAS_POR_DEFECTO, type Metas } from '@/domain/indicadores/definiciones';
-import type { Actor, Adjunto, EstadoSolicitud, Servicio, Solicitud, Usuario } from '@/domain/types';
+import type {
+  Actor,
+  Adjunto,
+  EstadoSolicitud,
+  Notificacion,
+  Servicio,
+  Solicitud,
+  TipoDocumento,
+  Usuario,
+} from '@/domain/types';
 import { ErrorRepositorio } from '@/data/repositories/types';
 import type {
   CambiosSolicitud,
@@ -25,17 +34,21 @@ import type {
   FiltroSolicitudes,
   FiltroUsuarios,
   IAuthRepository,
+  IDocumentosRepository,
   IMetasRepository,
+  INotificacionesRepository,
   IRequestRepository,
   IServiceRepository,
   IUserRepository,
   Repositorios,
 } from '@/data/repositories/types';
 
-import { detalleOpcional, lista, noImplementado, peticion } from './cliente';
+import { detalleOpcional, lista, peticion } from './cliente';
 import { modoAutenticacion } from './config';
 import {
+  aNotificacion,
   aServicio,
+  aTipoDocumento,
   aSolicitud,
   aUsuario,
   desdeCredenciales,
@@ -48,6 +61,13 @@ import { guardarTokens, leerCookie, type TokensJwt } from './sesion';
 // ─────────────────────────────────────────────────────────────────────────────
 // Autenticación
 // ─────────────────────────────────────────────────────────────────────────────
+
+/** Django sólo acepta un POST anónimo si antes fijó la cookie `csrftoken`. */
+async function asegurarCsrf(): Promise<void> {
+  if (!leerCookie('csrftoken')) {
+    await peticion(API.auth.csrf, { respuesta: 'nada', sesionRequerida: false });
+  }
+}
 
 export class RepositorioAuthHttp implements IAuthRepository {
   async iniciarSesion(correo: string, contrasena: string): Promise<Usuario> {
@@ -63,16 +83,23 @@ export class RepositorioAuthHttp implements IAuthRepository {
       return aUsuario(await peticion<Dto>(API.auth.yo));
     }
 
-    // Django sólo acepta el POST si antes fijó la cookie `csrftoken`.
-    if (!leerCookie('csrftoken')) {
-      await peticion(API.auth.csrf, { respuesta: 'nada', sesionRequerida: false });
-    }
+    await asegurarCsrf();
     const usuario = await peticion<Dto>(API.auth.login, {
       metodo: 'POST',
       cuerpo: credenciales,
       sesionRequerida: false,
     });
     return aUsuario(usuario);
+  }
+
+  async solicitarRecuperacion(correo: string): Promise<void> {
+    if (modoAutenticacion() === 'sesion') await asegurarCsrf();
+    await peticion(API.auth.recuperar, {
+      metodo: 'POST',
+      cuerpo: { correo: correo.trim().toLowerCase() },
+      respuesta: 'nada',
+      sesionRequerida: false,
+    });
   }
 
   async cerrarSesion(): Promise<void> {
@@ -275,9 +302,24 @@ export class RepositorioServiciosHttp implements IServiceRepository {
     );
   }
 
-  /** El servidor aplica la regla de no activar un servicio sin requisitos. */
   cambiarActivacion(id: string, activo: boolean): Promise<Servicio> {
     return this.actualizar(id, { activo });
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Catálogo de documentos
+// ─────────────────────────────────────────────────────────────────────────────
+
+export class RepositorioDocumentosHttp implements IDocumentosRepository {
+  async listar(): Promise<TipoDocumento[]> {
+    return (await lista<Dto>(API.documentos)).map(aTipoDocumento);
+  }
+
+  async crear(nombre: string): Promise<TipoDocumento> {
+    return aTipoDocumento(
+      await peticion<Dto>(API.documentos, { metodo: 'POST', cuerpo: { nombre: nombre.trim() } }),
+    );
   }
 }
 
@@ -301,13 +343,32 @@ export class RepositorioMetasHttp implements IMetasRepository {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Notificaciones
+// ─────────────────────────────────────────────────────────────────────────────
+
+export class RepositorioNotificacionesHttp implements INotificacionesRepository {
+  async listar(): Promise<Notificacion[]> {
+    return (await lista<Dto>(API.notificaciones.lista)).map(aNotificacion);
+  }
+
+  async marcarLeida(id: string): Promise<void> {
+    await peticion(API.notificaciones.leida(id), { metodo: 'POST', respuesta: 'nada' });
+  }
+
+  async marcarTodasLeidas(): Promise<void> {
+    await peticion(API.notificaciones.leerTodas, { metodo: 'POST', respuesta: 'nada' });
+  }
+}
+
 export function crearRepositoriosHttp(): Repositorios {
   return {
     auth: new RepositorioAuthHttp(),
     solicitudes: new RepositorioSolicitudesHttp(),
     usuarios: new RepositorioUsuariosHttp(),
     servicios: new RepositorioServiciosHttp(),
+    documentos: new RepositorioDocumentosHttp(),
     metas: new RepositorioMetasHttp(),
-    restablecerDemo: () => Promise.resolve().then(() => noImplementado('restablecerDemo')),
+    notificaciones: new RepositorioNotificacionesHttp(),
   };
 }

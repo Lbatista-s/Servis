@@ -16,6 +16,8 @@ import { useMetas, useServicios, useSolicitudes, useUsuarios } from '@/hooks/use
 export interface CuadroMando {
   cargando: boolean;
   error: string | null;
+  /** Repite las consultas que fallaron. */
+  recargar: () => void;
   datos: DatosCuadro | null;
   metas: Metas | null;
   resultados: ResultadoIndicador[];
@@ -50,6 +52,11 @@ export function useCuadroMando(periodo: IdPeriodo): CuadroMando {
   return {
     cargando: solicitudes.cargando || servicios.cargando || usuarios.cargando || metas.cargando,
     error: solicitudes.error ?? servicios.error ?? usuarios.error ?? metas.error,
+    recargar: () => {
+      for (const consulta of [solicitudes, servicios, usuarios, metas]) {
+        if (consulta.error) consulta.recargar();
+      }
+    },
     datos,
     metas: metas.datos,
     resultados,

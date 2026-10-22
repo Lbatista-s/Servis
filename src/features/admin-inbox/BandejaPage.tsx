@@ -1,36 +1,43 @@
 /** Pantalla 7 — Bandeja administrativa. */
 
 import { Table, type TableColumnsType } from 'antd';
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useMemo, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { RUTAS } from '@/app/rutas';
 import {
   AvatarUsuario,
   Badge,
   Button,
+  CampoBusqueda,
   Card,
   EmptyState,
-  CampoBusqueda,
+  EsqueletoTabla,
+  EstadoError,
   Icono,
-  Loading,
   PageHeader,
   SelectorFiltro,
   StatCard,
   StatusBadge,
 } from '@/components/ui';
+import type { FiltroSolicitudes } from '@/data';
 import {
+  ESTADOS,
   ESTADOS_FINALES,
   ETIQUETA_ESTADO,
   type EstadoSolicitud,
   type Solicitud,
 } from '@/domain/types';
 import { useIndiceServicios, useIndiceUsuarios, useSolicitudes } from '@/hooks/useDatos';
+import { useUsuarioActual } from '@/features/auth/authStore';
+import { useRetardado } from '@/hooks/useRetardado';
+import { descargarCsv } from '@/lib/csv';
 import { opcionesConTodos, TODOS, type ConTodos } from '@/lib/filtros';
 import { formatearFecha, formatearFechaLarga } from '@/lib/format';
 
 /** Filtro de la bandeja: cualquier estado, o todas las que aún no están cerradas. */
 const ABIERTAS = 'abiertas';
+const ESTADOS_ABIERTOS = ESTADOS.filter((e) => !ESTADOS_FINALES.includes(e));
 type FiltroEstado = ConTodos<EstadoSolicitud | typeof ABIERTAS>;
 
 const OPCIONES_ESTADO = (() => {
@@ -42,33 +49,55 @@ const OPCIONES_ESTADO = (() => {
   ];
 })();
 
+/** Vistas rápidas de la barra lateral (`?vista=`): fijan el estado de partida. */
+type Vista = 'pendientes' | 'asignadas' | 'devueltas';
+const VISTAS: Record<Vista, { titulo: string; estados: readonly EstadoSolicitud[] }> = {
+  pendientes: {
+    titulo: 'Pendientes de revisar',
+    estados: ['enviada', 'en_revision', 'corregida'],
+  },
+  asignadas: { titulo: 'Asignadas a mí', estados: ESTADOS_ABIERTOS },
+  devueltas: { titulo: 'Devueltas al estudiante', estados: ['devuelta'] },
+};
+
+const esVista = (valor: string | null): valor is Vista => valor !== null && valor in VISTAS;
+
 export function BandejaPage() {
+  const [parametros] = useSearchParams();
+  const clave = parametros.get('vista');
+  const vista = esVista(clave) ? clave : null;
+  const usuario = useUsuarioActual();
   const [busqueda, setBusqueda] = useState('');
   // La bandeja es la cola de trabajo: por defecto sólo lo que sigue abierto.
   const [estado, setEstado] = useState<FiltroEstado>(ABIERTAS);
   const [servicioId, setServicioId] = useState<ConTodos<string>>(TODOS);
   const navegar = useNavigate();
 
-  const { datos: todas, cargando } = useSolicitudes();
+  // El filtrado lo hace el servidor; la búsqueda espera a que se deje de teclear.
+  const termino = useRetardado(busqueda.trim());
+  const filtro = useMemo<FiltroSolicitudes>(
+    () => ({
+      // Con una vista activa, el estado lo decide la vista.
+      ...(vista
+        ? { estados: VISTAS[vista].estados }
+        : estado === ABIERTAS
+          ? { estados: ESTADOS_ABIERTOS }
+          : estado !== TODOS
+            ? { estados: [estado] }
+            : {}),
+      ...(vista === 'asignadas' && usuario ? { asignadaA: usuario.id } : {}),
+      ...(servicioId !== TODOS ? { servicioId } : {}),
+      ...(termino ? { busqueda: termino } : {}),
+    }),
+    [vista, usuario, estado, servicioId, termino],
+  );
+  const { datos: filtradas, cargando, error, recargar } = useSolicitudes(filtro);
+  // Métricas sobre el total, no sobre el resultado filtrado.
+  const { datos: todas } = useSolicitudes();
   const usuarios = useIndiceUsuarios();
   const servicios = useIndiceServicios();
 
-  const lista = (todas ?? []).filter((solicitud) => {
-    if (estado === ABIERTAS) {
-      if (ESTADOS_FINALES.includes(solicitud.estado)) return false;
-    } else if (estado !== TODOS && solicitud.estado !== estado) return false;
-    if (servicioId !== TODOS && solicitud.servicioId !== servicioId) return false;
-    if (busqueda.trim()) {
-      const termino = busqueda.trim().toLowerCase();
-      const estudiante = usuarios.get(solicitud.solicitanteId)?.nombre.toLowerCase() ?? '';
-      if (!solicitud.id.toLowerCase().includes(termino) && !estudiante.includes(termino)) {
-        return false;
-      }
-    }
-    return true;
-  });
-
-  // Métricas sobre el total, no sobre el resultado filtrado.
+  const lista = filtradas ?? [];
   const universo = todas ?? [];
   const cuenta = (estados: readonly EstadoSolicitud[]) =>
     universo.filter((s) => estados.includes(s.estado)).length;
@@ -142,19 +171,47 @@ export function BandejaPage() {
     },
   ];
 
+  /** Exporta lo que muestra la tabla, con los filtros aplicados. */
+  function exportar() {
+    const encabezado = [
+      'ID',
+      'Estudiante',
+      'Matrícula',
+      'Carrera',
+      'Servicio',
+      'Estado',
+      'Recibida',
+      'Asignada a',
+    ];
+    const filas = lista.map((solicitud) => {
+      const estudiante = usuarios.get(solicitud.solicitanteId);
+      return [
+        solicitud.id,
+        estudiante?.nombre ?? solicitud.solicitanteId,
+        estudiante?.matricula,
+        estudiante?.carrera,
+        servicios.get(solicitud.servicioId)?.nombre ?? solicitud.servicioId,
+        ETIQUETA_ESTADO[solicitud.estado],
+        formatearFecha(solicitud.enviadaEn ?? solicitud.creadaEn),
+        solicitud.asignadaA ? (usuarios.get(solicitud.asignadaA)?.nombre ?? '') : '',
+      ];
+    });
+    descargarCsv([encabezado, ...filas], 'bandeja');
+  }
+
   return (
     <>
       <PageHeader
-        titulo="Bandeja de entrada"
+        titulo={vista ? VISTAS[vista].titulo : 'Bandeja de entrada'}
         subtitulo={`${formatearFechaLarga(new Date().toISOString())} — Área de Ingenierías`}
       >
-        <Button variante="outline" tamano="sm">
+        <Button variante="outline" tamano="sm" disabled={lista.length === 0} onClick={exportar}>
           <Icono nombre="descargar" />
-          Exportar
+          Exportar CSV
         </Button>
       </PageHeader>
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-5">
         <StatCard
           etiqueta="Pendientes"
           valor={cuenta(['enviada'])}
@@ -210,13 +267,24 @@ export function BandejaPage() {
           )}
         />
 
-        <SelectorFiltro
-          valor={estado}
-          onCambio={setEstado}
-          etiqueta="Filtrar por estado"
-          className="sm:w-44"
-          opciones={OPCIONES_ESTADO}
-        />
+        {vista ? (
+          <Link
+            to={RUTAS.bandeja}
+            className="inline-flex h-8 items-center gap-1.5 rounded-full border border-primary-light-2 bg-primary-light px-3 text-sm font-medium text-primary-dark hover:border-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+          >
+            Vista: {VISTAS[vista].titulo}
+            <Icono nombre="cerrar" className="h-3 w-3" />
+            <span className="sr-only">(quitar y ver todas)</span>
+          </Link>
+        ) : (
+          <SelectorFiltro
+            valor={estado}
+            onCambio={setEstado}
+            etiqueta="Filtrar por estado"
+            className="sm:w-44"
+            opciones={OPCIONES_ESTADO}
+          />
+        )}
 
         <Badge tono="gray" sinPunto>
           {lista.length} de {universo.length}
@@ -224,7 +292,9 @@ export function BandejaPage() {
       </div>
 
       {cargando ? (
-        <Loading mensaje="Cargando la bandeja…" />
+        <EsqueletoTabla mensaje="Cargando la bandeja…" conEncabezado={false} />
+      ) : error ? (
+        <EstadoError mensaje={error} onReintentar={recargar} />
       ) : lista.length === 0 ? (
         <Card>
           <EmptyState

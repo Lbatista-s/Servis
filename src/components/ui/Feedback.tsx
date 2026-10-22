@@ -5,6 +5,9 @@ import type { ReactNode } from 'react';
 
 import { cv } from '@/theme/css';
 
+import { Button } from './Button';
+import { Icono } from './Icons';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Aviso en línea
 // ─────────────────────────────────────────────────────────────────────────────
@@ -77,6 +80,35 @@ export function EmptyState({
     >
       {children}
     </Empty>
+  );
+}
+
+/**
+ * Estado de error de una consulta, con la acción de reintentar. Sustituye al
+ * contenido que no se pudo cargar; nunca deja la pantalla en blanco.
+ */
+export function EstadoError({
+  titulo = 'No se pudo cargar la información',
+  mensaje,
+  onReintentar,
+  className,
+}: {
+  titulo?: string;
+  mensaje?: string | null;
+  onReintentar?: () => void;
+  className?: string;
+}) {
+  return (
+    <div role="alert" className={className}>
+      <EmptyState icono="⚠️" titulo={titulo} descripcion={mensaje ?? undefined}>
+        {onReintentar ? (
+          <Button onClick={onReintentar}>
+            <Icono nombre="rotar" />
+            Reintentar
+          </Button>
+        ) : null}
+      </EmptyState>
+    </div>
   );
 }
 

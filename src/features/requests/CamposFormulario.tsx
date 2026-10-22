@@ -11,9 +11,11 @@ import {
   Card,
   DateInput,
   Field,
+  FieldHint,
   FieldLabel,
   Input,
   SectionHeader,
+  SelectInput,
   Textarea,
 } from '@/components/ui';
 import { cn } from '@/lib/utils';
@@ -27,6 +29,7 @@ const TIPO_HTML: Record<CampoFormulario['tipo'], string> = {
   correo: 'email',
   telefono: 'tel',
   area: 'text',
+  lista: 'text',
 };
 
 export interface CamposFormularioProps {
@@ -63,6 +66,13 @@ export function CamposFormulario({
                   render={({ field }) =>
                     campo.tipo === 'area' ? (
                       <Textarea placeholder={campo.placeholder} {...field} />
+                    ) : campo.tipo === 'lista' ? (
+                      <SelectInput
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        opciones={campo.opciones ?? []}
+                      />
                     ) : campo.tipo === 'fecha' ? (
                       <DateInput
                         value={field.value}
@@ -78,6 +88,7 @@ export function CamposFormulario({
                     )
                   }
                 />
+                {campo.ayuda ? <FieldHint>{campo.ayuda}</FieldHint> : null}
               </Field>
             ))}
           </div>

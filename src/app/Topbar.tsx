@@ -1,11 +1,18 @@
-/** Barra superior: título de la pantalla, búsqueda, avisos y menú de usuario. */
+/**
+ * Barra superior: título de la pantalla, tema, avisos y el menú de perfil,
+ * que es el único control de la cuenta (configuración y cierre de sesión).
+ */
 
-import { Badge, Button, Dropdown, Input, Layout } from 'antd';
+import { Button, Dropdown, Layout } from 'antd';
+import { useState } from 'react';
+
 import { AvatarUsuario, Icono, SelectorTema } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import { ETIQUETA_ROL } from '@/domain/types';
 import { useUsuarioActual } from '@/features/auth/authStore';
+import { ConfiguracionDialog } from '@/features/settings/ConfiguracionDialog';
 
+import { CampanaNotificaciones } from './CampanaNotificaciones';
 import { useCerrarSesion } from './useCerrarSesion';
 
 /**
@@ -26,6 +33,7 @@ export function Topbar({
 }) {
   const usuario = useUsuarioActual();
   const salir = useCerrarSesion();
+  const [configuracionAbierta, setConfiguracionAbierta] = useState(false);
 
   return (
     <Layout.Header
@@ -50,28 +58,12 @@ export function Topbar({
 
       <div className="flex-1" />
 
-      {/* Búsqueda global: decorativa en esta fase, igual que en el prototipo. */}
-      <div aria-hidden="true" className="hidden w-56 xl:block">
-        <Input
-          readOnly
-          tabIndex={-1}
-          variant="borderless"
-          placeholder="Buscar en SERVIS…"
-          prefix={<Icono nombre="buscar" className="h-3.5 w-3.5 text-white" />}
-          className="[&_input::placeholder]:!text-white/90"
-          style={{ background: 'rgba(255,255,255,.14)' }}
-        />
-      </div>
-
       <SelectorTema />
 
-      <Badge dot offset={[-6, 6]} className="!hidden sm:!inline-block">
-        <Button
-          className={BOTON_MARCO}
-          aria-label="Notificaciones"
-          icon={<Icono nombre="campana" />}
-        />
-      </Badge>
+      {/* El administrador no participa en el flujo de solicitudes: no recibe avisos. */}
+      {usuario && usuario.rol !== 'administrador' ? (
+        <CampanaNotificaciones className={BOTON_MARCO} />
+      ) : null}
 
       {usuario ? (
         <Dropdown
@@ -80,12 +72,24 @@ export function Topbar({
           menu={{
             items: [
               {
-                type: 'group',
                 key: 'cuenta',
-                label: ETIQUETA_ROL[usuario.rol],
-                children: [{ key: 'correo', label: usuario.correo, disabled: true }],
+                disabled: true,
+                className: '!cursor-default',
+                label: (
+                  <span className="block py-0.5">
+                    <span className="block font-semibold text-ink">{usuario.nombre}</span>
+                    <span className="block text-sm text-ink-3">{ETIQUETA_ROL[usuario.rol]}</span>
+                    <span className="block text-sm text-ink-3">{usuario.correo}</span>
+                  </span>
+                ),
               },
               { type: 'divider' },
+              {
+                key: 'configuracion',
+                icon: <Icono nombre="engranaje" />,
+                label: 'Configuración',
+                onClick: () => setConfiguracionAbierta(true),
+              },
               {
                 key: 'salir',
                 icon: <Icono nombre="salir" />,
@@ -97,6 +101,7 @@ export function Topbar({
         >
           <Button
             shape="round"
+            aria-label={`Cuenta de ${usuario.nombre}`}
             className={cn('flex shrink-0 items-center gap-2 pl-1', BOTON_MARCO)}
           >
             <AvatarUsuario usuario={usuario} tamano="sm" />
@@ -105,6 +110,11 @@ export function Topbar({
           </Button>
         </Dropdown>
       ) : null}
+
+      <ConfiguracionDialog
+        abierto={configuracionAbierta}
+        onCerrar={() => setConfiguracionAbierta(false)}
+      />
     </Layout.Header>
   );
 }

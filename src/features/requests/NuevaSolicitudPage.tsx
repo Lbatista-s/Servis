@@ -16,11 +16,12 @@ import {
   Breadcrumb,
   Button,
   Card,
+  EsqueletoDetalle,
+  EstadoError,
   FileChip,
   Icono,
   InlineNotification,
   ListaDatos,
-  Loading,
   NoteBlock,
   SectionHeader,
   Sobretitulo,
@@ -31,7 +32,7 @@ import {
 import { repositorios } from '@/data';
 import type { Adjunto } from '@/domain/types';
 import { useActor } from '@/features/auth/authStore';
-import { mensajeDeError } from '@/hooks/useAsync';
+import { mensajeDeError } from '@/lib/errores';
 import { useRevalidar, useServicio } from '@/hooks/useDatos';
 import { cn } from '@/lib/utils';
 import { contar } from '@/lib/texto';
@@ -44,7 +45,7 @@ const PASOS = ['Datos del servicio', 'Documentos', 'Revisión y envío'] as cons
 
 export function NuevaSolicitudPage() {
   const { servicioId } = useParams<{ servicioId: string }>();
-  const { datos: servicio, cargando } = useServicio(servicioId);
+  const { datos: servicio, cargando, error, recargar } = useServicio(servicioId);
   const actor = useActor();
   const navegar = useNavigate();
   const revalidar = useRevalidar();
@@ -62,11 +63,14 @@ export function NuevaSolicitudPage() {
     mode: 'onTouched',
   });
 
-  if (cargando) return <Loading mensaje="Cargando el servicio…" />;
+  if (cargando) return <EsqueletoDetalle mensaje="Cargando el servicio…" />;
+  if (error) return <EstadoError mensaje={error} onReintentar={recargar} />;
   if (!servicio) return <Navigate to={RUTAS.catalogo} replace />;
   if (!actor) return null;
 
   const obligatorios = servicio.requisitos.filter((r) => r.obligatorio);
+  // Algunos servicios (talleres, revisión de resultados…) sólo piden datos.
+  const pideDocumentos = servicio.requisitos.length > 0;
   const requisitosCubiertos = adjuntos.length >= obligatorios.length;
 
   /** Avanza sólo si los campos del paso actual son válidos. */
@@ -109,7 +113,7 @@ export function NuevaSolicitudPage() {
         );
       }
 
-      revalidar();
+      revalidar('solicitudes');
       navegar(RUTAS.detalleSolicitud(creada.id));
     } catch (fallo) {
       setErrorEnvio(mensajeDeError(fallo));
@@ -139,8 +143,9 @@ export function NuevaSolicitudPage() {
             <div>
               <p className="font-semibold text-ink">{servicio.nombre}</p>
               <p className="text-sm text-ink-3">
-                Completa el formulario y adjunta los documentos requeridos para procesar tu
-                solicitud.
+                {pideDocumentos
+                  ? 'Completa el formulario y adjunta los documentos requeridos para procesar tu solicitud.'
+                  : 'Completa el formulario para procesar tu solicitud; este servicio no pide documentos.'}
               </p>
             </div>
           </div>
@@ -151,7 +156,16 @@ export function NuevaSolicitudPage() {
           {paso === 0 ? <CamposFormulario campos={campos} formulario={formulario} /> : null}
 
           {/* ── Paso 2: documentos ── */}
-          {paso === 1 ? (
+          {paso === 1 && !pideDocumentos ? (
+            <Card>
+              <SectionHeader titulo="Documentos adjuntos" />
+              <InlineNotification tono="info">
+                Este servicio no pide documentos. Continúa para revisar y enviar tu solicitud.
+              </InlineNotification>
+            </Card>
+          ) : null}
+
+          {paso === 1 && pideDocumentos ? (
             <Card>
               <SectionHeader titulo="Documentos adjuntos" />
               {adjuntos.length > 0 ? (
@@ -206,20 +220,22 @@ export function NuevaSolicitudPage() {
                 />
               </Card>
 
-              <Card>
-                <SectionHeader titulo={`Documentos (${adjuntos.length})`} />
-                {adjuntos.length === 0 ? (
-                  <p className="text-base text-ink-3">No has adjuntado ningún documento.</p>
-                ) : (
-                  <ul className="flex flex-col gap-2">
-                    {adjuntos.map((adjunto) => (
-                      <li key={adjunto.id}>
-                        <FileChip adjunto={adjunto} />
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </Card>
+              {pideDocumentos ? (
+                <Card>
+                  <SectionHeader titulo={`Documentos (${adjuntos.length})`} />
+                  {adjuntos.length === 0 ? (
+                    <p className="text-base text-ink-3">No has adjuntado ningún documento.</p>
+                  ) : (
+                    <ul className="flex flex-col gap-2">
+                      {adjuntos.map((adjunto) => (
+                        <li key={adjunto.id}>
+                          <FileChip adjunto={adjunto} />
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </Card>
+              ) : null}
 
               {!requisitosCubiertos ? (
                 <InlineNotification tono="aviso">
@@ -265,6 +281,9 @@ export function NuevaSolicitudPage() {
         <aside className="flex flex-col gap-3.5 xl:sticky xl:top-0">
           <Card>
             <SectionHeader titulo="Requisitos del servicio" />
+            {pideDocumentos ? null : (
+              <p className="text-base text-ink-3">Este servicio no pide documentos.</p>
+            )}
             <ul className="flex flex-col gap-2">
               {servicio.requisitos.map((requisito, indice) => {
                 const cubierto = indice < adjuntos.length;
@@ -289,8 +308,9 @@ export function NuevaSolicitudPage() {
             </ul>
 
             <NoteBlock className="mt-4">
-              <strong>Nota:</strong> los documentos deben ser legibles y estar vigentes. Tiempo
-              estimado de respuesta: {servicio.diasEstimados} días hábiles.
+              <strong>Nota:</strong>{' '}
+              {pideDocumentos ? 'los documentos deben ser legibles y estar vigentes. ' : null}
+              Tiempo estimado de respuesta: {servicio.diasEstimados} días hábiles.
             </NoteBlock>
           </Card>
 
@@ -301,10 +321,12 @@ export function NuevaSolicitudPage() {
                 cumplido={formulario.formState.isValid}
                 texto="Datos del formulario completados"
               />
-              <EstadoPreparacion
-                cumplido={adjuntos.length > 0}
-                texto={contar(adjuntos.length, 'documento adjunto', 'documentos adjuntos')}
-              />
+              {pideDocumentos ? (
+                <EstadoPreparacion
+                  cumplido={adjuntos.length > 0}
+                  texto={contar(adjuntos.length, 'documento adjunto', 'documentos adjuntos')}
+                />
+              ) : null}
               <EstadoPreparacion
                 cumplido={requisitosCubiertos}
                 texto={

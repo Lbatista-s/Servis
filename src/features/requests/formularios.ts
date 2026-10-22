@@ -8,7 +8,7 @@
 
 import { z, type ZodTypeAny } from 'zod';
 
-export type TipoCampo = 'texto' | 'fecha' | 'correo' | 'telefono' | 'area';
+export type TipoCampo = 'texto' | 'fecha' | 'correo' | 'telefono' | 'area' | 'lista';
 
 export interface CampoFormulario {
   nombre: string;
@@ -20,6 +20,22 @@ export interface CampoFormulario {
   seccion: string;
   /** El campo ocupa el ancho completo de la cuadrícula. */
   anchoCompleto?: boolean;
+  /** Opciones de un campo `lista`. */
+  opciones?: readonly string[];
+  /** Ayuda bajo el campo. */
+  ayuda?: string;
+}
+
+/** Teléfono de contacto, que los formularios de INTEC piden en casi todos los servicios. */
+function TELEFONO(seccion: string): CampoFormulario {
+  return {
+    nombre: 'telefono',
+    etiqueta: 'Teléfono',
+    tipo: 'telefono',
+    obligatorio: true,
+    placeholder: '+1 (809) 000-0000',
+    seccion,
+  };
 }
 
 /** Campos usados cuando un servicio no declara los suyos. */
@@ -212,47 +228,186 @@ export const CAMPOS_POR_SERVICIO: Record<string, readonly CampoFormulario[]> = {
     },
   ],
 
-  carnet: [
+  // Los campos siguientes reproducen los formularios del Centro de Servicio de
+  // INTEC (formularios.intec.edu.do). Los datos que SERVIS ya conoce del
+  // estudiante (nombre, ID, correo, carrera) no se vuelven a pedir.
+
+  talleres: [
     {
-      nombre: 'motivo',
-      etiqueta: 'Motivo de la solicitud',
-      tipo: 'texto',
+      nombre: 'taller',
+      etiqueta: 'Taller',
+      tipo: 'lista',
       obligatorio: true,
-      placeholder: 'Primera emisión, reposición por pérdida…',
-      seccion: 'Datos del carnet',
+      opciones: [
+        'Baile social: Merengue',
+        'Baile social: Salsa',
+        'Artes plásticas: Lettering',
+        'Fitness: Zumba',
+      ],
+      seccion: 'Datos del taller',
     },
     {
-      nombre: 'tipoSangre',
-      etiqueta: 'Tipo de sangre',
+      nombre: 'diaPreferido',
+      etiqueta: 'Día preferido',
       tipo: 'texto',
-      obligatorio: false,
-      placeholder: 'Ej. O+',
-      seccion: 'Datos del carnet',
+      obligatorio: true,
+      placeholder: 'Ej. Sábado',
+      seccion: 'Datos del taller',
+    },
+    {
+      nombre: 'horaPreferida',
+      etiqueta: 'Hora preferida',
+      tipo: 'texto',
+      obligatorio: true,
+      placeholder: 'Ej. 10:00 a. m.',
+      seccion: 'Datos del taller',
+    },
+    TELEFONO('Datos del taller'),
+    {
+      nombre: 'integrantes',
+      etiqueta: 'Integrantes',
+      tipo: 'area',
+      obligatorio: true,
+      placeholder: 'Un integrante por línea: Nombre | ID',
+      ayuda: 'El grupo debe tener al menos 15 personas.',
+      seccion: 'Datos del taller',
+      anchoCompleto: true,
+    },
+  ],
+
+  descuento: [
+    {
+      nombre: 'nivel',
+      etiqueta: 'Es estudiante de',
+      tipo: 'lista',
+      obligatorio: true,
+      opciones: ['Grado', 'Postgrado'],
+      seccion: 'Datos del estudiante',
+    },
+    TELEFONO('Datos del estudiante'),
+    {
+      nombre: 'relacionFamiliar',
+      etiqueta: 'El familiar es',
+      tipo: 'lista',
+      obligatorio: true,
+      opciones: ['Egresado del INTEC', 'Inscrito en el INTEC'],
+      seccion: 'Datos del familiar',
+    },
+    {
+      nombre: 'parentesco',
+      etiqueta: 'Parentesco',
+      tipo: 'lista',
+      obligatorio: true,
+      opciones: ['Madre', 'Padre', 'Hermano', 'Hermana'],
+      ayuda: 'Solo aplica para familiares directos.',
+      seccion: 'Datos del familiar',
+    },
+    {
+      nombre: 'familiarNombre',
+      etiqueta: 'Nombre completo del familiar',
+      tipo: 'texto',
+      obligatorio: true,
+      seccion: 'Datos del familiar',
+    },
+    {
+      nombre: 'familiarId',
+      etiqueta: 'ID del familiar',
+      tipo: 'texto',
+      obligatorio: true,
+      placeholder: 'Ej. 1012345',
+      seccion: 'Datos del familiar',
     },
   ],
 
   objetos: [
     {
-      nombre: 'objeto',
-      etiqueta: 'Objeto perdido',
-      tipo: 'texto',
+      nombre: 'reporte',
+      etiqueta: 'Reportar',
+      tipo: 'lista',
       obligatorio: true,
-      placeholder: 'Describe el objeto con el mayor detalle posible',
+      opciones: ['Objeto perdido', 'Objeto encontrado'],
+      seccion: 'Datos del reporte',
+    },
+    TELEFONO('Datos del reporte'),
+    {
+      nombre: 'fecha',
+      etiqueta: 'Fecha en que lo perdió o encontró',
+      tipo: 'fecha',
+      obligatorio: true,
       seccion: 'Datos del reporte',
     },
     {
       nombre: 'lugar',
-      etiqueta: 'Último lugar donde lo viste',
+      etiqueta: 'Lugar en que lo perdió o encontró',
       tipo: 'texto',
       obligatorio: true,
       seccion: 'Datos del reporte',
     },
     {
-      nombre: 'fecha',
-      etiqueta: 'Fecha del extravío',
-      tipo: 'fecha',
+      nombre: 'descripcion',
+      etiqueta: 'Descripción del artículo',
+      tipo: 'area',
       obligatorio: true,
+      placeholder: 'Color, marca, contenido… cualquier detalle que ayude a identificarlo',
       seccion: 'Datos del reporte',
+      anchoCompleto: true,
+    },
+  ],
+
+  resultados: [
+    {
+      nombre: 'nombreContacto',
+      etiqueta: 'Nombre de contacto',
+      tipo: 'texto',
+      obligatorio: true,
+      seccion: 'Datos de la solicitud',
+    },
+  ],
+
+  'certificado-pruebas': [
+    {
+      nombre: 'prueba',
+      etiqueta: 'Prueba que requiere resultado',
+      tipo: 'texto',
+      obligatorio: true,
+      placeholder: 'PAAG4, PAAG3, EPAA, PAI, POMA, EXANI-III, ELASH o PNI',
+      seccion: 'Datos de la solicitud',
+    },
+    {
+      nombre: 'finalidad',
+      etiqueta: 'Finalidad',
+      tipo: 'texto',
+      obligatorio: true,
+      seccion: 'Datos de la solicitud',
+    },
+    {
+      nombre: 'nombreContacto',
+      etiqueta: 'Nombre de contacto',
+      tipo: 'texto',
+      obligatorio: true,
+      seccion: 'Datos de la solicitud',
+    },
+  ],
+
+  'exoneracion-pruebas': [
+    {
+      nombre: 'nombreContacto',
+      etiqueta: 'Nombre de contacto',
+      tipo: 'texto',
+      obligatorio: true,
+      seccion: 'Datos de la solicitud',
+    },
+  ],
+
+  carneton: [
+    TELEFONO('Datos del vehículo'),
+    {
+      nombre: 'vehiculoElectrico',
+      etiqueta: '¿Su vehículo es eléctrico?',
+      tipo: 'lista',
+      obligatorio: true,
+      opciones: ['Sí', 'No'],
+      seccion: 'Datos del vehículo',
     },
   ],
 };
@@ -291,6 +446,13 @@ export function esquemaDe(campos: readonly CampoFormulario[]) {
         .refine((valor) => valor.trim() === '' || z.string().email().safeParse(valor).success, {
           message: 'El formato del correo no es válido.',
         });
+    }
+
+    if (campo.tipo === 'lista' && campo.opciones) {
+      const opciones = campo.opciones;
+      regla = z.string().refine((valor) => valor === '' || opciones.includes(valor), {
+        message: 'Elige una de las opciones.',
+      });
     }
 
     if (campo.obligatorio) {

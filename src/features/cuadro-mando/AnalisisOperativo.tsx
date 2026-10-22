@@ -11,10 +11,11 @@ import {
   AvatarUsuario,
   BarChart,
   Card,
-  Loading,
+  EsqueletoBloque,
+  EstadoError,
   Progress,
-  Separator,
   SectionHeader,
+  Separator,
   StatCard,
   StatusBadge,
 } from '@/components/ui';
@@ -34,11 +35,12 @@ function diasDeResolucion(solicitud: Solicitud): number | null {
 }
 
 export function AnalisisOperativo() {
-  const { datos: solicitudes, cargando } = useSolicitudes();
+  const { datos: solicitudes, cargando, error, recargar } = useSolicitudes();
   const servicios = useIndiceServicios();
   const usuarios = useIndiceUsuarios();
 
-  if (cargando) return <Loading mensaje="Calculando métricas…" />;
+  if (cargando) return <EsqueletoBloque mensaje="Calculando métricas…" filas={8} />;
+  if (error) return <EstadoError mensaje={error} onReintentar={recargar} />;
 
   const lista = solicitudes ?? [];
   const total = lista.length;
