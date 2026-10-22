@@ -70,6 +70,9 @@ describe('MisDocumentosPage', () => {
     const [primero] = within(lista).getAllByRole('button', { name: /^Ver / });
     if (!primero) throw new Error('Falta el botón Ver.');
     await usuario.click(primero);
-    await waitFor(() => expect(screen.getByText('Documento en el visor')).toBeInTheDocument());
+    // El visor carga la página del PDF bajo demanda: margen para un CI lento.
+    await waitFor(() => expect(screen.getByText('Documento en el visor')).toBeInTheDocument(), {
+      timeout: 5000,
+    });
   });
 });

@@ -28,6 +28,12 @@ vi.mock('./PaginasPdf', () => ({
 
 const pdf = new Blob(['%PDF-1.4'], { type: 'application/pdf' });
 
+/**
+ * La página del PDF se carga bajo demanda (`lazy`): en un ejecutor de CI lento
+ * puede tardar más que el segundo que espera `findBy` por defecto.
+ */
+const CARGA_DIFERIDA = { timeout: 5000 };
+
 function renderizar(props: Partial<VisorDocumentoProps> = {}) {
   return render(
     <ProveedorUI>
@@ -50,7 +56,9 @@ describe('VisorDocumento', () => {
     const usuario = userEvent.setup();
     renderizar();
 
-    expect(await screen.findByText('Contenido de la página 1')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Contenido de la página 1', undefined, CARGA_DIFERIDA),
+    ).toBeInTheDocument();
     expect(screen.getByText('Página 1 de 3')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Página anterior' })).toBeDisabled();
 
@@ -116,7 +124,9 @@ describe('useVisorDocumento', () => {
     render(<Pantalla obtener={obtener} />);
 
     await usuario.click(screen.getByRole('button', { name: 'Abrir' }));
-    expect(await screen.findByText('Contenido de la página 1')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Contenido de la página 1', undefined, CARGA_DIFERIDA),
+    ).toBeInTheDocument();
     expect(screen.getByRole('dialog', { name: 'carta.pdf' })).toBeInTheDocument();
   });
 
@@ -130,7 +140,10 @@ describe('useVisorDocumento', () => {
 
     await usuario.click(screen.getByRole('button', { name: 'Abrir' }));
     await usuario.click(await screen.findByRole('button', { name: /Reintentar/ }));
-    await waitFor(() => expect(screen.getByText('Contenido de la página 1')).toBeInTheDocument());
+    await waitFor(
+      () => expect(screen.getByText('Contenido de la página 1')).toBeInTheDocument(),
+      CARGA_DIFERIDA,
+    );
     expect(obtener).toHaveBeenCalledTimes(2);
   });
 });
