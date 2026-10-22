@@ -58,18 +58,7 @@ export function ServiciosPage() {
     {
       title: 'Servicio',
       key: 'servicio',
-      render: (_, servicio) => (
-        <span className="flex items-center gap-2.5">
-          <span
-            aria-hidden="true"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-lg"
-            style={{ backgroundColor: servicio.color }}
-          >
-            {servicio.icono}
-          </span>
-          <span className="font-medium">{servicio.nombre}</span>
-        </span>
-      ),
+      render: (_, servicio) => <span className="font-medium">{servicio.nombre}</span>,
     },
     {
       title: 'Categoría',
@@ -82,7 +71,7 @@ export function ServiciosPage() {
       title: 'Requisitos',
       key: 'requisitos',
       render: (_, servicio) => (
-        <Badge tono={servicio.requisitos.length === 0 ? 'red' : 'gray'} sinPunto>
+        <Badge tono="gray" sinPunto>
           {contar(servicio.requisitos.length, 'requisito')}
         </Badge>
       ),

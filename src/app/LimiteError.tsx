@@ -40,7 +40,7 @@ export class LimiteError extends Component<Props, Estado> {
     return (
       <div role="alert" className="py-10">
         <EmptyState
-          icono="🛠️"
+          icono="alerta"
           titulo="Algo salió mal"
           descripcion="Ocurrió un error inesperado al mostrar esta pantalla. Puedes reintentar o volver al inicio."
         >

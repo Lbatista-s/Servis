@@ -133,7 +133,7 @@ export function VisorDocumento({
   } else {
     contenido = (
       <EmptyState
-        icono="📄"
+        icono="documento"
         titulo={pdfIlegible ? 'No se pudo mostrar el PDF' : 'Vista previa no disponible'}
         descripcion="Descarga el archivo para abrirlo con otra aplicación."
       />

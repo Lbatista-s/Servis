@@ -62,7 +62,6 @@ export function PanelEstudiante() {
     <li key={solicitud.id}>
       <FilaSolicitud
         solicitud={solicitud}
-        icono={servicios.get(solicitud.servicioId)?.icono ?? '📄'}
         nombreServicio={servicios.get(solicitud.servicioId)?.nombre ?? solicitud.servicioId}
         accion={ACCION_PENDIENTE[solicitud.estado]}
       />
@@ -72,7 +71,7 @@ export function PanelEstudiante() {
   return (
     <>
       <PageHeader
-        titulo={`¡Hola, ${nombrePila}! 👋`}
+        titulo={`Hola, ${nombrePila}`}
         subtitulo={
           <>
             {pendientes.length > 0 ? (
@@ -100,7 +99,7 @@ export function PanelEstudiante() {
       {lista.length === 0 ? (
         <Card>
           <EmptyState
-            icono="📄"
+            icono="documento"
             titulo="Todavía no tienes solicitudes"
             descripcion="Explora el catálogo y elige el servicio que necesitas tramitar."
           >
@@ -154,17 +153,6 @@ export function PanelEstudiante() {
                 </ButtonLink>
               </SectionHeader>
               <DocumentosListos solicitudes={documentos} />
-            </Card>
-
-            <Card fondo="institucional">
-              <p className="text-md font-semibold text-white">¿Necesitas ayuda?</p>
-              <p className="mb-3.5 mt-1.5 text-sm text-white/90">
-                Consulta el catálogo de servicios disponibles o contacta al Área de Ingenierías.
-              </p>
-              <ButtonLink to={RUTAS.catalogo} variante="outline">
-                <Icono nombre="cuadricula" />
-                Ver catálogo
-              </ButtonLink>
             </Card>
           </aside>
         </div>

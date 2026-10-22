@@ -53,7 +53,7 @@ export function MisDocumentosPage() {
       ) : conDocumento.length === 0 ? (
         <Card>
           <EmptyState
-            icono="📂"
+            icono="carpeta"
             titulo="Aún no tienes documentos"
             descripcion="Cuando una de tus solicitudes se complete, su documento aparecerá aquí."
           >
@@ -74,12 +74,7 @@ export function MisDocumentosPage() {
               <li key={solicitud.id}>
                 <Card className="h-full">
                   <div className="flex items-start gap-3">
-                    <span
-                      aria-hidden="true"
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-canvas-2 text-xl"
-                    >
-                      {servicio?.icono ?? '📄'}
-                    </span>
+                    <Icono nombre="documento" className="mt-0.5 h-4 w-4 text-ink-3" />
                     <div className="min-w-0">
                       <p className="truncate font-semibold text-ink">
                         {servicio?.nombre ?? solicitud.servicioId}

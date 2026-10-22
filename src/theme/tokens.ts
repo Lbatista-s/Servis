@@ -168,13 +168,14 @@ export const FUENTES = {
   mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
 } as const;
 
+/** Radios contenidos: esquinas apenas suavizadas, sin aspecto de burbuja. */
 export const RADIOS = {
-  xs: 4,
-  sm: 6,
-  DEFAULT: 8,
-  md: 10,
-  lg: 12,
-  xl: 16,
+  xs: 2,
+  sm: 4,
+  DEFAULT: 6,
+  md: 6,
+  lg: 8,
+  xl: 8,
 } as const;
 
 /** Dimensiones estructurales del armazón. */

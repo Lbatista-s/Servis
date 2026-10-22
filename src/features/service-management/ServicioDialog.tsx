@@ -34,22 +34,17 @@ import { SelectorDocumentos } from './SelectorDocumentos';
 
 const CATEGORIAS = Object.keys(ETIQUETA_CATEGORIA) as CategoriaServicio[];
 
-/** Marcas visuales del catálogo: emoji y fondo del recuadro, como en el prototipo. */
-const ICONOS: readonly { icono: string; color: string }[] = [
-  { icono: '📄', color: '#FEF3C7' },
-  { icono: '🎓', color: '#F3E8FF' },
-  { icono: '🔄', color: '#DBEAFE' },
-  { icono: '📝', color: '#F0FDF4' },
-  { icono: '💳', color: '#FEF3E8' },
-  { icono: '🪪', color: '#FFF1F2' },
-  { icono: '🌐', color: '#DCFCE7' },
-];
+/**
+ * `icono` y `color` siguen en el contrato de la API, pero la interfaz ya no los
+ * muestra: un servicio nuevo se crea con estos valores neutros y uno existente
+ * conserva los suyos.
+ */
+const MARCA_POR_DEFECTO = { icono: '📄', color: '#FEF3C7' } as const;
 
 const esquemaServicio = z.object({
   nombre: z.string().trim().min(3, 'Escribe un nombre de al menos 3 caracteres.'),
   descripcion: z.string().trim().min(10, 'Describe el servicio en al menos 10 caracteres.'),
   categoria: z.enum(CATEGORIAS as [CategoriaServicio, ...CategoriaServicio[]]),
-  icono: z.string(),
   diasEstimados: z
     .number({ message: 'Indica los días hábiles.' })
     .int('Debe ser un número entero.')
@@ -67,7 +62,6 @@ function valoresDe(servicio?: Servicio): DatosServicio {
         nombre: servicio.nombre,
         descripcion: servicio.descripcion,
         categoria: servicio.categoria,
-        icono: servicio.icono,
         diasEstimados: servicio.diasEstimados,
         requisitos: servicio.requisitos.map(({ id, obligatorio }) => ({ id, obligatorio })),
         activo: servicio.activo,
@@ -76,7 +70,6 @@ function valoresDe(servicio?: Servicio): DatosServicio {
         nombre: '',
         descripcion: '',
         categoria: 'academico',
-        icono: ICONOS[0]?.icono ?? '📄',
         diasEstimados: 5,
         requisitos: [],
         activo: false,
@@ -101,22 +94,15 @@ function FormularioServicio({ servicio, onCerrar }: { servicio?: Servicio; onCer
   });
   const errores = formulario.formState.errors;
 
-  // Los servicios sembrados usan emojis fuera de la lista: se conserva el suyo.
-  const iconos =
-    servicio && !ICONOS.some((i) => i.icono === servicio.icono)
-      ? [{ icono: servicio.icono, color: servicio.color }, ...ICONOS]
-      : ICONOS;
-
   async function guardar(datos: DatosServicio) {
     setError(null);
-    const marca = iconos.find((i) => i.icono === datos.icono) ?? iconos[0];
     const nombreDe = (id: string) => catalogo?.find((d) => d.id === id)?.nombre ?? id;
     const comunes = {
       nombre: datos.nombre.trim(),
       descripcion: datos.descripcion.trim(),
       categoria: datos.categoria,
-      icono: marca?.icono ?? datos.icono,
-      color: marca?.color ?? '#FEF3C7',
+      icono: servicio?.icono ?? MARCA_POR_DEFECTO.icono,
+      color: servicio?.color ?? MARCA_POR_DEFECTO.color,
       diasEstimados: datos.diasEstimados,
       // El servidor toma la descripción del catálogo; se envía igualmente
       // para que la respuesta optimista no dependa de ello.
@@ -159,35 +145,14 @@ function FormularioServicio({ servicio, onCerrar }: { servicio?: Servicio; onCer
       </p>
 
       <form onSubmit={formulario.handleSubmit(guardar)} noValidate className="flex flex-col gap-4">
-        <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
-          <Field error={errores.nombre?.message}>
-            <FieldLabel requerido>Nombre</FieldLabel>
-            <Controller
-              control={formulario.control}
-              name="nombre"
-              render={({ field }) => <Input placeholder="Ej. Constancia de estudios" {...field} />}
-            />
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="icono-servicio">Icono</FieldLabel>
-            <Controller
-              control={formulario.control}
-              name="icono"
-              render={({ field }) => (
-                <Select
-                  id="icono-servicio"
-                  className="min-w-[88px]"
-                  value={field.value}
-                  onChange={field.onChange}
-                  options={iconos.map(({ icono }) => ({
-                    value: icono,
-                    label: <span className="text-lg">{icono}</span>,
-                  }))}
-                />
-              )}
-            />
-          </Field>
-        </div>
+        <Field error={errores.nombre?.message}>
+          <FieldLabel requerido>Nombre</FieldLabel>
+          <Controller
+            control={formulario.control}
+            name="nombre"
+            render={({ field }) => <Input placeholder="Ej. Constancia de estudios" {...field} />}
+          />
+        </Field>
 
         <Field error={errores.descripcion?.message}>
           <FieldLabel requerido>Descripción</FieldLabel>

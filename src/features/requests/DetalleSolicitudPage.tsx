@@ -49,7 +49,7 @@ export function DetalleSolicitudPage() {
   if (!solicitud) {
     return (
       <EmptyState
-        icono="🔍"
+        icono="buscar"
         titulo="No encontramos esa solicitud"
         descripcion="Es posible que haya sido eliminada o que el enlace sea incorrecto."
       >
@@ -214,10 +214,7 @@ export function DetalleSolicitudPage() {
                 </Button>
               </div>
             ) : (
-              <p className="py-4 text-center text-base text-ink-3">
-                <span aria-hidden="true" className="mb-2 block text-3xl">
-                  📋
-                </span>
+              <p className="text-base text-ink-3">
                 Disponible una vez que tu solicitud sea aprobada y completada.
               </p>
             )}
@@ -226,17 +223,10 @@ export function DetalleSolicitudPage() {
           {servicio ? (
             <Card>
               <SectionHeader titulo="Tiempo estimado" />
-              <div className="flex items-center gap-2.5 rounded bg-warning-light p-3">
-                <span aria-hidden="true" className="text-2xl">
-                  ⏱
-                </span>
-                <div>
-                  <p className="text-base font-semibold text-ink">
-                    {servicio.diasEstimados} días hábiles
-                  </p>
-                  <p className="text-sm text-ink-3">para {servicio.nombre.toLowerCase()}</p>
-                </div>
-              </div>
+              <p className="font-display text-2xl font-bold tabular-nums text-ink">
+                {servicio.diasEstimados} días hábiles
+              </p>
+              <p className="text-sm text-ink-3">para {servicio.nombre.toLowerCase()}</p>
             </Card>
           ) : null}
         </aside>

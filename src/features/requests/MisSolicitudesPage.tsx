@@ -92,7 +92,7 @@ export function MisSolicitudesPage() {
       ) : todas.length === 0 ? (
         <Card>
           <EmptyState
-            icono="📄"
+            icono="documento"
             titulo="Todavía no tienes solicitudes"
             descripcion="Explora el catálogo y elige el servicio que necesitas tramitar."
           >
@@ -102,7 +102,7 @@ export function MisSolicitudesPage() {
       ) : lista.length === 0 ? (
         <Card>
           <EmptyState
-            icono="🔍"
+            icono="buscar"
             titulo="Ninguna solicitud coincide"
             descripcion="Prueba con otro término o cambia el estado seleccionado."
           />
@@ -114,7 +114,6 @@ export function MisSolicitudesPage() {
               <li key={solicitud.id}>
                 <FilaSolicitud
                   solicitud={solicitud}
-                  icono={servicios.get(solicitud.servicioId)?.icono ?? '📄'}
                   nombreServicio={nombreServicio(solicitud.servicioId)}
                   accion={ACCION_PENDIENTE[solicitud.estado]}
                 />

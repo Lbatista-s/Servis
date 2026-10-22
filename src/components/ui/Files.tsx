@@ -59,9 +59,7 @@ export function FileChip({
         className,
       )}
     >
-      <span className="text-lg" aria-hidden="true">
-        📎
-      </span>
+      <Icono nombre="documento" className="h-4 w-4 text-ink-3" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-base font-medium text-ink">{adjunto.nombre}</p>
         <p className="text-xs text-ink-3">

@@ -71,7 +71,7 @@ export function CatalogoPage() {
         <EstadoError mensaje={error} onReintentar={recargar} />
       ) : lista.length === 0 ? (
         <EmptyState
-          icono="🔍"
+          icono="buscar"
           titulo="No encontramos servicios"
           descripcion="Prueba con otro término de búsqueda o cambia la categoría seleccionada."
         />
@@ -83,18 +83,12 @@ export function CatalogoPage() {
               <li key={servicio.id}>
                 <Link
                   to={RUTAS.nuevaSolicitud(servicio.id)}
-                  className="flex h-full flex-col gap-2.5 rounded-lg border border-line bg-surface p-5 transition-all hover:-translate-y-px hover:border-primary hover:shadow-s3"
+                  className="group flex h-full flex-col gap-2 rounded-lg border border-line bg-surface p-5 transition-colors hover:border-ink-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
                 >
-                  <div className="flex items-center gap-3">
-                    <span
-                      aria-hidden="true"
-                      className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-md text-2xl"
-                      style={{ backgroundColor: servicio.color }}
-                    >
-                      {servicio.icono}
-                    </span>
-                    <span className="text-md font-semibold text-ink">{servicio.nombre}</span>
-                  </div>
+                  <span className="text-2xs font-semibold uppercase tracking-wider text-ink-3">
+                    {ETIQUETA_CATEGORIA[servicio.categoria]}
+                  </span>
+                  <span className="text-md font-semibold text-ink">{servicio.nombre}</span>
 
                   <p className="text-sm leading-relaxed text-ink-3">{servicio.descripcion}</p>
 
@@ -105,8 +99,9 @@ export function CatalogoPage() {
                       {obligatorios > 0 ? ` · ${contar(obligatorios, 'obligatorio')}` : ''}
                     </span>
                     {/* Toda la tarjeta es el enlace: esto sólo lo señala visualmente. */}
-                    <span className="rounded bg-primary px-3 py-1 text-sm font-semibold text-white">
+                    <span className="flex items-center gap-1 text-sm font-semibold text-primary-dark group-hover:underline">
                       Solicitar
+                      <Icono nombre="chevron" className="h-3 w-3" />
                     </span>
                   </div>
                 </Link>

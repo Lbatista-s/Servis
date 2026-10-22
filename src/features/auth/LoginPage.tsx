@@ -17,7 +17,6 @@ import { INICIO_POR_ROL, RUTAS } from '@/app/rutas';
 import { Button, Field, FieldLabel, Icono, InlineNotification, Input } from '@/components/ui';
 import { entorno } from '@/config/entorno';
 import { ETIQUETA_ROL } from '@/domain/types';
-import { useServicios } from '@/hooks/useDatos';
 import { correoInstitucional, EJEMPLO_CORREO } from '@/lib/esquemas';
 import { CONTRASENA_SIMULADA, CUENTAS_SIMULADAS } from '@/mocks/cuentas';
 
@@ -34,7 +33,6 @@ type DatosAcceso = z.infer<typeof esquemaAcceso>;
 export function LoginPage() {
   const usuario = useUsuarioActual();
   const { iniciarSesion, cargando, error, limpiarError } = useAuth();
-  const { datos: servicios } = useServicios({ soloActivos: true });
   const navegar = useNavigate();
   const ubicacion = useLocation();
 
@@ -76,18 +74,8 @@ export function LoginPage() {
 
   return (
     <AuthLayout
-      titular="Tramita tus servicios"
-      destacado="cuando y donde los necesites."
-      descripcion="La plataforma digital del Área de Ingenierías de INTEC para gestionar solicitudes académicas y administrativas de forma eficiente y trazable."
-      estadisticas={[
-        // Contra la API real el catálogo puede exigir sesión: sin dato, la
-        // cifra se omite en lugar de mostrar un cero engañoso.
-        ...(servicios?.length
-          ? [{ valor: String(servicios.length), etiqueta: 'Servicios digitalizados' }]
-          : []),
-        { valor: '100%', etiqueta: 'Seguimiento en línea' },
-        { valor: '0', etiqueta: 'Papeles requeridos' },
-      ]}
+      titular="Servicios académicos y administrativos"
+      descripcion="Solicita, sigue y recibe tus trámites del Área de Ingenierías en un solo lugar."
     >
       <h1 className="text-5xl font-bold text-ink">Iniciar sesión</h1>
       <p className="mb-8 mt-1.5 text-md text-ink-3">
@@ -170,7 +158,6 @@ export function LoginPage() {
         </div>
 
         <Button type="submit" tamano="lg" block disabled={cargando}>
-          <Icono nombre="chevron" />
           {cargando ? 'Accediendo…' : 'Iniciar sesión'}
         </Button>
       </form>

@@ -52,7 +52,7 @@ export function DetalleBandejaPage() {
   if (!solicitud) {
     return (
       <EmptyState
-        icono="🔍"
+        icono="buscar"
         titulo="No encontramos esa solicitud"
         descripcion="Es posible que haya sido eliminada o que el enlace sea incorrecto."
       >
