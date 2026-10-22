@@ -1,20 +1,17 @@
 /**
- * Logotipo de SERVIS en vector, construido según el «Modelo de logos
- * auxiliares» del manual de identidad de INTEC:
+ * Logotipo de SERVIS en vector, construido según la regla de logos auxiliares
+ * del manual de identidad de INTEC (co-branding):
  *
- * - el logo comercial de INTEC como base, con sus trazos oficiales (extraídos
- *   del PDF descargable del manual, sin alterar forma ni color);
- * - un icono único hexagonal, el símbolo S de SERVIS, un 125 % mayor que el
- *   hexágono del logo comercial y apoyado con uno de sus lados paralelo al
- *   lado superior derecho de éste;
- * - el nombre alineado a la derecha del logo comercial, en mayúsculas y Vino
- *   INTEC (Montserrat Black, equivalente libre de la Gotham Black del manual),
- *   con el texto descriptivo en Rojo INTEC debajo.
+ * - el logo comercial de INTEC, con sus trazos oficiales (extraídos del PDF
+ *   descargable del manual, sin alterar forma ni color);
+ * - un hexágono propio con el símbolo S de SERVIS, un 125 % mayor que el
+ *   hexágono de INTEC;
+ * - el nombre en mayúsculas y Vino INTEC (Montserrat ExtraBold, equivalente
+ *   libre de la Gotham Black del manual).
  *
- * Versiones: `color` para fondos claros y `negativo` para el marco gris, donde
- * el Vino no se lee: el nombre va en blanco y el descriptor en Rojo 30 %. El
- * logo comercial puede ir sobre cualquier fondo salvo Rojo o Vino sólidos, así
- * que ninguna de las dos lo coloca sobre esos colores.
+ * Versiones: `color` para fondos claros y `negativo` (textos en blanco) para
+ * el marco gris. El logo comercial puede ir sobre cualquier fondo salvo Rojo
+ * o Vino sólidos, así que ninguna de las dos lo coloca sobre esos colores.
  */
 
 import { cn } from '@/lib/utils';
@@ -24,120 +21,18 @@ import { COLORES_MARCA } from '@/theme/tokens';
 // Geometría
 // ─────────────────────────────────────────────────────────────────────────────
 
-type Punto = readonly [number, number];
-
-/** Hexágono de INTEC (vértice arriba): 133,4 × 154 unidades, como el archivo oficial. */
+/** Hexágono de INTEC: 133,4 × 154 unidades (tamaño del archivo oficial). */
 const ANCHO_INTEC = 133.4;
 const ALTO_INTEC = 154.05;
-/** Lado superior derecho del hexágono de INTEC, en su propio sistema. */
-const LADO_SUPERIOR_DERECHO_INTEC: readonly [Punto, Punto] = [
-  [ANCHO_INTEC / 2, 0],
-  [ANCHO_INTEC, ALTO_INTEC / 4],
-];
-
-/** Contorno del símbolo S (`SimboloServis`), dibujado en una caja de 98 × 114 desde (1, 1). */
+/** Símbolo S dibujado en una caja de 98 × 114 unidades. */
 const ANCHO_SIMBOLO = 98;
-/** Lado inferior izquierdo del símbolo, en el sistema de `SimboloServis`. */
-const LADO_INFERIOR_IZQUIERDO_SIMBOLO: readonly [Punto, Punto] = [
-  [1, 86.7],
-  [50, 115],
-];
-/** Vértices del contorno del símbolo, en el sistema de `SimboloServis`. */
-const CONTORNO_SIMBOLO: readonly Punto[] = [
-  [50, 1],
-  [99, 29.3],
-  [99, 86.7],
-  [50, 115],
-  [1, 86.7],
-  [1, 29.3],
-];
-
-/** El icono único mide el 125 % del hexágono del logo comercial. */
+/** El hexágono de SERVIS mide el 125 % del de INTEC. */
 const ESCALA_SIMBOLO = (ANCHO_INTEC * 1.25) / ANCHO_SIMBOLO;
-/** Separación entre los dos lados paralelos: sólo se tocan los filetes. */
-const HOLGURA = 3;
-/** Margen del lienzo, para que no se recorten filetes. */
-const MARGEN = 3;
-/** Distancia entre el logo comercial y el nombre. */
-const SEPARACION_TEXTO = 26;
-
-const NOMBRE = { tamano: 118, ancho: 440, altoMayuscula: 86 };
-const DESCRIPTOR = { tamano: 25, anchos: [300, 512] as const, interlineado: 32 };
-
-const punto = (a: Punto, b: Punto, t: number): Punto => [
-  a[0] + (b[0] - a[0]) * t,
-  a[1] + (b[1] - a[1]) * t,
-];
-
-/**
- * Posición de cada pieza del logotipo, en un sistema cuyo origen es la
- * esquina superior izquierda de la caja del hexágono de INTEC. Pura y
- * exportada para poder comprobar la regla del manual en las pruebas.
- */
-export function geometriaLogotipo(formato: 'completo' | 'compacto') {
-  // Normal exterior del lado superior derecho de INTEC (hacia arriba y a la derecha).
-  const [a, b] = LADO_SUPERIOR_DERECHO_INTEC;
-  const largo = Math.hypot(b[0] - a[0], b[1] - a[1]);
-  const normal: Punto = [(b[1] - a[1]) / largo, -(b[0] - a[0]) / largo];
-  const medioIntec = punto(a, b, 0.5);
-
-  // El punto medio del lado inferior izquierdo del símbolo se coloca frente al
-  // del lado de INTEC, a la distancia de la holgura.
-  const aSimbolo = (p: Punto): Punto => [(p[0] - 1) * ESCALA_SIMBOLO, (p[1] - 1) * ESCALA_SIMBOLO];
-  const [c, d] = LADO_INFERIOR_IZQUIERDO_SIMBOLO;
-  const medioSimbolo = aSimbolo(punto(c, d, 0.5));
-  const origenSimbolo: Punto = [
-    medioIntec[0] + normal[0] * HOLGURA - medioSimbolo[0],
-    medioIntec[1] + normal[1] * HOLGURA - medioSimbolo[1],
-  ];
-  const enLienzo = (p: Punto): Punto => {
-    const q = aSimbolo(p);
-    return [q[0] + origenSimbolo[0], q[1] + origenSimbolo[1]];
-  };
-  const contornoSimbolo = CONTORNO_SIMBOLO.map(enLienzo);
-  const ladoSimbolo: readonly [Punto, Punto] = [enLienzo(c), enLienzo(d)];
-
-  // El nombre, a la derecha del logo comercial y bajo el icono.
-  const xTexto = ANCHO_INTEC + SEPARACION_TEXTO;
-  const completo = formato === 'completo';
-  const baseNombre = completo ? 128 : 136;
-  const cajaNombre = {
-    x: xTexto,
-    y: baseNombre - NOMBRE.altoMayuscula,
-    ancho: NOMBRE.ancho,
-    alto: NOMBRE.altoMayuscula,
-  };
-  const basesDescriptor = completo
-    ? [baseNombre + 34, baseNombre + 34 + DESCRIPTOR.interlineado]
-    : [];
-
-  const xs = [...contornoSimbolo.map((p) => p[0]), 0, xTexto + NOMBRE.ancho];
-  if (completo) xs.push(xTexto + 4 + DESCRIPTOR.anchos[1] + 50);
-  const ys = [
-    ...contornoSimbolo.map((p) => p[1]),
-    ALTO_INTEC,
-    ...basesDescriptor.map((y) => y + 8),
-  ];
-  const minX = Math.min(...xs) - MARGEN;
-  const minY = Math.min(...ys) - MARGEN;
-
-  return {
-    escala: ESCALA_SIMBOLO,
-    ladoIntec: LADO_SUPERIOR_DERECHO_INTEC,
-    ladoSimbolo,
-    contornoSimbolo,
-    origenSimbolo,
-    cajaNombre,
-    baseNombre,
-    basesDescriptor,
-    caja: {
-      x: minX,
-      y: minY,
-      ancho: Math.max(...xs) + MARGEN - minX,
-      alto: Math.max(...ys) + MARGEN - minY,
-    },
-  };
-}
+const ALTO_SERVIS = 114 * ESCALA_SIMBOLO;
+/** Solape horizontal entre los hexágonos: sólo se tocan los filetes. */
+const SOLAPE = 4;
+const X_SERVIS = ANCHO_INTEC - SOLAPE;
+const X_TEXTO = X_SERVIS + ANCHO_SIMBOLO * ESCALA_SIMBOLO + 26;
 
 /** Logo comercial de INTEC: hexágono con filete blanco, hexágono rojo y nombre. */
 function HexagonoIntec({ y }: { y: number }) {
@@ -213,72 +108,48 @@ export function Logotipo({
 }: LogotipoProps) {
   const negativo = version === 'negativo';
   const colorNombre = negativo ? '#FFFFFF' : COLORES_MARCA.vino;
-  const colorDescriptor = negativo ? COLORES_MARCA.rojo30 : COLORES_MARCA.rojoIntec;
-  const g = geometriaLogotipo(formato);
-  const { caja } = g;
+  const colorDescriptor = negativo ? 'rgba(255,255,255,.92)' : COLORES_MARCA.gris;
+  const completo = formato === 'completo';
+
+  const ancho = X_TEXTO + (completo ? 520 : 440);
+  const altoCaja = ALTO_SERVIS;
 
   return (
     <svg
-      viewBox={`${caja.x} ${caja.y} ${caja.ancho} ${caja.alto}`}
+      viewBox={`0 0 ${ancho} ${altoCaja}`}
       height={alto}
-      width={(alto * caja.ancho) / caja.alto}
+      width={(alto * ancho) / altoCaja}
       role="img"
       aria-label="SERVIS — Servicios académicos y administrativos automatizados, INTEC"
       className={cn('shrink-0', className)}
     >
-      <HexagonoIntec y={0} />
+      <HexagonoIntec y={altoCaja - ALTO_INTEC - 4} />
 
-      <g
-        transform={`translate(${g.origenSimbolo[0]} ${g.origenSimbolo[1]}) scale(${g.escala}) translate(-1 -1)`}
-      >
+      <g transform={`translate(${X_SERVIS} 0) scale(${ESCALA_SIMBOLO}) translate(-1 -1)`}>
         <SimboloServis filete={negativo ? '#FFFFFF' : COLORES_MARCA.vino} />
       </g>
 
-      <text
-        x={g.cajaNombre.x}
-        y={g.baseNombre}
-        fontFamily={FUENTE_TITULOS}
-        fontSize={NOMBRE.tamano}
-        fontWeight="900"
-        fill={colorNombre}
-        textLength={NOMBRE.ancho}
-        lengthAdjust="spacingAndGlyphs"
-      >
-        SERVIS
-      </text>
-
-      {g.basesDescriptor.length > 0 ? (
-        <g
-          fontFamily={FUENTE_TITULOS}
-          fontWeight="700"
-          fontSize={DESCRIPTOR.tamano}
-          fill={colorDescriptor}
+      <g fontFamily={FUENTE_TITULOS} fill={colorNombre}>
+        <text
+          x={X_TEXTO}
+          y={completo ? 112 : 138}
+          fontSize="118"
+          fontWeight="800"
+          textLength="440"
+          lengthAdjust="spacingAndGlyphs"
         >
-          <text
-            x={g.cajaNombre.x + 4}
-            y={g.basesDescriptor[0]}
-            textLength={DESCRIPTOR.anchos[0]}
-            lengthAdjust="spacingAndGlyphs"
-          >
+          SERVIS
+        </text>
+      </g>
+
+      {completo ? (
+        <g fontFamily={FUENTE_TITULOS} fontWeight="600" fontSize="25" fill={colorDescriptor}>
+          <text x={X_TEXTO + 4} y={152} textLength="300" lengthAdjust="spacingAndGlyphs">
             SERVICIOS ACADÉMICOS
           </text>
-          <text
-            x={g.cajaNombre.x + 4}
-            y={g.basesDescriptor[1]}
-            textLength={DESCRIPTOR.anchos[1]}
-            lengthAdjust="spacingAndGlyphs"
-          >
+          <text x={X_TEXTO + 4} y={184} textLength="512" lengthAdjust="spacingAndGlyphs">
             Y ADMINISTRATIVOS AUTOMATIZADOS
           </text>
-          {/* Filete que cierra el texto descriptivo, como en el modelo del manual. */}
-          <line
-            x1={g.cajaNombre.x + 4 + DESCRIPTOR.anchos[1] + 12}
-            x2={g.cajaNombre.x + 4 + DESCRIPTOR.anchos[1] + 50}
-            y1={(g.basesDescriptor[1] ?? 0) - 8}
-            y2={(g.basesDescriptor[1] ?? 0) - 8}
-            stroke={colorDescriptor}
-            strokeWidth="2"
-          />
         </g>
       ) : null}
     </svg>

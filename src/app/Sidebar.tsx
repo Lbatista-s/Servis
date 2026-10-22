@@ -93,7 +93,7 @@ export function Sidebar({ onNavegar }: { onNavegar?: () => void }) {
           aria-label="SERVIS — ir al inicio"
           className="flex flex-col gap-1.5 rounded px-2 py-2 transition-colors hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
         >
-          <Logotipo formato="compacto" version="negativo" alto={92} />
+          <Logotipo formato="compacto" version="negativo" alto={50} />
           <span className="text-2xs uppercase tracking-wider text-white/90">
             Área de Ingenierías
           </span>

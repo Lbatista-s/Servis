@@ -7,7 +7,7 @@ export function PaginaNoEncontrada() {
   const modo = useTema((estado) => estado.modo);
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-canvas px-6 py-12">
-      <Logotipo formato="compacto" alto={90} version={modo === 'oscuro' ? 'negativo' : 'color'} />
+      <Logotipo formato="compacto" alto={48} version={modo === 'oscuro' ? 'negativo' : 'color'} />
       <div className="w-full max-w-lg rounded-lg border border-line bg-surface">
         <EmptyState
           icono="🧭"

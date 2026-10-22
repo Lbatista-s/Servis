@@ -40,7 +40,7 @@ export function AuthLayout({
           style={{ height: 200, width: 200 }}
         />
 
-        <Logotipo version="negativo" alto={130} className="relative z-10 mb-8 max-w-full" />
+        <Logotipo version="negativo" alto={72} className="relative z-10 mb-8 max-w-full" />
 
         <p className="relative z-10 text-3xl font-bold leading-snug text-white lg:text-[24px]">
           {/* Rojo 30 %: el Rojo puro no se lee sobre el gris; como texto grande supera 3:1. */}
